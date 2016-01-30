@@ -1,0 +1,76 @@
+
+Baxman.png
+size: 512,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Arm_E_1
+  rotate: false
+  xy: 459, 28
+  size: 40, 96
+  orig: 40, 96
+  offset: 0, 0
+  index: -1
+Arm_W_1
+  rotate: false
+  xy: 459, 28
+  size: 40, 96
+  orig: 40, 96
+  offset: 0, 0
+  index: -1
+Arm_E_2
+  rotate: true
+  xy: 308, 15
+  size: 57, 112
+  orig: 57, 112
+  offset: 0, 0
+  index: -1
+Arm_W_2
+  rotate: true
+  xy: 2, 9
+  size: 57, 112
+  orig: 57, 112
+  offset: 0, 0
+  index: -1
+Leg_E_1
+  rotate: false
+  xy: 459, 126
+  size: 49, 124
+  orig: 49, 124
+  offset: 0, 0
+  index: -1
+Leg_W_1
+  rotate: false
+  xy: 459, 126
+  size: 49, 124
+  orig: 49, 124
+  offset: 0, 0
+  index: -1
+Leg_E_2
+  rotate: true
+  xy: 206, 2
+  size: 70, 100
+  orig: 70, 100
+  offset: 0, 0
+  index: -1
+Leg_W_2
+  rotate: true
+  xy: 206, 2
+  size: 70, 100
+  orig: 70, 100
+  offset: 0, 0
+  index: -1
+Torso
+  rotate: true
+  xy: 2, 68
+  size: 182, 202
+  orig: 182, 202
+  offset: 0, 0
+  index: -1
+face
+  rotate: false
+  xy: 206, 74
+  size: 251, 176
+  orig: 251, 176
+  offset: 0, 0
+  index: -1

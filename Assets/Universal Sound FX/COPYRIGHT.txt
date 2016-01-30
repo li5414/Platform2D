@@ -1,0 +1,8 @@
+
+All files in this folders and any subfolders are property of and copyrighted
+by Imphenzia AB and are included here with authorization by Imphenzia AB.
+
+These files originate from the Universal Sound FX library available at:
+http://www.universalsoundfx.com
+The Universal Sound FX library is a very low cost, high quality sound effects
+library containing more than 3000 sound effects.

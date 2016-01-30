@@ -1,0 +1,216 @@
+
+Gunman.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+B_Arm
+  rotate: false
+  xy: 972, 918
+  size: 42, 104
+  orig: 42, 104
+  offset: 0, 0
+  index: -1
+B_Foot
+  rotate: false
+  xy: 2, 2
+  size: 46, 20
+  orig: 46, 20
+  offset: 0, 0
+  index: -1
+F_Foot
+  rotate: false
+  xy: 2, 2
+  size: 46, 20
+  orig: 46, 20
+  offset: 0, 0
+  index: -1
+B_Forearm
+  rotate: false
+  xy: 409, 468
+  size: 101, 127
+  orig: 101, 127
+  offset: 0, 0
+  index: -1
+B_Hand_1H_1
+  rotate: false
+  xy: 307, 196
+  size: 64, 69
+  orig: 64, 69
+  offset: 0, 0
+  index: -1
+B_Hand_1H_2
+  rotate: true
+  xy: 322, 267
+  size: 75, 62
+  orig: 75, 62
+  offset: 0, 0
+  index: -1
+B_Hand_2H
+  rotate: true
+  xy: 972, 862
+  size: 54, 46
+  orig: 54, 46
+  offset: 0, 0
+  index: -1
+B_Hand_Open
+  rotate: false
+  xy: 890, 773
+  size: 86, 81
+  orig: 86, 81
+  offset: 0, 0
+  index: -1
+B_Shin
+  rotate: true
+  xy: 409, 396
+  size: 70, 107
+  orig: 70, 107
+  offset: 0, 0
+  index: -1
+F_Shin
+  rotate: true
+  xy: 409, 396
+  size: 70, 107
+  orig: 70, 107
+  offset: 0, 0
+  index: -1
+B_Thigh
+  rotate: true
+  xy: 770, 789
+  size: 65, 118
+  orig: 65, 118
+  offset: 0, 0
+  index: -1
+Body
+  rotate: false
+  xy: 254, 411
+  size: 153, 184
+  orig: 153, 184
+  offset: 0, 0
+  index: -1
+F_Arm
+  rotate: false
+  xy: 134, 26
+  size: 71, 90
+  orig: 71, 90
+  offset: 0, 0
+  index: -1
+F_Forearm
+  rotate: true
+  xy: 2, 24
+  size: 92, 130
+  orig: 92, 130
+  offset: 0, 0
+  index: -1
+F_Hand_1H
+  rotate: false
+  xy: 234, 196
+  size: 71, 72
+  orig: 71, 72
+  offset: 0, 0
+  index: -1
+F_Hand_Closed
+  rotate: false
+  xy: 234, 142
+  size: 66, 52
+  orig: 66, 52
+  offset: 0, 0
+  index: -1
+F_Hand_Open
+  rotate: false
+  xy: 230, 270
+  size: 90, 72
+  orig: 90, 72
+  offset: 0, 0
+  index: -1
+F_Thigh
+  rotate: true
+  xy: 254, 344
+  size: 65, 118
+  orig: 65, 118
+  offset: 0, 0
+  index: -1
+Head
+  rotate: false
+  xy: 2, 366
+  size: 250, 229
+  orig: 250, 229
+  offset: 0, 0
+  index: -1
+Jetpack
+  rotate: false
+  xy: 2, 242
+  size: 226, 122
+  orig: 226, 122
+  offset: 0, 0
+  index: -1
+Launcher
+  rotate: false
+  xy: 2, 754
+  size: 568, 268
+  orig: 568, 268
+  offset: 0, 0
+  index: -1
+Launcher_Missile
+  rotate: false
+  xy: 572, 758
+  size: 196, 96
+  orig: 196, 96
+  offset: 0, 0
+  index: -1
+Pistol
+  rotate: false
+  xy: 2, 118
+  size: 188, 122
+  orig: 188, 122
+  offset: 0, 0
+  index: -1
+Pistol_Chamber
+  rotate: false
+  xy: 978, 821
+  size: 39, 39
+  orig: 39, 39
+  offset: 0, 0
+  index: -1
+Shotgun
+  rotate: false
+  xy: 572, 856
+  size: 398, 166
+  orig: 398, 166
+  offset: 0, 0
+  index: -1
+Shotgun_Hatch
+  rotate: false
+  xy: 302, 143
+  size: 56, 51
+  orig: 56, 51
+  offset: 0, 0
+  index: -1
+Shotgun_Pump
+  rotate: true
+  xy: 192, 158
+  size: 82, 40
+  orig: 82, 40
+  offset: 0, 0
+  index: -1
+Shotgun_Shell
+  rotate: true
+  xy: 512, 549
+  size: 46, 28
+  orig: 46, 28
+  offset: 0, 0
+  index: -1
+SniperRifle
+  rotate: false
+  xy: 2, 597
+  size: 541, 155
+  orig: 541, 155
+  offset: 0, 0
+  index: -1
+Sniper_Shell
+  rotate: true
+  xy: 545, 680
+  size: 72, 18
+  orig: 72, 18
+  offset: 0, 0
+  index: -1

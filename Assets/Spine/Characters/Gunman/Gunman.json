@@ -1,0 +1,2816 @@
+{
+"skeleton": { "hash": "dCa4+7squAK7ISnx8Gp4DFgvnR8", "spine": "3.0.08", "width": 294.01, "height": 510.61, "images": "./images/" },
+"bones": [
+	{ "name": "root" },
+	{ "name": "Hip", "parent": "root", "x": 1.63, "y": 171.74 },
+	{ "name": "HipRecoil", "parent": "Hip", "length": 40, "color": "ff7800ff" },
+	{ "name": "F_LegIK", "parent": "root", "x": -47.88, "y": 9.15, "color": "ff3f00ff" },
+	{ "name": "F_Thigh", "parent": "HipRecoil", "length": 66.4, "x": -27.28, "y": -11.56, "rotation": -90 },
+	{ "name": "F_Shin", "parent": "F_Thigh", "length": 84.92, "x": 67.8, "y": -9.78, "rotation": -8.7 },
+	{ "name": "F_Foot", "parent": "F_Shin", "length": 27.26, "x": 80.57, "y": 6.51, "rotation": -1.52, "inheritRotation": false },
+	{ "name": "B_LegIK", "parent": "root", "x": 13.07, "y": 10.39, "color": "ff3f00ff" },
+	{ "name": "B_Thigh", "parent": "HipRecoil", "length": 68.63, "x": 30.73, "y": -9.46, "rotation": -86.84 },
+	{ "name": "B_Shin", "parent": "B_Thigh", "length": 81.16, "x": 70.34, "y": -12.22, "rotation": -10.7 },
+	{ "name": "B_Foot", "parent": "B_Shin", "length": 23.06, "x": 80.96, "y": 6.78, "rotation": -0.36, "inheritRotation": false },
+	{ "name": "AimPivot", "parent": "root", "x": 16.88, "y": 189.16, "color": "ff6d00ff" },
+	{ "name": "Recoil", "parent": "AimPivot", "length": 50, "color": "ff6d00ff" },
+	{ "name": "HeadIK", "parent": "Recoil", "x": 243.66, "y": 165.33, "color": "b200cfff" },
+	{ "name": "GunIKRoot", "parent": "Recoil", "x": 68.64, "y": 41.42, "color": "a600ffff" },
+	{ "name": "SniperRifle", "parent": "GunIKRoot", "length": 85.38, "x": -106.59, "y": 11.68, "color": "a600ffff" },
+	{ "name": "Shotgun", "parent": "GunIKRoot", "length": 88.06, "x": 93.07, "y": 31.07, "color": "a600ffff" },
+	{ "name": "Shotgun_Pump", "parent": "Shotgun", "length": 28.99, "x": 31.14, "y": -31.14, "color": "a600ffff" },
+	{ "name": "Pistol", "parent": "GunIKRoot", "length": 50, "x": 64.95, "y": 17.69, "color": "a600ffff" },
+	{ "name": "Pistol_Chamber", "parent": "Pistol", "color": "a600ffff" },
+	{ "name": "Muzzle", "parent": "GunIKRoot", "length": 50, "x": 262.11, "y": 75.83, "color": "a600ffff" },
+	{ "name": "Launcher", "parent": "GunIKRoot", "length": 192.64, "x": -100.87, "y": 158.66, "color": "a600ffff" },
+	{ "name": "Launcher_Missile", "parent": "Launcher", "length": 68.27, "x": 230.39, "y": 4.11, "color": "a600ffff" },
+	{ "name": "F_HandIK", "parent": "GunIKRoot", "x": 179.81, "y": -37.13, "color": "15ff00ff" },
+	{ "name": "F_ArmIK", "parent": "GunIKRoot", "x": -156.35, "y": -97.61, "color": "ff3f00ff" },
+	{ "name": "Shotgun_Shell", "parent": "F_ArmIK", "length": 20.46, "x": 21.81, "y": -13.4, "color": "ff3f00ff" },
+	{ "name": "B_HandIK", "parent": "GunIKRoot", "x": 179.81, "y": 4.69, "color": "ff0600ff" },
+	{ "name": "B_ArmIK", "parent": "GunIKRoot", "x": -7.05, "y": -104.66, "color": "ff3f00ff" },
+	{ "name": "BodyIK", "parent": "Recoil", "x": -18.46, "y": 133.8, "color": "d100c3ff" },
+	{ "name": "Body", "parent": "HipRecoil", "length": 127.63, "x": 4.67, "y": 4.67, "rotation": 93.6, "color": "abb0aeff" },
+	{ "name": "Jetpack", "parent": "Body", "length": 48.39, "x": 78.72, "y": 35.58, "rotation": 176.84, "color": "abb0aeff" },
+	{ "name": "HeadPivot", "parent": "Body", "x": 173.6, "y": 5.18, "rotation": -92.72, "color": "95009bff" },
+	{ "name": "Head", "parent": "HeadPivot", "length": 113.3, "color": "95009bff" },
+	{ "name": "F_Arm", "parent": "Body", "length": 76.88, "x": 103.42, "y": 47.88, "rotation": 137.86, "color": "00d126ff" },
+	{ "name": "F_Forearm", "parent": "F_Arm", "length": 82.17, "x": 73.05, "y": -0.8, "rotation": 19.1, "color": "00d126ff" },
+	{
+		"name": "F_Hand",
+		"parent": "F_Forearm",
+		"length": 52.93,
+		"x": 81.88,
+		"y": -0.69,
+		"rotation": -85.76,
+		"inheritRotation": false,
+		"color": "00d126ff"
+	},
+	{ "name": "B_Arm", "parent": "Body", "length": 72.04, "x": 96.87, "y": -46.96, "rotation": -172.81, "color": "ff0300ff" },
+	{ "name": "B_Forearm", "parent": "B_Arm", "length": 86.19, "x": 69, "y": 0.05, "rotation": 17.48, "color": "ff0900ff" },
+	{
+		"name": "B_Hand",
+		"parent": "B_Forearm",
+		"length": 54.49,
+		"x": 86.17,
+		"y": -0.31,
+		"rotation": -61.07,
+		"inheritRotation": false,
+		"color": "ff0400ff"
+	},
+	{
+		"name": "B_Fingers",
+		"parent": "B_Forearm",
+		"length": 51.25,
+		"x": 86.07,
+		"y": -0.39,
+		"rotation": -61.08,
+		"inheritRotation": false,
+		"color": "ff0400ff"
+	}
+],
+"ik": [
+	{
+		"name": "B_LegIK",
+		"bones": [ "B_Thigh", "B_Shin" ],
+		"target": "B_LegIK",
+		"bendPositive": false
+	},
+	{
+		"name": "BodyIK",
+		"bones": [ "Body" ],
+		"target": "BodyIK",
+		"mix": 0.604
+	},
+	{
+		"name": "F_LegIK",
+		"bones": [ "F_Thigh", "F_Shin" ],
+		"target": "F_LegIK",
+		"bendPositive": false
+	},
+	{
+		"name": "B_ArmIK",
+		"bones": [ "B_Arm", "B_Forearm" ],
+		"target": "B_ArmIK"
+	},
+	{
+		"name": "F_ArmIK",
+		"bones": [ "F_Arm", "F_Forearm" ],
+		"target": "F_ArmIK"
+	},
+	{
+		"name": "HeadIK",
+		"bones": [ "Head" ],
+		"target": "HeadIK"
+	},
+	{
+		"name": "B_FingersIK",
+		"bones": [ "B_Fingers" ],
+		"target": "B_HandIK",
+		"mix": 0
+	},
+	{
+		"name": "B_HandIK",
+		"bones": [ "B_Hand" ],
+		"target": "B_HandIK",
+		"mix": 0
+	},
+	{
+		"name": "F_HandIK",
+		"bones": [ "F_Hand" ],
+		"target": "F_HandIK",
+		"mix": 0
+	}
+],
+"slots": [
+	{ "name": "Jetpack", "bone": "Jetpack", "attachment": "Jetpack" },
+	{ "name": "B_Arm", "bone": "B_Arm", "color": "e0e0e0ff", "attachment": "B_Arm" },
+	{ "name": "B_Forearm", "bone": "B_Forearm", "color": "e0e0e0ff", "attachment": "B_Forearm" },
+	{ "name": "B_Hand_Open", "bone": "B_Hand", "color": "e0e0e0ff", "attachment": "B_Hand_Open" },
+	{ "name": "B_Hand_1H_2", "bone": "B_Hand", "color": "e0e0e0ff" },
+	{ "name": "Pistol_Chamber", "bone": "Pistol_Chamber" },
+	{ "name": "Pistol", "bone": "Pistol" },
+	{ "name": "Launcher_Missile", "bone": "Launcher_Missile" },
+	{ "name": "Launcher", "bone": "Launcher" },
+	{ "name": "B_Hand_1H_1", "bone": "B_Hand", "color": "e0e0e0ff" },
+	{ "name": "B_Thigh", "bone": "B_Thigh", "color": "e0e0e0ff", "attachment": "B_Thigh" },
+	{ "name": "B_Shin", "bone": "B_Shin", "color": "e0e0e0ff", "attachment": "B_Shin" },
+	{ "name": "B_Foot", "bone": "B_Foot", "color": "e0e0e0ff", "attachment": "B_Foot" },
+	{ "name": "Body", "bone": "Body", "attachment": "Body" },
+	{ "name": "F_Thigh", "bone": "F_Thigh", "attachment": "F_Thigh" },
+	{ "name": "F_Shin", "bone": "F_Shin", "attachment": "F_Shin" },
+	{ "name": "F_Foot", "bone": "F_Foot", "attachment": "F_Foot" },
+	{ "name": "Head", "bone": "Head", "attachment": "Head" },
+	{ "name": "SniperRifle", "bone": "SniperRifle" },
+	{ "name": "Shotgun_Shell", "bone": "Shotgun_Shell" },
+	{ "name": "Shotgun", "bone": "Shotgun" },
+	{ "name": "Shotgun_Pump", "bone": "Shotgun_Pump" },
+	{ "name": "Shotgun_Hatch", "bone": "Shotgun" },
+	{ "name": "B_Hand_2H", "bone": "B_Fingers" },
+	{ "name": "F_Arm", "bone": "F_Arm", "attachment": "F_Arm" },
+	{ "name": "F_Forearm", "bone": "F_Forearm", "attachment": "F_Forearm" },
+	{ "name": "F_Hand", "bone": "F_Hand", "attachment": "F_Hand_Open" },
+	{ "name": "Sniper_Shell", "bone": "SniperRifle" }
+],
+"skins": {
+	"default": {
+		"B_Arm": {
+			"B_Arm": { "x": 39.66, "y": -0.49, "rotation": 79.21, "width": 42, "height": 104 }
+		},
+		"B_Foot": {
+			"B_Foot": { "x": 6.86, "y": -2.17, "rotation": 0.36, "width": 46, "height": 20 }
+		},
+		"B_Forearm": {
+			"B_Forearm": { "x": 51.04, "y": 0.33, "rotation": 61.73, "width": 101, "height": 127 }
+		},
+		"B_Hand_1H_1": {
+			"B_Hand_1H_1": { "x": 16.52, "y": 10.99, "rotation": 50.59, "width": 64, "height": 69 }
+		},
+		"B_Hand_1H_2": {
+			"B_Hand_1H_2": { "x": 16.51, "y": 3.88, "rotation": 50.59, "width": 75, "height": 62 }
+		},
+		"B_Hand_2H": {
+			"B_Hand_2H": { "x": 23.33, "y": 1.6, "rotation": 57.91, "width": 54, "height": 46 }
+		},
+		"B_Hand_Open": {
+			"B_Hand_Open": { "x": 22.07, "y": 5.14, "rotation": 50.59, "width": 86, "height": 81 }
+		},
+		"B_Shin": {
+			"B_Shin": { "x": 38.72, "y": -3.99, "rotation": 97.54, "width": 70, "height": 107 }
+		},
+		"B_Thigh": {
+			"B_Thigh": { "x": 37, "y": -5.9, "rotation": 86.84, "width": 65, "height": 118 }
+		},
+		"Body": {
+			"Body": {
+				"type": "mesh",
+				"uvs": [ 0.87182, 0.54717, 0.75624, 0.97903, 0.26476, 0.96155, 0.13238, 0.48077, 0, 0, 0.49369, 0.05766, 0.98739, 0.11532, 0.55007, 0.43243 ],
+				"triangles": [ 7, 5, 6, 3, 4, 5, 3, 5, 7, 0, 7, 6, 2, 3, 7, 1, 7, 0, 2, 7, 1 ],
+				"vertices": [ 43.05, -49.27, -35.14, -26.65, -27.22, 48.19, 62.33, 62.86, 151.89, 77.54, 136.57, 2.81, 121.24, -71.9, 67.19999, -1.46 ],
+				"hull": 7,
+				"edges": [ 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 0 ],
+				"width": 153,
+				"height": 184
+			}
+		},
+		"F_Arm": {
+			"F_Arm": { "x": 42.17, "y": 0.99, "rotation": 128.53, "width": 71, "height": 90 }
+		},
+		"F_Foot": {
+			"F_Foot": { "x": 9.27, "y": -3.49, "rotation": 1.52, "width": 46, "height": 20 }
+		},
+		"F_Forearm": {
+			"F_Forearm": { "x": 45.18, "y": -1.93, "rotation": 109.42, "width": 92, "height": 130 }
+		},
+		"F_Hand": {
+			"F_Hand_1H": { "x": 22.87, "y": 7.32, "rotation": 111.24, "width": 71, "height": 72 },
+			"F_Hand_Closed": { "x": 12.25, "y": 2.02, "rotation": 113.44, "width": 66, "height": 52 },
+			"F_Hand_Open": { "x": 22.33, "y": 8.72, "rotation": 111.24, "width": 90, "height": 72 }
+		},
+		"F_Shin": {
+			"F_Shin": { "x": 39.62, "y": -1.49, "rotation": 98.94, "width": 70, "height": 107 }
+		},
+		"F_Thigh": {
+			"F_Thigh": { "x": 35.17, "y": -4.84, "rotation": 90, "width": 65, "height": 118 }
+		},
+		"Head": {
+			"Head": { "x": 9.91, "y": 43.44, "rotation": -0.87, "width": 250, "height": 229 }
+		},
+		"Jetpack": {
+			"Jetpack": { "x": -8.3, "y": 1.52, "rotation": 89.86, "width": 226, "height": 122 }
+		},
+		"Launcher": {
+			"Launcher": { "x": 1.51, "y": -48.79, "width": 568, "height": 268 }
+		},
+		"Launcher_Missile": {
+			"Launcher_Missile": { "x": -25.48, "y": 2.26, "width": 196, "height": 96 }
+		},
+		"Pistol": {
+			"Pistol": { "x": 39.31, "y": -28.11, "rotation": 0.6, "width": 188, "height": 122 }
+		},
+		"Pistol_Chamber": {
+			"Pistol_Chamber": { "x": 22.13, "y": 1.87, "width": 39, "height": 39 }
+		},
+		"Shotgun": {
+			"Shotgun": { "x": 21.48, "y": -35.97, "width": 398, "height": 166 }
+		},
+		"Shotgun_Hatch": {
+			"Shotgun_Hatch": { "x": -58.53, "y": 9.66, "width": 56, "height": 51 }
+		},
+		"Shotgun_Pump": {
+			"Shotgun_Pump": { "x": 18.25, "y": -4.29, "width": 82, "height": 40 }
+		},
+		"Shotgun_Shell": {
+			"Shotgun_Shell": { "y": -0.78, "width": 46, "height": 28 }
+		},
+		"SniperRifle": {
+			"SniperRifle": { "x": 123.79, "y": -8.81, "width": 541, "height": 155 }
+		},
+		"Sniper_Shell": {
+			"Sniper_Shell": { "x": 194.73, "y": 19.6, "width": 72, "height": 18 }
+		}
+	}
+},
+"events": {
+	"EjectCasing": {},
+	"Fire": {},
+	"Footstep": {},
+	"Sound": {}
+},
+"animations": {
+	"Aim_Launcher": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 4.6, "y": -91.27 }
+				]
+			}
+		}
+	},
+	"Aim_Pistol": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 54.05, "y": 4.33 }
+				]
+			}
+		}
+	},
+	"Aim_Shotgun": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": 0, "curve": "stepped" },
+					{ "time": 0.3333, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": -41.75, "y": -15.65, "curve": "stepped" },
+					{ "time": 0.3333, "x": -41.75, "y": -15.65 }
+				]
+			}
+		}
+	},
+	"Aim_Sniper": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": 0, "curve": "stepped" },
+					{ "time": 0.3333, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 115.9, "y": -38.9, "curve": "stepped" },
+					{ "time": 0.3333, "x": 115.9, "y": -38.9 }
+				]
+			}
+		}
+	},
+	"Fall": {
+		"bones": {
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": 18.65 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"B_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 51.58, "y": 11.49 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -32.13 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{ "time": 0, "x": -4.94, "y": -2.2 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 2.61, "y": 13.56 }
+				]
+			},
+			"F_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 34.07, "y": 92.3 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -36.55 }
+				]
+			}
+		}
+	},
+	"Fire_Launcher": {
+		"slots": {
+			"Launcher_Missile": {
+				"attachment": [
+					{ "time": 0, "name": "Launcher_Missile" },
+					{ "time": 0.4, "name": null }
+				]
+			}
+		},
+		"bones": {
+			"Recoil": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2333, "angle": 0.36, "curve": "stepped" },
+					{
+						"time": 0.4,
+						"angle": 0.36,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.5,
+						"angle": 32.33,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.7,
+						"angle": -12.75,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.9, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2333, "x": -6.49, "y": -12.99, "curve": "stepped" },
+					{
+						"time": 0.4,
+						"x": -6.49,
+						"y": -12.99,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.5,
+						"x": -62.17,
+						"y": -12.99,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.7,
+						"x": 0,
+						"y": -11.13,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.9, "x": 0, "y": 0 }
+				]
+			},
+			"HipRecoil": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2333, "angle": -11.03, "curve": "stepped" },
+					{
+						"time": 0.4,
+						"angle": -11.03,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.5,
+						"angle": 7.18,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.6333, "angle": 0, "curve": "stepped" },
+					{ "time": 0.9, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2333, "x": -6.49, "y": -12.99, "curve": "stepped" },
+					{
+						"time": 0.4,
+						"x": -6.49,
+						"y": -12.99,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.5,
+						"x": -49.18,
+						"y": -12.99,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.6333,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.7,
+						"x": 0,
+						"y": -12.06,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.9, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0.4, "name": "Fire" },
+			{ "time": 0.4, "name": "Sound", "string": "Launcher/Random" }
+		]
+	},
+	"Fire_Pistol": {
+		"bones": {
+			"Recoil": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.0666,
+						"angle": 4.79,
+						"curve": [ 0.245, 0, 0.637, 0.55 ]
+					},
+					{
+						"time": 0.2,
+						"angle": -1.27,
+						"curve": [ 0.381, 0.54, 0.742, 1 ]
+					},
+					{ "time": 0.2666, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.0666,
+						"x": -23.41,
+						"y": 0,
+						"curve": [ 0.245, 0, 0.637, 0.55 ]
+					},
+					{
+						"time": 0.2,
+						"x": 1.03,
+						"y": 0,
+						"curve": [ 0.381, 0.54, 0.742, 1 ]
+					},
+					{ "time": 0.2666, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0, "name": "Fire" },
+			{ "time": 0, "name": "Sound", "string": "Pistol/Random" }
+		]
+	},
+	"Fire_Shotgun": {
+		"bones": {
+			"Shotgun_Pump": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
+					{
+						"time": 0.3333,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.4333,
+						"x": -32.4,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.5333, "x": 0, "y": 0 }
+				]
+			},
+			"B_ArmIK": {
+				"translate": [
+					{ "time": 0, "x": 103.23, "y": 86.29, "curve": "stepped" },
+					{
+						"time": 0.3333,
+						"x": 103.23,
+						"y": 86.29,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.4333,
+						"x": 70.83,
+						"y": 86.29,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.5333, "x": 103.23, "y": 86.29 }
+				]
+			},
+			"Recoil": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.0666,
+						"angle": 6.53,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.1666,
+						"angle": -7.54,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.3333,
+						"angle": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.4333,
+						"angle": 4.84,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.8333, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.0666,
+						"x": -34.02,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.1666,
+						"x": -7.29,
+						"y": -7.28,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.3333,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.4333,
+						"x": 0,
+						"y": 4.04,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.8333, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0, "name": "Fire" },
+			{ "time": 0, "name": "Sound", "string": "Shotgun/Random" },
+			{ "time": 0.3333, "name": "Sound", "string": "Pump/Random" },
+			{ "time": 0.4333, "name": "EjectCasing" }
+		]
+	},
+	"Fire_Sniper": {
+		"bones": {
+			"Recoil": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.0666,
+						"angle": 8,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2666, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.0666,
+						"x": -47.62,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.2,
+						"x": 17.38,
+						"y": -5.04,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2666, "x": 0, "y": 0 }
+				]
+			},
+			"HipRecoil": {
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.0666,
+						"x": -17.1,
+						"y": -4.02,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2666, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0, "name": "Fire" },
+			{ "time": 0, "name": "Sound", "string": "Sniper/Random" }
+		]
+	},
+	"Idle": {
+		"bones": {
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 8.58,
+						"y": -12.74,
+						"curve": [ 0.147, 0.24, 0.703, 1 ]
+					},
+					{
+						"time": 0.7,
+						"x": 8.58,
+						"y": -7.83,
+						"curve": [ 0.329, 0.31, 0.662, 0.65 ]
+					},
+					{
+						"time": 0.8333,
+						"x": 8.58,
+						"y": -7.72,
+						"curve": [ 0.316, 0.27, 0.654, 0.62 ]
+					},
+					{ "time": 1.6666, "x": 8.58, "y": -12.74 }
+				]
+			},
+			"HeadPivot": {
+				"translate": [
+					{
+						"time": 0,
+						"x": -0.49,
+						"y": -10.97,
+						"curve": [ 0.333, 0.33, 0.666, 0.66 ]
+					},
+					{
+						"time": 0.1,
+						"x": -1.1,
+						"y": -10.92,
+						"curve": [ 0.333, 0.33, 0.666, 0.66 ]
+					},
+					{
+						"time": 0.3333,
+						"x": 0.28,
+						"y": -11.05,
+						"curve": [ 0.333, 0.33, 0.666, 0.66 ]
+					},
+					{
+						"time": 0.7666,
+						"x": 2.16,
+						"y": -11.21,
+						"curve": [ 0.333, 0.33, 0.666, 0.66 ]
+					},
+					{
+						"time": 1.0333,
+						"x": 4.04,
+						"y": -11.38,
+						"curve": [ 0.334, 0.33, 0.667, 0.66 ]
+					},
+					{ "time": 1.6666, "x": -0.49, "y": -10.97 }
+				]
+			},
+			"F_LegIK": {
+				"translate": [
+					{ "time": 0, "x": -21.46, "y": 2.86, "curve": "stepped" },
+					{ "time": 1.4666, "x": -21.46, "y": 2.86 }
+				]
+			},
+			"B_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 47.22, "y": 0, "curve": "stepped" },
+					{ "time": 1.4666, "x": 47.22, "y": 0 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			}
+		}
+	},
+	"Idle_Launcher": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": -35.68, "curve": "stepped" },
+					{ "time": 1.3333, "angle": -35.68 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": -30.19,
+						"y": -105.67,
+						"curve": [ 0.25, 0, 0.625, 0.5 ]
+					},
+					{
+						"time": 0.6666,
+						"x": -30.19,
+						"y": -93.67,
+						"curve": [ 0.375, 0.5, 0.75, 1 ]
+					},
+					{ "time": 1.3333, "x": -30.19, "y": -105.67 }
+				]
+			}
+		}
+	},
+	"Idle_Pistol": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": -72.21, "curve": "stepped" },
+					{ "time": 1, "angle": -72.21 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": -56.82,
+						"y": -105.42,
+						"curve": [ 0.25, 0, 0.625, 0.5 ]
+					},
+					{
+						"time": 0.5,
+						"x": -56.82,
+						"y": -94.22,
+						"curve": [ 0.375, 0.5, 0.75, 1 ]
+					},
+					{ "time": 1, "x": -56.82, "y": -105.42 }
+				]
+			}
+		}
+	},
+	"Idle_Shotgun": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": -33.78, "curve": "stepped" },
+					{ "time": 1, "angle": -33.78 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": -41.75,
+						"y": -15.65,
+						"curve": [ 0.25, 0, 0.625, 0.5 ]
+					},
+					{
+						"time": 0.5,
+						"x": -41.75,
+						"y": -22.96,
+						"curve": [ 0.375, 0.5, 0.75, 1 ]
+					},
+					{ "time": 1, "x": -41.75, "y": -15.65 }
+				]
+			}
+		}
+	},
+	"Idle_Sniper": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": -41.52, "curve": "stepped" },
+					{ "time": 0.6666, "angle": -41.52 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 67.3,
+						"y": -159.43,
+						"curve": [ 0.25, 0, 0.625, 0.5 ]
+					},
+					{
+						"time": 0.3333,
+						"x": 65.36,
+						"y": -152.63,
+						"curve": [ 0.375, 0.5, 0.75, 1 ]
+					},
+					{ "time": 0.6666, "x": 67.3, "y": -159.43 }
+				]
+			}
+		}
+	},
+	"Jetpack_Backward": {
+		"bones": {
+			"F_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 67.67, "y": 2.71 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -37.53 }
+				]
+			},
+			"B_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 25.97, "y": 26.91 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -64.63 }
+				]
+			},
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": 19.25 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{ "time": 0, "x": -11.35, "y": 3.96 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 1.13, "y": -0.39 }
+				]
+			}
+		}
+	},
+	"Jetpack_Forward": {
+		"bones": {
+			"F_LegIK": {
+				"translate": [
+					{ "time": 0, "x": -65.07, "y": 49.96 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -78.96 }
+				]
+			},
+			"B_LegIK": {
+				"translate": [
+					{ "time": 0, "x": -67.39, "y": 32.53 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -80.18 }
+				]
+			},
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": -19.91 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 4.93, "y": 0.5 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{ "time": 0, "x": -0.81, "y": 2.26 }
+				]
+			}
+		}
+	},
+	"Jetpack_Neutral": {
+		"bones": {
+			"F_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 1.18, "y": 5.54 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -66.88 }
+				]
+			},
+			"B_LegIK": {
+				"translate": [
+					{ "time": 0, "x": -19.29, "y": 11.34 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -66.16 }
+				]
+			},
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 2.4, "y": 0 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{ "time": 0, "x": -1.2, "y": 0 }
+				]
+			}
+		}
+	},
+	"Jump": {
+		"bones": {
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": -18.94 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"B_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 22.43, "y": 101.23 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -85.68 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{ "time": 0, "x": -7.29, "y": 26.59 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 4.9, "y": 1.68 }
+				]
+			},
+			"F_LegIK": {
+				"translate": [
+					{ "time": 0, "x": -50.21, "y": 25.04 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -89.88 }
+				]
+			}
+		}
+	},
+	"Reload_Launcher": {
+		"slots": {
+			"F_Hand": {
+				"attachment": [
+					{ "time": 0, "name": "F_Hand_Open" },
+					{ "time": 0.2666, "name": "F_Hand_Closed" },
+					{ "time": 0.6666, "name": "F_Hand_1H" },
+					{ "time": 0.9333, "name": "F_Hand_Open" },
+					{ "time": 1.1666, "name": "F_Hand_Closed" }
+				]
+			},
+			"Launcher_Missile": {
+				"attachment": [
+					{ "time": 0, "name": null },
+					{ "time": 0.6, "name": "Launcher_Missile" }
+				]
+			}
+		},
+		"bones": {
+			"F_ArmIK": {
+				"translate": [
+					{
+						"time": 0,
+						"x": 146.47,
+						"y": 137.3,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2333, "x": 90.98, "y": 199.14, "curve": "stepped" },
+					{
+						"time": 0.9333,
+						"x": 90.98,
+						"y": 199.14,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.1666, "x": 146.47, "y": 137.3 }
+				]
+			},
+			"Recoil": {
+				"rotate": [
+					{ "time": 0, "angle": -8.74, "curve": "stepped" },
+					{
+						"time": 0.9,
+						"angle": -8.74,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.2333,
+						"angle": 13.09,
+						"curve": [ 0.382, 0.55, 0.739, 1 ]
+					},
+					{ "time": 1.4333, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0.81, "y": -3.7, "curve": "stepped" },
+					{
+						"time": 0.9,
+						"x": 0.81,
+						"y": -3.7,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.2333,
+						"x": 6.19,
+						"y": 22.85,
+						"curve": [ 0.382, 0.55, 0.739, 1 ]
+					},
+					{ "time": 1.4333, "x": 0, "y": 0 }
+				]
+			},
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": -55.19, "curve": "stepped" },
+					{
+						"time": 0.9333,
+						"angle": -55.19,
+						"curve": [ 0.243, 0, 0.648, 0.6 ]
+					},
+					{
+						"time": 1.2666,
+						"angle": 10.08,
+						"curve": [ 0.382, 0.57, 0.735, 1 ]
+					},
+					{ "time": 1.4333, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": -40.04, "y": -154.15, "curve": "stepped" },
+					{
+						"time": 0.9333,
+						"x": -40.04,
+						"y": -154.15,
+						"curve": [ 0.243, 0, 0.648, 0.6 ]
+					},
+					{
+						"time": 1.2666,
+						"x": 0.5,
+						"y": -65.16,
+						"curve": [ 0.382, 0.57, 0.735, 1 ]
+					},
+					{ "time": 1.4333, "x": 4.6, "y": -91.27 }
+				]
+			},
+			"F_HandIK": {
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 62.13,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.2333, "x": -200.64, "y": 252.62, "curve": "stepped" },
+					{
+						"time": 0.9,
+						"x": -200.64,
+						"y": 252.62,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.1666, "x": 0, "y": 62.13, "curve": "stepped" },
+					{ "time": 1.4333, "x": 0, "y": 62.13 }
+				]
+			},
+			"Launcher_Missile": {
+				"translate": [
+					{ "time": 0, "x": -53.72, "y": 0, "curve": "stepped" },
+					{
+						"time": 0.6,
+						"x": -53.72,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.8, "x": 0, "y": 0 }
+				]
+			},
+			"HipRecoil": {
+				"rotate": [
+					{ "time": 0, "angle": -17.01, "curve": "stepped" },
+					{
+						"time": 0.9,
+						"angle": -17.01,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.4333, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": -24.54, "y": -15.42, "curve": "stepped" },
+					{
+						"time": 0.9,
+						"x": -24.54,
+						"y": -15.42,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.4333, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0.6666, "name": "Sound", "string": "Chamber/Random" }
+		]
+	},
+	"Reload_Pistol": {
+		"slots": {
+			"F_Hand": {
+				"attachment": [
+					{ "time": 0.4666, "name": "F_Hand_1H" },
+					{ "time": 0.6, "name": "F_Hand_Open" },
+					{ "time": 0.6666, "name": "F_Hand_Closed" }
+				]
+			},
+			"Pistol_Chamber": {
+				"attachment": [
+					{ "time": 0, "name": "Pistol_Chamber" },
+					{ "time": 0.1333, "name": null },
+					{ "time": 0.6, "name": "Pistol_Chamber" }
+				]
+			}
+		},
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.1333, "angle": 71.87, "curve": "stepped" },
+					{
+						"time": 0.3,
+						"angle": 71.87,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4666, "angle": 38.38, "curve": "stepped" },
+					{
+						"time": 0.6,
+						"angle": 38.38,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.9333, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 54.05,
+						"y": 4.33,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.1333, "x": 4.33, "y": -18.78, "curve": "stepped" },
+					{
+						"time": 0.3,
+						"x": 4.33,
+						"y": -18.78,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4666, "x": -53.02, "y": -119.91, "curve": "stepped" },
+					{
+						"time": 0.6,
+						"x": -53.02,
+						"y": -119.91,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.9333, "x": 54.05, "y": 4.33 }
+				]
+			},
+			"F_ArmIK": {
+				"translate": [
+					{
+						"time": 0.1333,
+						"x": 88.58,
+						"y": 82.51,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.4666,
+						"x": 219.18,
+						"y": 128.13,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.5333,
+						"x": 231.34,
+						"y": 146.06,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.6,
+						"x": 219.1,
+						"y": 119.01,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.9333, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"ik": {
+			"F_ArmIK": [
+				{ "time": 0, "mix": 0, "bendPositive": true, "curve": "stepped" },
+				{
+					"time": 0.1333,
+					"mix": 0,
+					"bendPositive": true,
+					"curve": [ 0.25, 0, 0.75, 1 ]
+				},
+				{ "time": 0.4666, "mix": 1, "bendPositive": true, "curve": "stepped" },
+				{
+					"time": 0.6,
+					"mix": 1,
+					"bendPositive": true,
+					"curve": [ 0.25, 0, 0.75, 1 ]
+				},
+				{ "time": 0.9333, "mix": 0, "bendPositive": true }
+			],
+			"F_HandIK": [
+				{
+					"time": 0.1333,
+					"mix": 0,
+					"bendPositive": true,
+					"curve": [ 0.25, 0, 0.75, 1 ]
+				},
+				{ "time": 0.4666, "mix": 1, "bendPositive": true, "curve": "stepped" },
+				{
+					"time": 0.6,
+					"mix": 1,
+					"bendPositive": true,
+					"curve": [ 0.25, 0, 0.75, 1 ]
+				},
+				{ "time": 0.9333, "mix": 0, "bendPositive": true }
+			]
+		},
+		"events": [
+			{ "time": 0.1333, "name": "EjectCasing" },
+			{ "time": 0.1333, "name": "Sound", "string": "Casings/Random" },
+			{ "time": 0.5666, "name": "Sound", "string": "Chamber/Random" }
+		]
+	},
+	"Reload_Shotgun": {
+		"slots": {
+			"F_Hand": {
+				"attachment": [
+					{ "time": 0, "name": "F_Hand_Open" },
+					{ "time": 0.1, "name": "F_Hand_Closed" },
+					{ "time": 1.5, "name": "F_Hand_Open" },
+					{ "time": 1.6666, "name": "F_Hand_1H" }
+				]
+			},
+			"Shotgun_Hatch": {
+				"attachment": [
+					{ "time": 0, "name": "Shotgun_Hatch" },
+					{ "time": 0.2, "name": null },
+					{ "time": 1.5, "name": "Shotgun_Hatch" }
+				]
+			},
+			"Shotgun_Shell": {
+				"attachment": [
+					{ "time": 0.2666, "name": "Shotgun_Shell" },
+					{ "time": 0.4, "name": null },
+					{ "time": 0.5333, "name": "Shotgun_Shell" },
+					{ "time": 0.6666, "name": null },
+					{ "time": 0.8, "name": "Shotgun_Shell" },
+					{ "time": 0.9333, "name": null },
+					{ "time": 1.0666, "name": "Shotgun_Shell" },
+					{ "time": 1.2, "name": null },
+					{ "time": 1.3333, "name": "Shotgun_Shell" },
+					{ "time": 1.4666, "name": null }
+				]
+			}
+		},
+		"bones": {
+			"Shotgun_Pump": {
+				"translate": [
+					{
+						"time": 1.6666,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.7333,
+						"x": -40.18,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.8, "x": 0, "y": 0, "curve": "stepped" },
+					{ "time": 1.8666, "x": 0, "y": 0 }
+				]
+			},
+			"F_ArmIK": {
+				"translate": [
+					{
+						"time": 0,
+						"x": 114.99,
+						"y": 67.37,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.1333,
+						"x": 154.76,
+						"y": 137.38,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.2666,
+						"x": 119.76,
+						"y": 129.07,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.4,
+						"x": 154.76,
+						"y": 137.38,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.5333,
+						"x": 119.76,
+						"y": 129.07,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.6666,
+						"x": 154.76,
+						"y": 137.38,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.8,
+						"x": 119.76,
+						"y": 129.07,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 0.9333,
+						"x": 154.76,
+						"y": 137.38,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.0666,
+						"x": 119.76,
+						"y": 129.07,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.2,
+						"x": 154.76,
+						"y": 137.38,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.3333,
+						"x": 119.76,
+						"y": 129.07,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.4666,
+						"x": 154.76,
+						"y": 137.38,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.6666, "x": 107.51, "y": 59.8 }
+				]
+			},
+			"F_HandIK": {
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": -18.55,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.1333, "x": 16.08, "y": 90.64, "curve": "stepped" },
+					{
+						"time": 1.5,
+						"x": 16.08,
+						"y": 90.64,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.6666, "x": 0, "y": -18.55 }
+				]
+			},
+			"B_ArmIK": {
+				"translate": [
+					{
+						"time": 1.6666,
+						"x": 103.23,
+						"y": 86.29,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.7333,
+						"x": 63.05,
+						"y": 86.29,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.8, "x": 103.23, "y": 86.29, "curve": "stepped" },
+					{ "time": 1.8666, "x": 103.23, "y": 86.29 }
+				]
+			},
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": -27.98, "curve": "stepped" },
+					{
+						"time": 1.5,
+						"angle": -27.98,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.6666, "angle": 27.55, "curve": "stepped" },
+					{ "time": 1.7333, "angle": 27.55, "curve": "stepped" },
+					{ "time": 1.8, "angle": 27.55, "curve": "stepped" },
+					{ "time": 1.8666, "angle": 27.55 }
+				],
+				"translate": [
+					{ "time": 0, "x": -61.71, "y": -22.31, "curve": "stepped" },
+					{
+						"time": 1.5,
+						"x": -61.71,
+						"y": -22.31,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.6666,
+						"x": -55.29,
+						"y": 31.72,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{
+						"time": 1.7333,
+						"x": -39.2,
+						"y": 40.12,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 1.8, "x": -55.29, "y": 31.72, "curve": "stepped" },
+					{ "time": 1.8666, "x": -55.29, "y": 31.72 }
+				]
+			},
+			"Shotgun_Shell": {
+				"rotate": [
+					{
+						"time": 0.2666,
+						"angle": 50.03,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.3333, "angle": 0.34 }
+				],
+				"translate": [
+					{
+						"time": 0.2666,
+						"x": 10.5,
+						"y": 47.24,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.3333, "x": 9.72, "y": 25.48 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0.4, "name": "Sound", "string": "Chamber/Random" },
+			{ "time": 0.6666, "name": "Sound", "string": "Chamber/Random" },
+			{ "time": 0.9333, "name": "Sound", "string": "Chamber/Random" },
+			{ "time": 1.2, "name": "Sound", "string": "Chamber/Random" },
+			{ "time": 1.4666, "name": "Sound", "string": "Chamber/Random" },
+			{ "time": 1.6666, "name": "Sound", "string": "Pump/Random" }
+		]
+	},
+	"Reload_Sniper": {
+		"bones": {
+			"GunIKRoot": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": 0,
+						"curve": [ 0.25, 0, 0.625, 0.5 ]
+					},
+					{
+						"time": 0.1,
+						"angle": -18.71,
+						"curve": [ 0.336, 0.34, 0.673, 0.68 ]
+					},
+					{ "time": 0.2666, "angle": -36.98, "curve": "stepped" },
+					{
+						"time": 0.7333,
+						"angle": -36.98,
+						"curve": [ 0.382, 0.56, 0.737, 1 ]
+					},
+					{ "time": 0.8666, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 115.9,
+						"y": -38.9,
+						"curve": [ 0.293, 0, 0.631, 0.37 ]
+					},
+					{
+						"time": 0.1,
+						"x": 110.54,
+						"y": -94.71,
+						"curve": [ 0.301, 0.21, 0.644, 0.58 ]
+					},
+					{
+						"time": 0.2666,
+						"x": 100.22,
+						"y": -163.3,
+						"curve": [ 0.33, 0.32, 0.665, 0.66 ]
+					},
+					{
+						"time": 0.3333,
+						"x": 102.37,
+						"y": -127.88,
+						"curve": [ 0.336, 0.34, 0.672, 0.68 ]
+					},
+					{
+						"time": 0.4,
+						"x": 80.19,
+						"y": -168.63,
+						"curve": [ 0.343, 0.36, 0.679, 0.7 ]
+					},
+					{
+						"time": 0.4666,
+						"x": 110.89,
+						"y": -136.12,
+						"curve": [ 0.351, 0.41, 0.687, 0.75 ]
+					},
+					{
+						"time": 0.5333,
+						"x": 97.15,
+						"y": -176.18,
+						"curve": [ 0.363, 0.63, 0.699, 1 ]
+					},
+					{
+						"time": 0.6,
+						"x": 110.89,
+						"y": -136.12,
+						"curve": [ 0.351, 0.41, 0.687, 0.75 ]
+					},
+					{
+						"time": 0.6666,
+						"x": 97.15,
+						"y": -176.18,
+						"curve": [ 0.363, 0.63, 0.699, 1 ]
+					},
+					{
+						"time": 0.7333,
+						"x": 100.22,
+						"y": -163.3,
+						"curve": [ 0.362, 0.44, 0.754, 1 ]
+					},
+					{ "time": 0.8666, "x": 115.9, "y": -38.9 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0.3333, "name": "EjectCasing" },
+			{ "time": 0.3333, "name": "Sound", "string": "Casings/Random" },
+			{ "time": 0.4, "name": "EjectCasing" },
+			{ "time": 0.4666, "name": "EjectCasing" },
+			{ "time": 0.4666, "name": "Sound", "string": "Casings/Random" },
+			{ "time": 0.5333, "name": "EjectCasing" },
+			{ "time": 0.6, "name": "EjectCasing" },
+			{ "time": 0.6, "name": "Sound", "string": "Casings/Random" },
+			{ "time": 0.6666, "name": "EjectCasing" },
+			{ "time": 0.7333, "name": "EjectCasing" },
+			{ "time": 0.7333, "name": "Sound", "string": "Casings/Random" }
+		]
+	},
+	"Run": {
+		"bones": {
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": -24.9 },
+					{ "time": 0.1, "x": 0, "y": -0.6 },
+					{ "time": 0.2, "x": 0, "y": 2.29 },
+					{ "time": 0.3, "x": 0, "y": -24.9 },
+					{ "time": 0.4333, "x": 0, "y": -0.6 },
+					{ "time": 0.5, "x": 0, "y": 2.29 },
+					{ "time": 0.6666, "x": 0, "y": -24.9 }
+				]
+			},
+			"F_LegIK": {
+				"translate": [
+					{
+						"time": 0,
+						"x": -62.53,
+						"y": 77.94,
+						"curve": [ 0.317, 0, 0.651, 0.34 ]
+					},
+					{
+						"time": 0.1,
+						"x": 115.55,
+						"y": 58.63,
+						"curve": [ 0.331, 0.3, 0.664, 0.64 ]
+					},
+					{
+						"time": 0.2,
+						"x": 144.63,
+						"y": 60.69,
+						"curve": [ 0.332, 0.32, 0.665, 0.65 ]
+					},
+					{
+						"time": 0.2666,
+						"x": 125.55,
+						"y": -1.05,
+						"curve": [ 0.331, 0.32, 0.665, 0.65 ]
+					},
+					{
+						"time": 0.3,
+						"x": 44.38,
+						"y": 2.46,
+						"curve": [ 0.332, 0.32, 0.665, 0.66 ]
+					},
+					{
+						"time": 0.3333,
+						"x": -0.8,
+						"y": 6.54,
+						"curve": [ 0.332, 0.32, 0.665, 0.66 ]
+					},
+					{
+						"time": 0.3666,
+						"x": -67.57,
+						"y": -1,
+						"curve": [ 0.33, 0.31, 0.664, 0.65 ]
+					},
+					{
+						"time": 0.4666,
+						"x": -100.08,
+						"y": 98.99,
+						"curve": [ 0.322, 0.29, 0.657, 0.63 ]
+					},
+					{
+						"time": 0.5,
+						"x": -87.04,
+						"y": 138.09,
+						"curve": [ 0.317, 0.27, 0.653, 0.62 ]
+					},
+					{
+						"time": 0.6,
+						"x": -71.12,
+						"y": 135.19,
+						"curve": [ 0.317, 0.27, 0.653, 0.62 ]
+					},
+					{ "time": 0.6666, "x": -62.53, "y": 77.94 }
+				]
+			},
+			"B_LegIK": {
+				"rotate": [
+					{ "time": 0, "angle": 0, "curve": "stepped" },
+					{ "time": 0.6666, "angle": 0 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": -0.8,
+						"y": 6.54,
+						"curve": [ 0.332, 0.32, 0.665, 0.66 ]
+					},
+					{
+						"time": 0.0333,
+						"x": -67.57,
+						"y": 4.71,
+						"curve": [ 0.33, 0.31, 0.664, 0.65 ]
+					},
+					{
+						"time": 0.1,
+						"x": -100.08,
+						"y": 98.99,
+						"curve": [ 0.322, 0.29, 0.657, 0.63 ]
+					},
+					{
+						"time": 0.2,
+						"x": -87.04,
+						"y": 116.62,
+						"curve": [ 0.317, 0.27, 0.653, 0.62 ]
+					},
+					{
+						"time": 0.3333,
+						"x": -62.53,
+						"y": 77.94,
+						"curve": [ 0.262, 0, 0.617, 0.43 ]
+					},
+					{
+						"time": 0.4333,
+						"x": 81.21,
+						"y": 58.63,
+						"curve": [ 0.332, 0.32, 0.665, 0.65 ]
+					},
+					{
+						"time": 0.5,
+						"x": 95.34,
+						"y": 53.82,
+						"curve": [ 0.332, 0.32, 0.666, 0.66 ]
+					},
+					{
+						"time": 0.6,
+						"x": 91.35,
+						"y": 20.87,
+						"curve": [ 0.332, 0.32, 0.665, 0.65 ]
+					},
+					{
+						"time": 0.6333,
+						"x": 61.55,
+						"y": 2.46,
+						"curve": [ 0.332, 0.32, 0.665, 0.66 ]
+					},
+					{ "time": 0.6666, "x": -0.8, "y": 6.54 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": -83.56,
+						"curve": [ 0.304, 0, 0.639, 0.35 ]
+					},
+					{
+						"time": 0.2,
+						"angle": 1.52,
+						"curve": [ 0.324, 0.28, 0.657, 0.61 ]
+					},
+					{
+						"time": 0.2666,
+						"angle": 0.97,
+						"curve": [ 0.33, 0.32, 0.664, 0.65 ]
+					},
+					{
+						"time": 0.3,
+						"angle": -0.72,
+						"curve": [ 0.331, 0.32, 0.664, 0.65 ]
+					},
+					{
+						"time": 0.3333,
+						"angle": -1.36,
+						"curve": [ 0.329, 0.31, 0.662, 0.65 ]
+					},
+					{
+						"time": 0.4,
+						"angle": -65.15,
+						"curve": [ 0.331, 0.32, 0.664, 0.65 ]
+					},
+					{
+						"time": 0.4333,
+						"angle": -96.84,
+						"curve": [ 0.326, 0.3, 0.66, 0.64 ]
+					},
+					{
+						"time": 0.5,
+						"angle": -133.8,
+						"curve": [ 0.327, 0.31, 0.661, 0.64 ]
+					},
+					{ "time": 0.6666, "angle": -83.56 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": -1.35,
+						"curve": [ 0.332, 0, 0.666, 0.33 ]
+					},
+					{
+						"time": 0.0333,
+						"angle": -0.79,
+						"curve": [ 0.332, 0.22, 0.666, 0.55 ]
+					},
+					{
+						"time": 0.0666,
+						"angle": -120.23,
+						"curve": [ 0.331, 0.19, 0.664, 0.52 ]
+					},
+					{
+						"time": 0.2,
+						"angle": -139.23,
+						"curve": [ 0.331, 0.27, 0.665, 0.6 ]
+					},
+					{
+						"time": 0.3,
+						"angle": -143.2,
+						"curve": [ 0.332, 0.29, 0.665, 0.63 ]
+					},
+					{
+						"time": 0.4,
+						"angle": -65.37,
+						"curve": [ 0.331, 0.29, 0.664, 0.63 ]
+					},
+					{
+						"time": 0.5,
+						"angle": 6.86,
+						"curve": [ 0.33, 0.28, 0.663, 0.62 ]
+					},
+					{ "time": 0.6666, "angle": -1.35 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.303, 0, 0.639, 0.35 ]
+					},
+					{
+						"time": 0.1,
+						"x": 40.14,
+						"y": 0,
+						"curve": [ 0.313, 0.23, 0.648, 0.58 ]
+					},
+					{
+						"time": 0.2666,
+						"x": 49.18,
+						"y": 0,
+						"curve": [ 0.307, 0.24, 0.653, 0.62 ]
+					},
+					{
+						"time": 0.4,
+						"x": 7.13,
+						"y": 0,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.6666, "x": 0, "y": 0 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.303, 0, 0.639, 0.35 ]
+					},
+					{
+						"time": 0.1,
+						"x": -45.49,
+						"y": 0,
+						"curve": [ 0.32, 0.26, 0.654, 0.6 ]
+					},
+					{
+						"time": 0.2,
+						"x": -49.35,
+						"y": 0,
+						"curve": [ 0.298, 0.21, 0.649, 0.6 ]
+					},
+					{
+						"time": 0.4666,
+						"x": 0,
+						"y": 0,
+						"curve": [ 0.255, 0, 0.619, 0.46 ]
+					},
+					{
+						"time": 0.5,
+						"x": 5.85,
+						"y": 0,
+						"curve": [ 0.366, 0.46, 0.753, 1 ]
+					},
+					{ "time": 0.6666, "x": 0, "y": 0 }
+				]
+			},
+			"HeadPivot": {
+				"translate": [
+					{
+						"time": 0,
+						"x": 8.7,
+						"y": -3.21,
+						"curve": [ 0.333, 0.32, 0.666, 0.66 ]
+					},
+					{
+						"time": 0.1,
+						"x": 1.4,
+						"y": -2.79,
+						"curve": [ 0.333, 0.32, 0.666, 0.65 ]
+					},
+					{
+						"time": 0.3,
+						"x": 9.73,
+						"y": -3.27,
+						"curve": [ 0.333, 0.32, 0.666, 0.66 ]
+					},
+					{
+						"time": 0.4,
+						"x": 1.4,
+						"y": -2.79,
+						"curve": [ 0.333, 0.32, 0.666, 0.65 ]
+					},
+					{ "time": 0.6666, "x": 8.7, "y": -3.21 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0.3, "name": "Sound", "string": "Footsteps/Random" },
+			{ "time": 0.6666, "name": "Sound", "string": "Footsteps/Random" }
+		]
+	},
+	"Setup_Launcher": {
+		"slots": {
+			"B_Hand_1H_1": {
+				"attachment": [
+					{ "time": 0, "name": "B_Hand_1H_1" }
+				]
+			},
+			"B_Hand_1H_2": {
+				"attachment": [
+					{ "time": 0, "name": "B_Hand_1H_2" }
+				]
+			},
+			"B_Hand_2H": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"B_Hand_Open": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"F_Hand": {
+				"attachment": [
+					{ "time": 0, "name": "F_Hand_Closed" }
+				]
+			},
+			"Launcher": {
+				"attachment": [
+					{ "time": 0, "name": "Launcher" }
+				]
+			},
+			"Launcher_Missile": {
+				"attachment": [
+					{ "time": 0, "name": "Launcher_Missile" }
+				]
+			},
+			"Pistol": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Pistol_Chamber": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun_Hatch": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun_Pump": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"SniperRifle": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			}
+		},
+		"bones": {
+			"B_HandIK": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 19.82 }
+				]
+			},
+			"B_ArmIK": {
+				"translate": [
+					{ "time": 0, "x": 43.54, "y": 128.31 }
+				]
+			},
+			"F_ArmIK": {
+				"translate": [
+					{ "time": 0, "x": 146.47, "y": 137.3 }
+				]
+			},
+			"AimPivot": {
+				"translate": [
+					{ "time": 0, "x": -4.6, "y": 91.27 }
+				]
+			},
+			"Recoil": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"BodyIK": {
+				"translate": [
+					{ "time": 0, "x": 4.6, "y": -91.27 }
+				]
+			},
+			"GunIKRoot": {
+				"translate": [
+					{ "time": 0, "x": 4.6, "y": -91.27 }
+				]
+			},
+			"HeadIK": {
+				"translate": [
+					{ "time": 0, "x": 4.6, "y": -91.27 }
+				]
+			},
+			"F_HandIK": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 62.13 }
+				]
+			},
+			"Muzzle": {
+				"translate": [
+					{ "time": 0, "x": -82.55, "y": 86.73 }
+				]
+			}
+		},
+		"ik": {
+			"B_ArmIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"B_FingersIK": [
+				{ "time": 0, "mix": 0, "bendPositive": true }
+			],
+			"B_HandIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"BodyIK": [
+				{ "time": 0, "mix": 0.604, "bendPositive": true }
+			],
+			"F_ArmIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"F_HandIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"HeadIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			]
+		}
+	},
+	"Setup_Pistol": {
+		"slots": {
+			"B_Hand_1H_1": {
+				"attachment": [
+					{ "time": 0, "name": "B_Hand_1H_1" }
+				]
+			},
+			"B_Hand_1H_2": {
+				"attachment": [
+					{ "time": 0, "name": "B_Hand_1H_2" }
+				]
+			},
+			"B_Hand_2H": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"B_Hand_Open": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"F_Hand": {
+				"attachment": [
+					{ "time": 0, "name": "F_Hand_Closed" }
+				]
+			},
+			"Launcher": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Launcher_Missile": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Pistol": {
+				"attachment": [
+					{ "time": 0, "name": "Pistol" }
+				]
+			},
+			"Pistol_Chamber": {
+				"attachment": [
+					{ "time": 0, "name": "Pistol_Chamber" }
+				]
+			},
+			"Shotgun": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun_Hatch": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun_Pump": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"SniperRifle": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			}
+		},
+		"bones": {
+			"B_HandIK": {
+				"translate": [
+					{ "time": 0, "x": -5.11, "y": -19.37 }
+				]
+			},
+			"B_ArmIK": {
+				"translate": [
+					{ "time": 0, "x": 34.76, "y": 67.84 }
+				]
+			},
+			"BodyIK": {
+				"translate": [
+					{ "time": 0, "x": -33.85, "y": -6.05 }
+				]
+			},
+			"GunIKRoot": {
+				"translate": [
+					{ "time": 0, "x": 54.05, "y": 4.33 }
+				]
+			},
+			"AimPivot": {
+				"translate": [
+					{ "time": 0, "x": 32.46, "y": 83.23 }
+				]
+			},
+			"HeadIK": {
+				"translate": [
+					{ "time": 0, "x": 22.22, "y": -86.4 }
+				]
+			},
+			"F_Hand": {
+				"rotate": [
+					{ "time": 0, "angle": -19.36 }
+				]
+			},
+			"Muzzle": {
+				"translate": [
+					{ "time": 0, "x": -70.01, "y": -59.56 }
+				]
+			},
+			"Recoil": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"ik": {
+			"B_FingersIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"B_HandIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"BodyIK": [
+				{ "time": 0, "mix": 0.152, "bendPositive": true }
+			],
+			"F_ArmIK": [
+				{ "time": 0, "mix": 0, "bendPositive": true }
+			],
+			"F_HandIK": [
+				{ "time": 0, "mix": 0, "bendPositive": true }
+			],
+			"HeadIK": [
+				{ "time": 0, "mix": 0.302, "bendPositive": true }
+			]
+		}
+	},
+	"Setup_Shotgun": {
+		"slots": {
+			"B_Hand_1H_1": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"B_Hand_1H_2": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"B_Hand_2H": {
+				"attachment": [
+					{ "time": 0, "name": "B_Hand_2H" }
+				]
+			},
+			"B_Hand_Open": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"F_Hand": {
+				"attachment": [
+					{ "time": 0, "name": "F_Hand_1H" }
+				]
+			},
+			"Launcher": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Launcher_Missile": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Pistol": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Pistol_Chamber": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun": {
+				"attachment": [
+					{ "time": 0, "name": "Shotgun" }
+				]
+			},
+			"Shotgun_Hatch": {
+				"attachment": [
+					{ "time": 0, "name": "Shotgun_Hatch" }
+				]
+			},
+			"Shotgun_Pump": {
+				"attachment": [
+					{ "time": 0, "name": "Shotgun_Pump" }
+				]
+			},
+			"SniperRifle": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			}
+		},
+		"bones": {
+			"Shotgun_Pump": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"Shotgun": {
+				"translate": [
+					{ "time": 0, "x": -24.2, "y": 0 }
+				]
+			},
+			"F_ArmIK": {
+				"translate": [
+					{ "time": 0, "x": 107.51, "y": 59.8 }
+				]
+			},
+			"F_HandIK": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": -22.78 }
+				]
+			},
+			"B_ArmIK": {
+				"translate": [
+					{ "time": 0, "x": 103.23, "y": 86.29 }
+				]
+			},
+			"B_HandIK": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": -22.36 }
+				]
+			},
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": -41.75, "y": -15.65 }
+				]
+			},
+			"BodyIK": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"AimPivot": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"HeadIK": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"Muzzle": {
+				"translate": [
+					{ "time": 0, "x": 13.58, "y": -42.84 }
+				]
+			},
+			"Recoil": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"ik": {
+			"B_ArmIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"B_FingersIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"B_HandIK": [
+				{ "time": 0, "mix": 0, "bendPositive": true }
+			],
+			"BodyIK": [
+				{ "time": 0, "mix": 0.473, "bendPositive": true }
+			],
+			"F_ArmIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"F_HandIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"HeadIK": [
+				{ "time": 0, "mix": 0.997, "bendPositive": true }
+			]
+		}
+	},
+	"Setup_Sniper": {
+		"slots": {
+			"B_Hand_1H_1": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"B_Hand_1H_2": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"B_Hand_2H": {
+				"attachment": [
+					{ "time": 0, "name": "B_Hand_2H" }
+				]
+			},
+			"B_Hand_Open": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"F_Hand": {
+				"attachment": [
+					{ "time": 0, "name": "F_Hand_1H" }
+				]
+			},
+			"Launcher": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Launcher_Missile": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Pistol": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Pistol_Chamber": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun_Hatch": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"Shotgun_Pump": {
+				"attachment": [
+					{ "time": 0, "name": null }
+				]
+			},
+			"SniperRifle": {
+				"attachment": [
+					{ "time": 0, "name": "SniperRifle" }
+				]
+			}
+		},
+		"bones": {
+			"B_ArmIK": {
+				"translate": [
+					{ "time": 0, "x": 22.79, "y": 74.27 }
+				]
+			},
+			"F_HandIK": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"B_HandIK": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			},
+			"HeadIK": {
+				"translate": [
+					{ "time": 0, "x": 37.98, "y": -113.21 }
+				]
+			},
+			"F_ArmIK": {
+				"translate": [
+					{ "time": 0, "x": 27.86, "y": 59.75 }
+				]
+			},
+			"GunIKRoot": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 115.9, "y": -38.9 }
+				]
+			},
+			"BodyIK": {
+				"translate": [
+					{ "time": 0, "x": 68.11, "y": -113.21 }
+				]
+			},
+			"B_Fingers": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				]
+			},
+			"B_Hand": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				]
+			},
+			"F_Hand": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				]
+			},
+			"AimPivot": {
+				"translate": [
+					{ "time": 0, "x": -36.82, "y": 113.83 }
+				]
+			},
+			"B_Arm": {
+				"translate": [
+					{ "time": 0, "x": 7.24, "y": -12.4 }
+				]
+			},
+			"Muzzle": {
+				"translate": [
+					{ "time": 0, "x": 21.94, "y": -49.11 }
+				]
+			},
+			"Recoil": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 }
+				]
+			}
+		},
+		"ik": {
+			"B_ArmIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"B_FingersIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"B_HandIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"BodyIK": [
+				{ "time": 0, "mix": 0.597, "bendPositive": true }
+			],
+			"F_ArmIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"F_HandIK": [
+				{ "time": 0, "mix": 1, "bendPositive": true }
+			],
+			"HeadIK": [
+				{ "time": 0, "mix": 0.997, "bendPositive": true }
+			]
+		}
+	},
+	"Walk": {
+		"bones": {
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": -2, "y": -9.73, "curve": "stepped" },
+					{ "time": 0.0333, "x": -2, "y": -9.73 },
+					{ "time": 0.0666, "x": -1.33, "y": -6.49 },
+					{ "time": 0.1, "x": 0, "y": 0 },
+					{ "time": 0.1666, "x": 0, "y": 2 },
+					{ "time": 0.3, "x": 1.65, "y": -6.28 },
+					{ "time": 0.4, "x": 0, "y": -14.6, "curve": "stepped" },
+					{ "time": 0.4333, "x": 0, "y": -14.6 },
+					{ "time": 0.4666, "x": -1.33, "y": -6.49 },
+					{ "time": 0.5, "x": 0, "y": 0 },
+					{ "time": 0.5666, "x": 0, "y": 2 },
+					{ "time": 0.7, "x": 1.65, "y": -6.28 },
+					{ "time": 0.8, "x": -2, "y": -9.73 }
+				]
+			},
+			"F_LegIK": {
+				"translate": [
+					{ "time": 0, "x": -5.02, "y": 19.89 },
+					{ "time": 0.1333, "x": 90.8, "y": 19.23 },
+					{ "time": 0.2666, "x": 117.65, "y": 9.94 },
+					{ "time": 0.3, "x": 112.97, "y": 0.49 },
+					{ "time": 0.3333, "x": 83.06, "y": 0.99 },
+					{ "time": 0.4333, "x": 27.02, "y": 0 },
+					{ "time": 0.7, "x": -49.92, "y": 4.64 },
+					{ "time": 0.7666, "x": -18.65, "y": 22.01 },
+					{ "time": 0.8, "x": -5.02, "y": 19.89 }
+				]
+			},
+			"HeadPivot": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
+					{ "time": 0.8, "x": 0, "y": 0 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{ "time": 0, "x": -10, "y": -3 },
+					{ "time": 0.1666, "x": 31.44, "y": -6 },
+					{ "time": 0.3, "x": 45.44, "y": 0 },
+					{ "time": 0.4, "x": 19.37, "y": 8.97 },
+					{ "time": 0.4333, "x": 14.4, "y": 8.42 },
+					{ "time": 0.5, "x": 4.45, "y": -2.63 },
+					{ "time": 0.6, "x": 0.45, "y": -5.94 },
+					{ "time": 0.8, "x": -10, "y": -3 }
+				]
+			},
+			"B_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 35.7, "y": 0.33 },
+					{ "time": 0.3, "x": -89.15, "y": 6.44 },
+					{ "time": 0.4, "x": -59.07, "y": 19.89 },
+					{ "time": 0.5666, "x": 17.52, "y": 24.18 },
+					{ "time": 0.7, "x": 69.8, "y": 11.42 },
+					{ "time": 0.7333, "x": 57.75, "y": 0.27 },
+					{ "time": 0.8, "x": 35.7, "y": 0.33 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{ "time": 0, "x": -2.79, "y": 6 },
+					{ "time": 0.0333, "x": 1.7, "y": 8.09 },
+					{ "time": 0.1666, "x": -20.29, "y": -1.55 },
+					{ "time": 0.3, "x": -43.23, "y": 0.6 },
+					{ "time": 0.4, "x": -48.23, "y": -3 },
+					{ "time": 0.6666, "x": -5, "y": -3 },
+					{ "time": 0.8, "x": -2.79, "y": 6 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": -36.27 },
+					{ "time": 0.1333, "angle": -29.25 },
+					{ "time": 0.2666, "angle": 9.42 },
+					{ "time": 0.3333, "angle": 1.56, "curve": "stepped" },
+					{ "time": 0.7, "angle": 1.56 },
+					{ "time": 0.7666, "angle": -36.27 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.2666, "angle": -1.62 },
+					{ "time": 0.4, "angle": -26.84 },
+					{ "time": 0.5333, "angle": -26.33 },
+					{ "time": 0.7, "angle": 14.73 },
+					{ "time": 0.7666, "angle": 0 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0.3333, "name": "Sound", "string": "Footsteps/Random" },
+			{ "time": 0.7666, "name": "Sound", "string": "Footsteps/Random" }
+		]
+	},
+	"Walk_Back": {
+		"bones": {
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": 0 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": -24.9 },
+					{ "time": 0.0666, "x": 0, "y": -19.2 },
+					{ "time": 0.2, "x": 0, "y": -2.22 },
+					{ "time": 0.2666, "x": 0, "y": -9.47 },
+					{ "time": 0.3333, "x": 0, "y": -24.9 },
+					{ "time": 0.4, "x": 0, "y": -19.2 },
+					{ "time": 0.5, "x": 0, "y": -0.56 },
+					{ "time": 0.5666, "x": 0, "y": -9.47 },
+					{ "time": 0.6666, "x": 0, "y": -24.9 }
+				]
+			},
+			"B_LegIK": {
+				"translate": [
+					{ "time": 0, "x": 95.27, "y": 0 },
+					{ "time": 0.0666, "x": 68.68, "y": 32.91 },
+					{ "time": 0.3, "x": -90.29, "y": 5.72 },
+					{ "time": 0.4666, "x": -17.17, "y": 3.33 },
+					{ "time": 0.5, "x": 4.29, "y": 4.29 },
+					{ "time": 0.6666, "x": 95.27, "y": 0 }
+				]
+			},
+			"B_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.3333, "x": -44.36, "y": 0 },
+					{ "time": 0.6666, "x": 0, "y": 0 }
+				]
+			},
+			"F_LegIK": {
+				"translate": [
+					{ "time": 0, "x": -34.44, "y": 5.72 },
+					{ "time": 0.2, "x": 57.34, "y": 1.73 },
+					{ "time": 0.3333, "x": 138.34, "y": 0.61 },
+					{ "time": 0.4333, "x": 120.26, "y": 34.06 },
+					{ "time": 0.5, "x": 74.41, "y": 23.86 },
+					{ "time": 0.6666, "x": -34.44, "y": 5.72 }
+				]
+			},
+			"F_Thigh": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.1666, "x": 22.18, "y": -3.31 },
+					{ "time": 0.3333, "x": 44.36, "y": 0 },
+					{ "time": 0.6666, "x": 0, "y": 0 }
+				]
+			},
+			"F_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": 0, "curve": "stepped" },
+					{ "time": 0.3333, "angle": 0 },
+					{ "time": 0.4, "angle": -13.57 },
+					{ "time": 0.5, "angle": 0.35 },
+					{ "time": 0.6666, "angle": 0 }
+				]
+			},
+			"B_Foot": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.0333, "angle": -12.73 },
+					{ "time": 0.3333, "angle": 0, "curve": "stepped" },
+					{ "time": 0.6666, "angle": 0 }
+				]
+			}
+		},
+		"events": [
+			{ "time": 0.3333, "name": "Sound", "string": "Footsteps/Random" },
+			{ "time": 0.6666, "name": "Sound", "string": "Footsteps/Random" }
+		]
+	}
+}
+}

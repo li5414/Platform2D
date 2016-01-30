@@ -1,0 +1,167 @@
+
+Hitman.png
+size: 1024,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+B_Foot
+  rotate: true
+  xy: 986, 458
+  size: 46, 20
+  orig: 46, 20
+  offset: 0, 0
+  index: -1
+F_Foot
+  rotate: true
+  xy: 986, 458
+  size: 46, 20
+  orig: 46, 20
+  offset: 0, 0
+  index: -1
+B_Hand_FistIdle
+  rotate: true
+  xy: 572, 256
+  size: 102, 143
+  orig: 102, 143
+  offset: 0, 0
+  index: -1
+B_Hand_FistIn
+  rotate: false
+  xy: 571, 360
+  size: 128, 144
+  orig: 128, 144
+  offset: 0, 0
+  index: -1
+B_Hand_FistSide
+  rotate: true
+  xy: 421, 224
+  size: 106, 149
+  orig: 106, 149
+  offset: 0, 0
+  index: -1
+B_Hand_FistUp
+  rotate: false
+  xy: 862, 286
+  size: 98, 105
+  orig: 98, 105
+  offset: 0, 0
+  index: -1
+B_Hand_Open
+  rotate: false
+  xy: 190, 84
+  size: 102, 157
+  orig: 102, 157
+  offset: 0, 0
+  index: -1
+B_Shin
+  rotate: true
+  xy: 293, 262
+  size: 68, 126
+  orig: 68, 126
+  offset: 0, 0
+  index: -1
+F_Shin
+  rotate: true
+  xy: 293, 262
+  size: 68, 126
+  orig: 68, 126
+  offset: 0, 0
+  index: -1
+B_Thigh
+  rotate: true
+  xy: 190, 6
+  size: 76, 116
+  orig: 76, 116
+  offset: 0, 0
+  index: -1
+B_UpperArm
+  rotate: true
+  xy: 572, 185
+  size: 69, 93
+  orig: 69, 93
+  offset: 0, 0
+  index: -1
+F_Hand_FistIdle
+  rotate: true
+  xy: 717, 256
+  size: 102, 143
+  orig: 102, 143
+  offset: 0, 0
+  index: -1
+F_Hand_FistIn
+  rotate: false
+  xy: 701, 360
+  size: 128, 144
+  orig: 128, 144
+  offset: 0, 0
+  index: -1
+F_Hand_FistOut
+  rotate: false
+  xy: 294, 109
+  size: 108, 151
+  orig: 108, 151
+  offset: 0, 0
+  index: -1
+F_Hand_FistSide
+  rotate: true
+  xy: 831, 393
+  size: 111, 153
+  orig: 111, 153
+  offset: 0, 0
+  index: -1
+F_Hand_FistUp
+  rotate: false
+  xy: 308, 2
+  size: 98, 105
+  orig: 98, 105
+  offset: 0, 0
+  index: -1
+F_Hand_Open
+  rotate: true
+  xy: 404, 120
+  size: 102, 157
+  orig: 102, 157
+  offset: 0, 0
+  index: -1
+F_Thigh
+  rotate: true
+  xy: 408, 42
+  size: 76, 117
+  orig: 76, 117
+  offset: 0, 0
+  index: -1
+F_UpperArm
+  rotate: true
+  xy: 667, 179
+  size: 75, 87
+  orig: 75, 87
+  offset: 0, 0
+  index: -1
+Hair
+  rotate: false
+  xy: 2, 17
+  size: 186, 224
+  orig: 186, 224
+  offset: 0, 0
+  index: -1
+Head
+  rotate: false
+  xy: 2, 243
+  size: 289, 261
+  orig: 289, 261
+  offset: 0, 0
+  index: -1
+Torso_Back
+  rotate: false
+  xy: 293, 332
+  size: 137, 172
+  orig: 137, 172
+  offset: 0, 0
+  index: -1
+Torso_Front
+  rotate: false
+  xy: 432, 332
+  size: 137, 172
+  orig: 137, 172
+  offset: 0, 0
+  index: -1
