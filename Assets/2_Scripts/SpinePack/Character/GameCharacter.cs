@@ -440,7 +440,8 @@ public class GameCharacter : MonoBehaviour
 
 		return false;
 	}
-
+    
+    //보통 검사 시 movingPlatform 과 같이 검사한다. 통합 고려하자.
 	public bool OnGround
     {
         get

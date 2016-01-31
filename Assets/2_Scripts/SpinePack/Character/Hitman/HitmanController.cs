@@ -266,6 +266,7 @@ public class HitmanController : GamePlayer
     
     override protected void UpdateAnim()
     {
+        // skeletonAnimation.state.SetAnimation( 0, runAnim, true );
         switch (state)
         {
             case ActionState.IDLE:
@@ -325,12 +326,14 @@ public class HitmanController : GamePlayer
             platformYVelocity = movingPlatform.Velocity.y;
         }
         
-        //점프하기로 하고 점프상태가 아니면 점프
+        //------------------------------------------------------------------------------
+        // jump
+        //------------------------------------------------------------------------------
         if (mDoJump && state != ActionState.JUMP)
         {
             SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
             
-            //벽점프.
+            //벽점프라면 x속도를 설정한다.
             if (state == ActionState.WALLSLIDE)
             {
                 if ( PressingAgainstWall == false )
@@ -353,12 +356,17 @@ public class HitmanController : GamePlayer
                 }
             }
             
-            velocity.y = (mJumpCount > 0 ? airJumpSpeed : jumpSpeed) + (platformYVelocity >= 0 ? platformYVelocity : 0);
+            //jump!
+            velocity.y = mJumpCount > 0 ? airJumpSpeed : jumpSpeed;
+            velocity.y += platformYVelocity;
             mJumpStartTime = Time.time;
-            SetState( ActionState.JUMP );
             mDoJump = false;
+            
+            //jump 이펙트 생성
             if (airJumpPrefab != null && mJumpCount > 0)
+            {
                 Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
+            }
             else if (groundJumpPrefab != null && mJumpCount == 0)
             {
                 if (wasWallJump)
@@ -373,10 +381,14 @@ public class HitmanController : GamePlayer
             }
             mJumpCount++;
 
-            if (OnJump != null)
-                OnJump(transform);
+            SetState( ActionState.JUMP );
+            
+            if (OnJump != null) OnJump(transform);
 
         }
+        //------------------------------------------------------------------------------
+        // sliding
+        //------------------------------------------------------------------------------
         else if (doSlide)
         {
             SoundPalette.PlaySound(slideSound, 1, 1, transform.position);
@@ -390,17 +402,21 @@ public class HitmanController : GamePlayer
             primaryCollider.transform.localScale = new Vector3(1, slideSquish, 1);
             IgnoreCharacterCollisions(true);
 
-            if (skeletonGhost != null)
-                skeletonGhost.ghostingEnabled = true;
+            if (skeletonGhost != null) skeletonGhost.ghostingEnabled = true;
         }
-
-        //ground logic
+        
+        //------------------------------------------------------------------------------
+        // x move
+        //------------------------------------------------------------------------------
+        //IDLE WALK RUN. 즉 점프나 슬라이딩을 하지 않았다면.
         if (state < ActionState.JUMP)
         {
             if (OnGround || movingPlatform)
             {
                 mJumpCount = 0;
                 upAttackUsed = false;
+                
+                // > run
                 if (absX > runThreshhold)
                 {
                     xVelocity = runSpeed * Mathf.Sign(x);
@@ -409,6 +425,7 @@ public class HitmanController : GamePlayer
                     SetState( ActionState.RUN );
                     SetFriction(movingFriction);
                 }
+                // > walk
                 else if (absX > deadZone)
                 {
                     xVelocity = walkSpeed * Mathf.Sign(x);
@@ -417,6 +434,7 @@ public class HitmanController : GamePlayer
                     SetState( ActionState.WALK );
                     SetFriction(movingFriction);
                 }
+                // > idle
                 else
                 {
                     velocity.x = movingPlatform ? platformXVelocity : Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 10);
@@ -440,26 +458,27 @@ public class HitmanController : GamePlayer
                     }
                 }
             }
+            //IDLE WALK RUN 이였는데 땅에 닿는게 없는경우.
             else
             {
                 SetFallState(true);
             }
-            //air logic
         }
+        //AIR
         else if (state == ActionState.JUMP)
         {
             float jumpTime = Time.time - mJumpStartTime;
             savedXVelocity = velocity.x;
-            if (!mJumpPressed || jumpTime >= jumpDuration || downAttackRecovery)
+            
+            if ( mJumpPressed == false || jumpTime >= jumpDuration || downAttackRecovery )
             {
                 mJumpStartTime -= jumpDuration;
 
-                if (velocity.y > 0)
-                    velocity.y = Mathf.MoveTowards(velocity.y, 0, Time.deltaTime * 30);
+                if (velocity.y > 0) velocity.y = Mathf.MoveTowards(velocity.y, 0, Time.deltaTime * 30);
 
                 if (velocity.y <= 0 || (jumpTime < jumpDuration && OnGround))
                 {
-                    if (!downAttackRecovery)
+                    if ( downAttackRecovery == false )
                     {
                         SetFallState(false);
                     }

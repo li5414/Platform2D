@@ -11,5 +11,5 @@ public class GamePlayer : GameCharacter
 	public bool inputAttackPressed;
 	public bool inputSlidePressed;
 
-	protected bool mIsRun = false;
+	protected bool inputRun = false;
 }

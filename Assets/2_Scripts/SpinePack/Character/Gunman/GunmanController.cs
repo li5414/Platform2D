@@ -355,8 +355,7 @@ public class GunmanController : GameCharacter
 
 
 
-            if (OnJump != null)
-                OnJump(transform);
+            if (OnJump != null) OnJump(transform);
         }
 
         //ground logic
