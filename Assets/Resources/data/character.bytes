@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "name": "test",
+    "date": "2015.6.09 19:40:50"
+  },
+  "data": {
+    "100": {
+      "id": "100",
+      "prefabName": "Player1",
+      "hp": 3,
+      "str": 3,
+      "agi": 3,
+      "def": 3,
+      "luck": 3,
+      "skills": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    "101": {
+      "id": "101",
+      "prefabName": "Player2",
+      "hp": 4,
+      "str": 4,
+      "agi": 4,
+      "def": 4,
+      "luck": 4,
+      "skills": [
+        "x",
+        "y",
+        "z"
+      ]
+    }
+  }
+}

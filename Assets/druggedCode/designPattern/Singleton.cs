@@ -48,7 +48,7 @@ namespace druggedcode
         {
             if (sInstance == null)
             {
-                DontDestroyOnLoad(gameObject);
+				if( transform.parent == null ) DontDestroyOnLoad(gameObject);
                 sInstance = GetComponent<T>();
             }
             else if (sInstance != this)
