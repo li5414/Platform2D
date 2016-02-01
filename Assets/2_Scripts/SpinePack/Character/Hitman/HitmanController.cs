@@ -101,7 +101,7 @@ public class HitmanController : GamePlayer
     bool attackWasPressed;
     bool waitingForAttackInput;
     float attackWatchdog;
-    float airControlLockoutTime = 0;
+    float airControlLockoutTime = 0;//뭐지?
     float wallSlideWatchdog;
     float wallSlideStartTime;
     bool wallSlideFlip;
@@ -114,7 +114,7 @@ public class HitmanController : GamePlayer
     bool velocityLock;
 
     //box 2d workarounds
-    float savedXVelocity;
+    float savedXVelocity;//왜 저장할까?
 
     override protected void Start()
     {
@@ -149,8 +149,7 @@ public class HitmanController : GamePlayer
                     case "YVelocity":
                         velocity = mRb.velocity;
                         velocity.y = uppercutVelocity * e.Float;
-                        if (movingPlatform)
-                            velocity.y += movingPlatform.Velocity.y;
+                        if (movingPlatform) velocity.y += movingPlatform.Velocity.y;
                         mRb.velocity = velocity;
                         break;
                     case "Pause":
@@ -308,9 +307,9 @@ public class HitmanController : GamePlayer
     {
         mIsOnSlope = false;
 
-        float x = mAxis.x;
-        float y = mAxis.y;
-        float absX = Mathf.Abs(x);
+		float axisX = mAxis.x;
+		float axisY = mAxis.y;
+        float absX = Mathf.Abs(axisX);
         
         float xVelocity = 0;
         float platformXVelocity = 0;
@@ -327,7 +326,7 @@ public class HitmanController : GamePlayer
         }
         
         //------------------------------------------------------------------------------
-        // jump
+        // do jump
         //------------------------------------------------------------------------------
         if (mDoJump && state != ActionState.JUMP)
         {
@@ -336,7 +335,7 @@ public class HitmanController : GamePlayer
             //벽점프라면 x속도를 설정한다.
             if (state == ActionState.WALLSLIDE)
             {
-                if ( PressingAgainstWall == false )
+                if ( IsPressingAgainstWall == false )
                 {
                     airControlLockoutTime = Time.time + 0.5f;
                     velocity.x = wallJumpXSpeed * (mFlipped ? -1 : 1) * 2;
@@ -387,7 +386,7 @@ public class HitmanController : GamePlayer
 
         }
         //------------------------------------------------------------------------------
-        // sliding
+        // do sliding
         //------------------------------------------------------------------------------
         else if (doSlide)
         {
@@ -419,7 +418,7 @@ public class HitmanController : GamePlayer
                 // > run
                 if (absX > runThreshhold)
                 {
-                    xVelocity = runSpeed * Mathf.Sign(x);
+                    xVelocity = runSpeed * Mathf.Sign(axisX);
                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 15);
                     if (movingPlatform) velocity.y = platformYVelocity;
                     SetState( ActionState.RUN );
@@ -428,7 +427,7 @@ public class HitmanController : GamePlayer
                 // > walk
                 else if (absX > deadZone)
                 {
-                    xVelocity = walkSpeed * Mathf.Sign(x);
+                    xVelocity = walkSpeed * Mathf.Sign(axisX);
                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 25);
                     if (movingPlatform) velocity.y = platformYVelocity;
                     SetState( ActionState.WALK );
@@ -464,7 +463,7 @@ public class HitmanController : GamePlayer
                 SetFallState(true);
             }
         }
-        //AIR
+        //JUMP loop
         else if (state == ActionState.JUMP)
         {
             float jumpTime = Time.time - mJumpStartTime;
@@ -489,12 +488,10 @@ public class HitmanController : GamePlayer
 
                 }
             }
-
-            //fall logic
         }
+        //fall loop
         else if (state == ActionState.FALL)
         {
-
             if (OnGround)
             {
                 SoundPalette.PlaySound(landSound, 1, 1, transform.position);
@@ -518,10 +515,9 @@ public class HitmanController : GamePlayer
             {
                 EnemyBounceCheck(ref velocity);
                 savedXVelocity = velocity.x;
-
             }
-            //wall slide logic
         }
+        //wall slide loop
         else if (state == ActionState.WALLSLIDE)
         {
             mJumpCount = 0;
@@ -530,11 +526,11 @@ public class HitmanController : GamePlayer
                 SoundPalette.PlaySound(landSound, 1, 1, transform.position);
                 SetState( ActionState.IDLE );
             }
-            else if (!PressingAgainstWall)
+            else if (!IsPressingAgainstWall)
             {
                 if (!EnemyBounceCheck(ref velocity))
                 {
-                    if (y > -0.5f)
+                    if (axisY > -0.5f)
                     {
                         wallSlideWatchdog -= Time.deltaTime;
                         if (wallSlideWatchdog <= 0)
@@ -555,7 +551,10 @@ public class HitmanController : GamePlayer
                 skeletonAnimation.Skeleton.FlipX = wallSlideFlip;
             }
         }
-
+        
+        //------------------------------------------------------------------------------
+        // x move
+        //------------------------------------------------------------------------------
         //air control
         if (state == ActionState.JUMP || state == ActionState.FALL)
         {
@@ -563,32 +562,27 @@ public class HitmanController : GamePlayer
             {
                 if (absX > runThreshhold)
                 {
-                    velocity.x = Mathf.MoveTowards(velocity.x, runSpeed * Mathf.Sign(x), Time.deltaTime * 8);
+                    velocity.x = Mathf.MoveTowards(velocity.x, runSpeed * Mathf.Sign(axisX), Time.deltaTime * 8);
                 }
                 else if (absX > deadZone)
                 {
-                    velocity.x = Mathf.MoveTowards(velocity.x, walkSpeed * Mathf.Sign(x), Time.deltaTime * 8);
+                    velocity.x = Mathf.MoveTowards(velocity.x, walkSpeed * Mathf.Sign(axisX), Time.deltaTime * 8);
                 }
                 else
                 {
                     velocity.x = Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 8);
                 }
-
-
-
             }
             else
             {
                 if (wasWallJump)
                 {
-                    //cancel air control lockout if reverse joystick
-                    if (absX > deadZone)
-                    {
-                        airControlLockoutTime = Time.time - 1;
-                    }
+                    //벽점프를 한상태에서 움직이면 에어컨트롤lock을 캔슬 한다.
+                    if (absX > deadZone) airControlLockoutTime = Time.time - 1;
                 }
             }
-
+            
+            //아래를 누르고 공격을 눌렀다면 다운 어택으로 간다.
             if (attackWasPressed && mAxis.y < -0.5f)
             {
                 velocity.x = 0;
@@ -597,6 +591,7 @@ public class HitmanController : GamePlayer
                 upAttackUsed = true;
                 skeletonAnimation.AnimationName = downAttackAnim;
             }
+            //위를 누르고 공격을 눌렀다면 공중에서 업어택을 한다.
             else if (attackWasPressed && mAxis.y > 0.5f)
             {
                 if (!upAttackUsed)
@@ -607,20 +602,22 @@ public class HitmanController : GamePlayer
                     velocity.y = 1;
                 }
             }
-
+            
+            //공중 어택을 하지 않아 여전히 jump 이거나 fall 인 경우.
             if (state == ActionState.JUMP || state == ActionState.FALL)
             {
-                if (Time.time != mJumpStartTime && PressingAgainstWall)
+                if (Time.time != mJumpStartTime && IsPressingAgainstWall)
                 {
+                    //Mathf.Abs(mRb.velocity.x) > 0.1f 를 absX 검사 외에 따로 검사하는 이유는? 
                     if (Mathf.Abs(mRb.velocity.x) > 0.1f || (state == ActionState.FALL && absX > deadZone))
                     {
-                        if (!wasWallJump && state == ActionState.JUMP)
+                        if ( wasWallJump ==false && state == ActionState.JUMP)
                         {
                             //dont do anything if still going up
                         }
                         else
                         {
-                            //start wall slide
+                            //벽타자
                             SetState( ActionState.WALLSLIDE );
                             mJumpCount = 0;
                             wallSlideWatchdog = wallSlideWatchdogDuration;
@@ -632,26 +629,25 @@ public class HitmanController : GamePlayer
                             }
                             else
                             {
-                                wallSlideFlip = x > 0;
+                                wallSlideFlip = axisX > 0;
                             }
                         }
-
-
                     }
-
                 }
             }
         }
 
-        //falling and wallslide
+        //떨어지자
         if (state == ActionState.FALL)
-            velocity.y += fallGravity * Time.deltaTime;
+		{
+			velocity.y += fallGravity * Time.deltaTime;
+		}
         else if (state == ActionState.WALLSLIDE)
         {
             velocity.y = Mathf.Clamp(velocity.y, wallSlideSpeed, 0);
         }
 
-        //slide control
+        //슬라이딩 loop
         if (state == ActionState.SLIDE)
         {
             float slideTime = Time.time - slideStartTime;
@@ -665,31 +661,29 @@ public class HitmanController : GamePlayer
             }
             else
             {
-                x = Mathf.Sign(savedXVelocity);
+                axisX = Mathf.Sign(savedXVelocity);
                 velocity.x = savedXVelocity + platformXVelocity;
-                if (movingPlatform)
-                    velocity.y = platformYVelocity;
+                if (movingPlatform) velocity.y = platformYVelocity;
             }
 
-            if (!OnGround)
+			if ( OnGround == false )
             {
                 //Fell off edge while sliding
                 primaryCollider.transform.localScale = Vector3.one;
                 IgnoreCharacterCollisions(false);
-                if (skeletonGhost != null)
-                    skeletonGhost.ghostingEnabled = false;
+                if (skeletonGhost != null) skeletonGhost.ghostingEnabled = false;
                 SetFallState(true);
             }
         }
 
-        //attack control
+        //공격
         if (state == ActionState.ATTACK)
         {
             if (attackWasPressed)
             {
                 attackWasPressed = false;
 
-                //check if animation allows input now
+				//다음 공격 입력 대기 상태이면 다음 공격을 플레이 한다.
                 if (waitingForAttackInput)
                 {
                     waitingForAttackInput = false;
@@ -697,12 +691,11 @@ public class HitmanController : GamePlayer
                 }
             }
 
-            //apply some of the moving platform velocity
+            //무빙플랫폼 적용
             velocity.x = Mathf.MoveTowards(velocity.x, platformXVelocity, Time.deltaTime * 8);
-            if (movingPlatform)
-                velocity.y = Mathf.MoveTowards(velocity.y, platformYVelocity, Time.deltaTime * 15);
+            if (movingPlatform) velocity.y = Mathf.MoveTowards(velocity.y, platformYVelocity, Time.deltaTime * 15);
 
-            //combo is paused, set idle mode and run watchdog
+			//콤보 대기 상태이면 지속적으로 입력 대기 시간을 감소시킨다.
             if (waitingForAttackInput)
             {
                 SetFriction(idleFriction);
@@ -712,29 +705,24 @@ public class HitmanController : GamePlayer
             }
             else
             {
-                //attacking, set moving mode
                 SetFriction(movingFriction);
             }
         }
 
-        //generic motion flipping control
+		//ActionState.IDLE,WALK,RUN,JUMP,FALL,WALLSLIDE,SLIDE 에서 WALLSLIDE 제외.
         if (state < ActionState.ATTACK && state != ActionState.WALLSLIDE)
         {
             if (Time.time > airControlLockoutTime)
             {
-                if (x > deadZone)
-                    skeletonAnimation.Skeleton.FlipX = false;
-                else if (x < -deadZone)
-                    skeletonAnimation.Skeleton.FlipX = true;
+                if (axisX > deadZone) skeletonAnimation.Skeleton.FlipX = false;
+                else if (axisX < -deadZone) skeletonAnimation.Skeleton.FlipX = true;
             }
             else
             {
-                if (velocity.x > deadZone)
-                    skeletonAnimation.Skeleton.FlipX = false;
-                else if (velocity.x < deadZone)
-                    skeletonAnimation.Skeleton.FlipX = true;
+				//airControllLockout 상태라면 입력받은 방향에 상관없이 현재 속도에 따라 플립 결정한다.
+                if (velocity.x > deadZone) skeletonAnimation.Skeleton.FlipX = false;
+                else if (velocity.x < deadZone) skeletonAnimation.Skeleton.FlipX = true;
             }
-
         }
 
         //down attack
@@ -758,8 +746,7 @@ public class HitmanController : GamePlayer
                 {
                     downAttackRecoveryTime -= Time.deltaTime;
                     velocity = Vector2.zero;
-                    if (movingPlatform)
-                        velocity = movingPlatform.Velocity;
+                    if (movingPlatform) velocity = movingPlatform.Velocity;
                 }
             }
             else
@@ -776,12 +763,10 @@ public class HitmanController : GamePlayer
                     skeletonAnimation.state.GetCurrent(0).Time = (downAttackFrameSkip / 30f);
 
                     //spawn effect
-                    if (downAttackPrefab)
-                        Instantiate(downAttackPrefab, transform.position + new Vector3(0, 0.25f, 0), Quaternion.identity);
+                    if (downAttackPrefab) Instantiate(downAttackPrefab, transform.position + new Vector3(0, 0.25f, 0), Quaternion.identity);
 
                     //adhere to moving platform
-                    if (movingPlatform)
-                        velocity = movingPlatform.Velocity;
+                    if (movingPlatform) velocity = movingPlatform.Velocity;
 
                 }
                 else

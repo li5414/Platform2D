@@ -475,7 +475,7 @@ public class GameCharacter : MonoBehaviour
     }
     
     //벽을 밀고 있는지 검사한다.
-    protected bool PressingAgainstWall
+    protected bool IsPressingAgainstWall
     {
         get
         {
@@ -493,12 +493,11 @@ public class GameCharacter : MonoBehaviour
                     usingVelocity = false;
                 }
             }
-
+            
             RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(mCastOriginWall), new Vector2(x, 0).normalized, mCastOriginWallDistance + (usingVelocity ? x * Time.deltaTime : 0), currentMask);
             if (hit.collider != null && !hit.collider.isTrigger)
             {
-                if (hit.collider.GetComponent<OneWayPlatform>())
-                    return false;
+                if (hit.collider.GetComponent<OneWayPlatform>()) return false;
 
                 return true;
             }
