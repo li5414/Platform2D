@@ -11,7 +11,7 @@ public class HitmanInput : MonoBehaviour
 
 	public KeyCode jumpKey = KeyCode.Space;
 	public KeyCode attackKey = KeyCode.J;
-	public KeyCode slideKey = KeyCode.K;
+	public KeyCode specialKey = KeyCode.K;
 
 	GamePlayer mPlayer;
 
@@ -32,6 +32,6 @@ public class HitmanInput : MonoBehaviour
 		mPlayer.inputJumpIsPressed = Input.GetKey (jumpKey);
 
 		mPlayer.inputAttackPressed = Input.GetKeyDown (attackKey);
-		mPlayer.inputSlidePressed = Input.GetKeyDown (slideKey);
+		mPlayer.inputSlidePressed = Input.GetKeyDown (specialKey);
 	}
 }

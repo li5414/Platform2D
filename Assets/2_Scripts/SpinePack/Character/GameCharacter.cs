@@ -46,8 +46,23 @@ public class GameCharacter : MonoBehaviour
     public void SetState( ActionState next )
     {
         if( mState == next ) return;
+
+		StateExit();
+
         mState = next;
+
+		StateEnter();
     }
+
+	virtual protected void StateExit()
+	{
+
+	}
+
+	virtual protected void StateEnter()
+	{
+
+	}
 
     public AnimationType bodyType;
 
@@ -62,7 +77,7 @@ public class GameCharacter : MonoBehaviour
     public float runSpeed = 5;
     public float jumpSpeed = 12;
     public float airJumpSpeed = 10;
-    public float headBounceSpeed = 16;
+    public float headBounceSpeed = 16;//캐릭터를 밟았을 때 vy
     public float jumpDuration = 0.5f;
     
     [Range(1, 3)]
@@ -78,7 +93,7 @@ public class GameCharacter : MonoBehaviour
 
     [Header("Input")]
     public float deadZone = 0.05f;
-    public float runThreshhold = 0.5f;
+    public float runThreshold = 0.5f;
 
     //raycasting
     [Header("Raycasting")]
@@ -260,8 +275,15 @@ public class GameCharacter : MonoBehaviour
 
         ProcessInput();
 
+		StateUpdate();
+
         UpdateAnim();
     }
+
+	virtual protected void StateUpdate()
+	{
+
+	}
 
     virtual protected void ProcessInput()
     {
@@ -277,7 +299,7 @@ public class GameCharacter : MonoBehaviour
     //--------------------------------------------------------------------------
     // Physics
     //--------------------------------------------------------------------------
-    void FixedUpdate()
+    virtual protected void FixedUpdate()
     {
         // * DEController
         //현재 속도 측정( 전달받은 속도를 바탕으로 중력, 지면 마찰 등 적용 )
@@ -315,10 +337,8 @@ public class GameCharacter : MonoBehaviour
     protected Rigidbody2D OnTopOfCharacter()
     {
         Rigidbody2D character = GetRelevantCharacterCast(mCastOriginCenterGround, 0.15f);
-        if (character == null)
-            character = GetRelevantCharacterCast(mCastOrginBackGround, 0.15f);
-        if (character == null)
-            character = GetRelevantCharacterCast(mCastOriginForwardGround, 0.15f);
+        if (character == null) character = GetRelevantCharacterCast(mCastOrginBackGround, 0.15f);
+        if (character == null) character = GetRelevantCharacterCast(mCastOriginForwardGround, 0.15f);
 
         return character;
     }

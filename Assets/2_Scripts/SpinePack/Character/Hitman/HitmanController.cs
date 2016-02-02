@@ -27,35 +27,38 @@ public class HitmanController : GamePlayer
     */
 
     public float wallJumpXSpeed = 3;
+
+	//------------------------------------------------------------------------------
+	// slide
+	//------------------------------------------------------------------------------
     public float slideDuration = 0.5f;
     public float slideVelocity = 6;
     public float slideSquish = 0.6f;
-    /// <summary>
-    /// How much velocity to apply during a punch animation when XVelocity Event is fired.
-    /// </summary>
-    public float punchVelocity = 7;
-    /// <summary>
-    /// How much velocity to apply during an uppercut when YVelocity Event is fired
-    /// </summary>
+
+
+	//------------------------------------------------------------------------------
+	// wallSlide
+	//------------------------------------------------------------------------------
+	public float wallSlideSpeed = -2;
+	//아무런 입력이 없이 슬라이딩이 지속될 시간
+	public float wallSlideWatchdogDuration = 10f;
+
+	//------------------------------------------------------------------------------
+	// anim events
+	//------------------------------------------------------------------------------
+    // 펀치 공격 혹은 어퍼컷에서 XVelocity 이벤트가 발생할 경우 x축에 영향을 끼칠 속도.
+	public float punchVelocity = 7;
+	//어퍼컷공격 시 YVelocity 이벤트가 발생한 경우 y 축에 영향을 끼칠 속도.
     public float uppercutVelocity = 5;
-    /// <summary>
-    /// Downward velocity for duration of Down Attack
-    /// </summary>
-    public float downAttackVelocity = 20;
-    /// <summary>
-    /// How long it takes for a punch combo to timeout and go back to idle
-    /// </summary>
-    public float attackWatchdogDuration = 0.5f;
-    /// <summary>
-    /// How long to wait before falling off of a wall if no input
-    /// </summary>
-    public float wallSlideWatchdogDuration = 10f;
-    /// <summary>
-    /// Fall speed limit when wall sliding
-    /// </summary>
-    public float wallSlideSpeed = -2;
+	//downattack 에서 YVelocity 이벤트가 발생한 경우 y 축에 영향을 끼칠 속도.
+	public float downAttackVelocity = 20;
+    //공격 시 Pause 이벤트가 발생한 경우. 공격 콤보를 위한 다음 입력을 기다릴 시간.
+	public float attackWatchdogDuration = 0.5f;
 
 
+	//------------------------------------------------------------------------------
+	// anim animation names
+	//------------------------------------------------------------------------------
     [Header("Animations")]
     [SpineAnimation]
     public string walkAnim;
@@ -87,34 +90,50 @@ public class HitmanController : GamePlayer
     [SpineAnimation]
     public string clearAttackAnim;
 
+	//------------------------------------------------------------------------------
+	// sound
+	//------------------------------------------------------------------------------
     [Header("Sounds")]
     public string footstepSound;
     public string landSound;
     public string jumpSound;
     public string slideSound;
 
+	//------------------------------------------------------------------------------
+	// effectPrefab
+	//------------------------------------------------------------------------------
     public GameObject downAttackPrefab;
 
-    float slideStartTime;
-    bool doSlide;
+	//------------------------------------------------------------------------------
+	// private
+	//------------------------------------------------------------------------------
 
-    bool attackWasPressed;
+	//behavior trigger
+	bool doSlide;
+
+	//slide
+    float slideStartTime;
+
+	//콤보 검사
     bool waitingForAttackInput;
     float attackWatchdog;
-    float airControlLockoutTime = 0;//뭐지?
+	//업어택을 했냐 안했냐
+	bool upAttackUsed;
+	//다운어택
+	bool downAttackRecovery = false;
+	float downAttackRecoveryTime = 0;
+	bool velocityLock;//다운어택중 극적인 효과를 위해 속도를 고정
+
+	//wall slide
     float wallSlideWatchdog;
     float wallSlideStartTime;
     bool wallSlideFlip;
     bool wasWallJump;
 
-    bool upAttackUsed;
-    bool downAttackRecovery = false;
-    float downAttackRecoveryTime = 0;
-
-    bool velocityLock;
-
-    //box 2d workarounds
-    float savedXVelocity;//왜 저장할까?
+	//slide시 적용, slide 동안 x 적용 
+	//jump loop, fall loop 점프 후 땅에 착지했을때 실적용
+    float savedXVelocity;
+	float airControlLockoutTime = 0;//벽점프 시 현재보다 조금 뒤로. x이동과 플립에 관여.
 
     override protected void Start()
     {
@@ -416,7 +435,7 @@ public class HitmanController : GamePlayer
                 upAttackUsed = false;
                 
                 // > run
-                if (absX > runThreshhold)
+                if (absX > runThreshold)
                 {
                     xVelocity = runSpeed * Mathf.Sign(axisX);
                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 15);
@@ -495,7 +514,7 @@ public class HitmanController : GamePlayer
             if (OnGround)
             {
                 SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-                if (absX > runThreshhold)
+                if (absX > runThreshold)
                 {
                     velocity.x = savedXVelocity;
                     SetState( ActionState.RUN );
@@ -526,9 +545,9 @@ public class HitmanController : GamePlayer
                 SoundPalette.PlaySound(landSound, 1, 1, transform.position);
                 SetState( ActionState.IDLE );
             }
-            else if (!IsPressingAgainstWall)
+			else if ( IsPressingAgainstWall == false )
             {
-                if (!EnemyBounceCheck(ref velocity))
+				if ( EnemyBounceCheck(ref velocity) == false )
                 {
                     if (axisY > -0.5f)
                     {
@@ -560,7 +579,7 @@ public class HitmanController : GamePlayer
         {
             if (Time.time > airControlLockoutTime)
             {
-                if (absX > runThreshhold)
+                if (absX > runThreshold)
                 {
                     velocity.x = Mathf.MoveTowards(velocity.x, runSpeed * Mathf.Sign(axisX), Time.deltaTime * 8);
                 }
@@ -594,7 +613,7 @@ public class HitmanController : GamePlayer
             //위를 누르고 공격을 눌렀다면 공중에서 업어택을 한다.
             else if (attackWasPressed && mAxis.y > 0.5f)
             {
-                if (!upAttackUsed)
+				if ( upAttackUsed== false )
                 {
                     SetState( ActionState.UPATTACK );
                     skeletonAnimation.AnimationName = upAttackAnim;
@@ -652,6 +671,7 @@ public class HitmanController : GamePlayer
         {
             float slideTime = Time.time - slideStartTime;
 
+			//슬라이딩 멈추고 idle 로 가자.
             if (slideTime > slideDuration)
             {
                 primaryCollider.transform.localScale = Vector3.one;
@@ -725,61 +745,56 @@ public class HitmanController : GamePlayer
             }
         }
 
-        //down attack
+        //down attack loop.
         if (state == ActionState.DOWNATTACK)
         {
-            //recovering from down attack
-            if (downAttackRecovery)
+			//아래로 떨어지고 있는 중이다. 아직 땅에 닿지 않은 상태
+			if (downAttackRecovery == false )
             {
-                //time elapsed, jump back to feet using JUMP state
-                if (downAttackRecoveryTime <= 0)
-                {
-                    SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-                    velocity.y = jumpSpeed + (platformYVelocity >= 0 ? platformYVelocity : 0);
-                    mJumpStartTime = Time.time;
-                    SetState( ActionState.JUMP );
-                    mDoJump = false;
-                    mJumpPressed = false;
-                }
-                //wait for a bit
-                else
-                {
-                    downAttackRecoveryTime -= Time.deltaTime;
-                    velocity = Vector2.zero;
-                    if (movingPlatform) velocity = movingPlatform.Velocity;
-                }
+				//땅에 닿았다.
+				if (OnGround)
+				{
+					SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
+					downAttackRecoveryTime = 2f;//적절한 연출을 위해 하드코딩으로 회복시간을 가진다.
+					downAttackRecovery = true;
+
+					//아래 두줄은 뭘 의미할까?
+					skeletonAnimation.skeleton.Data.FindAnimation(clearAttackAnim).Apply(skeletonAnimation.skeleton, 0, 1, false, null);
+					skeletonAnimation.state.GetCurrent(0).Time = (downAttackFrameSkip / 30f);
+
+					if (downAttackPrefab) Instantiate(downAttackPrefab, transform.position + new Vector3(0, 0.25f, 0), Quaternion.identity);
+					if (movingPlatform) velocity = movingPlatform.Velocity;
+				}
+				else
+				{
+					//다운어택으로 떨어지는 중.
+				}
             }
+			//땅에 닿은 후 회복중.
             else
             {
-                //Has impacted the ground, advance sub-state and recover
-                if (OnGround)
-                {
-                    SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-                    downAttackRecoveryTime = 2f;  //hard coded value to add drama to recovery
-                    downAttackRecovery = true;
-
-                    //TODO: use set value
-                    skeletonAnimation.skeleton.Data.FindAnimation(clearAttackAnim).Apply(skeletonAnimation.skeleton, 0, 1, false, null);
-                    skeletonAnimation.state.GetCurrent(0).Time = (downAttackFrameSkip / 30f);
-
-                    //spawn effect
-                    if (downAttackPrefab) Instantiate(downAttackPrefab, transform.position + new Vector3(0, 0.25f, 0), Quaternion.identity);
-
-                    //adhere to moving platform
-                    if (movingPlatform) velocity = movingPlatform.Velocity;
-
-                }
-                else
-                {
-                    //TODO:  Watchdog and error case check
-                }
+				if (downAttackRecoveryTime > 0)
+				{
+					downAttackRecoveryTime -= Time.deltaTime;
+					velocity = Vector2.zero;
+					if (movingPlatform) velocity = movingPlatform.Velocity;
+				}
+				//회복이 끝나면 점프 상태로 변경한다.
+				else
+				{
+					SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
+					velocity.y = jumpSpeed + (platformYVelocity >= 0 ? platformYVelocity : 0);
+					mJumpStartTime = Time.time;
+					SetState( ActionState.JUMP );
+					mDoJump = false;
+					mJumpPressed = false;
+				}
             }
 
-            //pause all movement, set by Pause event in animation for great dramatic posing.
-            if (velocityLock)
-                velocity = Vector2.zero;
+            if (velocityLock) velocity = Vector2.zero;
         }
 
+		//플립처리. velociy 적용.
         mFlipped = skeletonAnimation.Skeleton.FlipX;
         mRb.velocity = velocity;
     }
@@ -787,17 +802,16 @@ public class HitmanController : GamePlayer
     //Bounce off a player in an angry way
     bool EnemyBounceCheck(ref Vector2 velocity)
     {
-        var character = OnTopOfCharacter();
-        if (character != null)
-        {
-            SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-            character.SendMessage("Hit", 1, SendMessageOptions.DontRequireReceiver);
-            velocity.y = headBounceSpeed;
-            mJumpStartTime = Time.time;
-            SetState( ActionState.JUMP );
-            mDoJump = false;
-            return true;
-        }
-        return false;
+		Rigidbody2D character = OnTopOfCharacter();
+
+		if( character == null ) return false;
+
+		SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
+		character.SendMessage("Hit", 1, SendMessageOptions.DontRequireReceiver);
+		velocity.y = headBounceSpeed;
+		mJumpStartTime = Time.time;
+		SetState( ActionState.JUMP );
+		mDoJump = false;
+		return true;
     }
 }

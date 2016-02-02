@@ -365,7 +365,7 @@ public class GunmanController : GameCharacter
             {
                 jetpackFuel = Mathf.MoveTowards(jetpackFuel, jetpackDuration, Time.deltaTime * jetpackRecovery);
                 mJumpCount = 0;
-                if (absX > runThreshhold && (!aiming || allowRunAim))
+                if (absX > runThreshold && (!aiming || allowRunAim))
                 {
                     xVelocity = runSpeed * Mathf.Sign(x);
                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 15);
@@ -420,7 +420,7 @@ public class GunmanController : GameCharacter
             if (OnGround)
             {
                 SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-                if (absX > runThreshhold)
+                if (absX > runThreshold)
                 {
                     velocity.x = savedXVelocity;
                     SetState( ActionState.RUN );
@@ -448,7 +448,7 @@ public class GunmanController : GameCharacter
         //air control
         if (state == ActionState.JUMP || state == ActionState.FALL)
         {
-            if (absX > runThreshhold)
+            if (absX > runThreshold)
             {
                 velocity.x = Mathf.MoveTowards(velocity.x, runSpeed * Mathf.Sign(x), Time.deltaTime * 8);
             }

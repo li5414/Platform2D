@@ -8,3 +8,8 @@
 ActionState.FALL
 ActionState.WALLSLIDE
 
+
+* 무빙플랫폼의 속도적용유무
+* 마찰력 적용
+* x 이동.
+* y 이동.
