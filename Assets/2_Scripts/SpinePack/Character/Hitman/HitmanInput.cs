@@ -13,15 +13,15 @@ public class HitmanInput : MonoBehaviour
 	public KeyCode attackKey = KeyCode.J;
 	public KeyCode specialKey = KeyCode.K;
 
-	GamePlayer mPlayer;
+	HitmanController mPlayer;
 
 	void Start ()
 	{
-		mPlayer = GetComponent<GamePlayer>();
+		mPlayer = GetComponent<HitmanController>();
 		mPlayer.HandleInput += HandleInput;
 	}
 
-	void HandleInput ( GameCharacter gamecontroller )
+	void HandleInput ( TempGameCharacter gamecontroller )
 	{
 		Vector2 axis = Vector2.zero;
 		axis.x = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));

@@ -69,7 +69,7 @@ public class GunmanInput : MonoBehaviour {
 		GetComponent<GunmanController>().HandleInput += HandleInput;
 	}
 
-	void HandleInput (GameCharacter gamecontroller) {
+	void HandleInput (TempGameCharacter gamecontroller) {
 
 		GunmanController controller = gamecontroller as GunmanController;
 		Vector2 moveStick = Vector2.zero;

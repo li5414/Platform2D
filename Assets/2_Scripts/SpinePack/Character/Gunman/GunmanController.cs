@@ -8,7 +8,7 @@ using Spine;
 using UnityEditor;
 #endif
 
-public class GunmanController : GameCharacter
+public class GunmanController : TempGameCharacter
 {
     /*
     ActionState[] ableList = 
@@ -136,6 +136,13 @@ public class GunmanController : GameCharacter
             }
         }
     }
+    
+    override protected void Update()
+    {
+        if (HandleInput != null) HandleInput(this);
+
+        UpdateAnim();
+    }
 
     public void Input(
         Vector2 moveStick, Vector2 aimStick,
@@ -146,7 +153,7 @@ public class GunmanController : GameCharacter
 
         if (((OnGround || movingPlatform) && state < ActionState.JUMP) || (state == ActionState.FALL/* Jetpack fuel here*/))
         {
-            if (!mJumpPressed)
+            if (mJumpPressed == false )
             {
 
                 if (JUMP_wasPressed && this.mPassThroughPlatform == null && moveStick.y < -0.25f)
@@ -564,7 +571,7 @@ public class GunmanController : GameCharacter
         return false;
     }
 
-    override protected void UpdateAnim()
+    void UpdateAnim()
     {
         switch (state)
         {

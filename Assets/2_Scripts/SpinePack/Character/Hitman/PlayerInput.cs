@@ -24,15 +24,14 @@ public class PlayerInput : MonoBehaviour
 
 	void HandleInput ( GameCharacter gamecontroller )
 	{
-		InputData data;
+		InputData data = new InputData();
 		data.axisX = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));
 		data.axisY = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
-
 		data.jumpTrigger = Input.GetKeyDown (jumpKey);
 		data.jumpPressed = Input.GetKey (jumpKey);
 		data.attackTrigger = Input.GetKey (attackKey);
 		data.specailATrigger = Input.GetKey (specialKey);
-
-		mPlayer.mInputData = data;
+        
+		mPlayer.input = data;
 	}
 }

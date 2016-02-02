@@ -147,8 +147,20 @@ public class GameCharacter : MonoBehaviour
     protected float mJumpStartTime;
     protected bool mIsRun = false;
 
-	//trigger
-	protected bool mDoJump;
+    //통합 과정 시 추가한 것들 & 임시
+    
+    protected OneWayPlatform mPlatformOneWay;
+    protected MovingPlatform mPlatformMoving;
+    
+    protected Rigidbody2D mStompableObject;
+    
+    protected bool BackOnGround;
+    protected bool ForwardOnGround;
+    protected bool CenterOnGround;
+    
+    protected bool mIsPressAgainstWall;
+    
+    protected Vector2 mMovingPlatformVelocity;
     
     public bool Flipped
     {
@@ -252,7 +264,7 @@ public class GameCharacter : MonoBehaviour
 
     IEnumerator PassthroughRoutine(OneWayPlatform platform)
     {
-        currentMask = passThroughMask;
+        currentMask = passThroughMask;//원웨이를 제외한 레이어 마스크
         Physics2D.IgnoreCollision(primaryCollider, platform.collider, true);
         mPassThroughPlatform = platform;
         yield return new WaitForSeconds(0.5f);
@@ -267,33 +279,43 @@ public class GameCharacter : MonoBehaviour
 
     virtual protected void Update()
     {
-        // * DECharacter
-        //input
-        //fsm update.
-        
         if (HandleInput != null) HandleInput(this);
 
-        ProcessInput();
-
 		StateUpdate();
-
-        UpdateAnim();
     }
 
 	virtual protected void StateUpdate()
 	{
 
 	}
-
-    virtual protected void ProcessInput()
+    
+    //--------------------------------------------------------------------------
+    // ?
+    //--------------------------------------------------------------------------
+    
+    //Enter the fall state, optionally using a jump counter.  IE: to prevent jumping after slipping off a platform
+    protected void SetFallState(bool useJump)
     {
-
+        if (useJump) mJumpCount++;
+        SetState( ActionState.FALL );
     }
 
-    //Sync the Spine Animation with the current ActionState. Handle a few "edge" cases to do with inclines and uh... edges.
-    virtual protected void UpdateAnim()
+    //work-around for Box2D not updating friction values at runtime...
+    protected void SetFriction(float friction)
     {
-
+        if (friction != mPhysicsMaterial.friction)
+        {
+            mPhysicsMaterial.friction = friction;
+            primaryCollider.gameObject.SetActive(false);
+            primaryCollider.gameObject.SetActive(true);
+        }
+    }
+    //Special effects helper function
+    protected void SpawnAtFoot(GameObject prefab, Quaternion rotation, Vector3 scale)
+    {
+        var bone = skeletonAnimation.Skeleton.FindBone(footEffectBone);
+        Vector3 pos = skeletonAnimation.transform.TransformPoint(bone.WorldX, bone.WorldY, 0);
+        ((GameObject)Instantiate(prefab, pos, rotation)).transform.localScale = scale;
     }
     
     //--------------------------------------------------------------------------
@@ -316,35 +338,10 @@ public class GameCharacter : MonoBehaviour
         // * DECharacter
         //지상에 막 닿았따면 점프 수를 초기화 한다.
         //지상에 막 닿았고 밟은 플랫폼의 착지 이펙트가 있따면 생성
-        
-        HandlePhysics();
-    }
-
-    virtual protected void HandlePhysics()
-    {
-
     }
     
-    protected MovingPlatform GetMovingPlatform()
-    {
-        MovingPlatform mp = MovingPlatformCast(mCastOriginCenterGround);
-        if (mp == null) mp = MovingPlatformCast(mCastOrginBackGround);
-        if (mp == null) mp = MovingPlatformCast(mCastOriginForwardGround);
-        return mp;
-    }
-    
-    //Detect being on top of a characters's head
-    protected Rigidbody2D OnTopOfCharacter()
-    {
-        Rigidbody2D character = GetRelevantCharacterCast(mCastOriginCenterGround, 0.15f);
-        if (character == null) character = GetRelevantCharacterCast(mCastOrginBackGround, 0.15f);
-        if (character == null) character = GetRelevantCharacterCast(mCastOriginForwardGround, 0.15f);
-
-        return character;
-    }
-
     //Raycasting stuff
-    Rigidbody2D GetRelevantCharacterCast(Vector3 origin, float dist)
+    protected Rigidbody2D GetRelevantCharacterCast(Vector3 origin, float dist)
     {
         RaycastHit2D[] hits = Physics2D.RaycastAll(transform.TransformPoint(origin), Vector2.down, dist, characterMask);
         if (hits.Length > 0)
@@ -371,25 +368,6 @@ public class GameCharacter : MonoBehaviour
         return null;
     }
 
-    //Enter the fall state, optionally using a jump counter.  IE: to prevent jumping after slipping off a platform
-    protected void SetFallState(bool useJump)
-    {
-        if (useJump) mJumpCount++;
-        SetState( ActionState.FALL );
-    }
-
-    //work-around for Box2D not updating friction values at runtime...
-    protected void SetFriction(float friction)
-    {
-        if (friction != mPhysicsMaterial.friction)
-        {
-            mPhysicsMaterial.friction = friction;
-            primaryCollider.gameObject.SetActive(false);
-            primaryCollider.gameObject.SetActive(true);
-        }
-    }
-
-    //TODO:  deal with SetFriction workaround breaking ignore pairs.........
     protected void IgnoreCharacterCollisions(bool ignore)
     {
         foreach (GameCharacter gc in All)
@@ -404,15 +382,7 @@ public class GameCharacter : MonoBehaviour
 		if (primaryCollider == null) Physics2D.IgnoreCollision(GetComponentInChildren<Collider2D>(), collider, ignore);
 		else Physics2D.IgnoreCollision(primaryCollider, collider, ignore);
 	}
-
-    //Special effects helper function
-    protected void SpawnAtFoot(GameObject prefab, Quaternion rotation, Vector3 scale)
-    {
-        var bone = skeletonAnimation.Skeleton.FindBone(footEffectBone);
-        Vector3 pos = skeletonAnimation.transform.TransformPoint(bone.WorldX, bone.WorldY, 0);
-        ((GameObject)Instantiate(prefab, pos, rotation)).transform.localScale = scale;
-    }
-
+    
     //--------------------------------------------------------------------------------
     // check Physics
     //--------------------------------------------------------------------------------
@@ -443,9 +413,7 @@ public class GameCharacter : MonoBehaviour
 		return platform;
 	}
 
-	//see if character is on the ground
-	//throw onIncline flag
-	bool GroundCast(Vector3 origin)
+	protected bool GroundCast(Vector3 origin)
 	{
 		RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(origin), Vector2.down, 0.15f, currentMask);
 		if (hit.collider != null && !hit.collider.isTrigger)
@@ -467,62 +435,6 @@ public class GameCharacter : MonoBehaviour
         get
         {
             return CenterOnGround || BackOnGround || ForwardOnGround;
-        }
-    }
-
-    protected bool BackOnGround
-    {
-        get
-        {
-            return GroundCast(mFlipped ? mCastOriginForwardGround : mCastOrginBackGround);
-        }
-    }
-
-    protected bool ForwardOnGround
-    {
-        get
-        {
-            return GroundCast(mFlipped ? mCastOrginBackGround : mCastOriginForwardGround);
-        }
-    }
-
-    protected bool CenterOnGround
-    {
-        get
-        {
-            return GroundCast(mCastOriginCenterGround);
-        }
-    }
-    
-    //벽을 밀고 있는지 검사한다.
-    protected bool IsPressingAgainstWall
-    {
-        get
-        {
-            float x = mRb.velocity.x;
-            bool usingVelocity = true;
-            if (Mathf.Abs(x) < 0.1f)
-            {
-                x = mAxis.x;
-                if (Mathf.Abs(x) <= deadZone)
-                {
-                    return false;
-                }
-                else
-                {
-                    usingVelocity = false;
-                }
-            }
-            
-            RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(mCastOriginWall), new Vector2(x, 0).normalized, mCastOriginWallDistance + (usingVelocity ? x * Time.deltaTime : 0), currentMask);
-            if (hit.collider != null && !hit.collider.isTrigger)
-            {
-                if (hit.collider.GetComponent<OneWayPlatform>()) return false;
-
-                return true;
-            }
-
-            return false;
         }
     }
 

@@ -4,7 +4,7 @@ using System.Collections;
 public class GamePlayer : GameCharacter
 {
 	//input
-	public InputData mInputData;
+	public InputData input;
 
 	public Vector2 inputedAxis;
 	public bool inputJumpWasPressed;

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 
-public class BoxmanController : GameCharacter
+public class BoxmanController : TempGameCharacter
 {
     /*
     ActionState[] ableList =
