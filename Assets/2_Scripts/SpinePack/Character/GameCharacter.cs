@@ -142,10 +142,7 @@ public class GameCharacter : MonoBehaviour
     
 	protected bool mFlipped;
 
-    protected Vector2 mAxis;
-    protected bool mJumpPressed;
     protected float mJumpStartTime;
-    protected bool mIsRun = false;
 
     //통합 과정 시 추가한 것들 & 임시
     

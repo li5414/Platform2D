@@ -254,8 +254,11 @@ public class FighterController : GamePlayer
         }
     }
 
+    Vector2 vel = new Vector2();
+    float speedX;
     override protected void StateEnter()
     {
+        //막 땅에 닿으면 점ㅍ 카운트를 0 해야한ㄷ.
         switch (state)
         {
             case ActionState.IDLE:
@@ -269,14 +272,28 @@ public class FighterController : GamePlayer
                     else if (BackOnGround) skeletonAnimation.AnimationName = balanceForward;
                     else if (ForwardOnGround) skeletonAnimation.AnimationName = balanceBackward;
                 }
+
+                vel.x = movingPlatform ? mMovingPlatformVelocity.x : Mathf.MoveTowards(vel.x, 0, Time.deltaTime * 10);
+                vel.y = mMovingPlatformVelocity.y;
+                SetFriction(movingPlatform ? movingFriction : idleFriction);
                 break;
 
             case ActionState.WALK:
                 skeletonAnimation.AnimationName = walkAnim;
+
+                speedX = walkSpeed * Mathf.Sign(input.axisX);
+                vel.x = Mathf.MoveTowards(vel.x, speedX + mMovingPlatformVelocity.x, Time.deltaTime * 25);
+                vel.y = mMovingPlatformVelocity.y;
+                SetFriction(movingFriction);
                 break;
 
             case ActionState.RUN:
                 skeletonAnimation.AnimationName = runAnim;
+
+                speedX = runSpeed * Mathf.Sign(input.axisX);
+                vel.x = Mathf.MoveTowards(vel.x, speedX + mMovingPlatformVelocity.x, Time.deltaTime * 15);
+                vel.y = mMovingPlatformVelocity.y;
+                SetFriction(movingFriction);
                 break;
 
             case ActionState.JUMP:
@@ -286,9 +303,9 @@ public class FighterController : GamePlayer
 
                 SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
 
-                float vx = 0f;//RigidbodyVX;
-                float vy = mJumpCount > 0 ? airJumpSpeed : jumpSpeed;
-                vy += mMovingPlatformVelocity.y;
+                vel.x = 0f;//RigidbodyVX;
+                vel.y = mJumpCount > 0 ? airJumpSpeed : jumpSpeed;
+                vel.y += mMovingPlatformVelocity.y;
 
                 mJumpStartTime = Time.time;
 
@@ -299,7 +316,7 @@ public class FighterController : GamePlayer
                 }
                 else if (groundJumpPrefab != null && mJumpCount == 0)
                 {
-                    if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, vx >= 0 ? 90 : -90), new Vector3(vx >= 0 ? 1 : -1, -1, 1));
+                    if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, vel.x >= 0 ? 90 : -90), new Vector3(vel.x >= 0 ? 1 : -1, -1, 1));
                     else SpawnAtFoot(groundJumpPrefab, Quaternion.identity, new Vector3(mFlipped ? -1 : 1, 1, 1));
                 }
 
@@ -313,10 +330,25 @@ public class FighterController : GamePlayer
 
             case ActionState.WALLSLIDE:
                 skeletonAnimation.AnimationName = wallSlideAnim;
+
+                mJumpCount = 0;
                 break;
 
             case ActionState.SLIDE:
                 skeletonAnimation.AnimationName = slideAnim;
+
+                SoundPalette.PlaySound(slideSound, 1, 1, transform.position);
+                slideStartTime = Time.time;
+                SetFriction(movingFriction);
+
+                vel.x = mFlipped ? -slideVelocity : slideVelocity;
+                savedXVelocity = vel.x;
+                vel.x += mMovingPlatformVelocity.x;
+
+                primaryCollider.transform.localScale = new Vector3(1, slideSquish, 1);
+                IgnoreCharacterCollisions(true);
+
+                if (skeletonGhost != null) skeletonGhost.ghostingEnabled = true;
                 break;
 
             case ActionState.ATTACK:
@@ -330,31 +362,80 @@ public class FighterController : GamePlayer
         }
     }
 
+    void Move()
+    {
+
+    }
+
     override protected void StateUpdate()
     {
         switch (state)
         {
             case ActionState.IDLE:
                 if (CheckJump()) return;
+                if (CheckSlide()) return;
+                if (CheckGroundFall()) return;
+
+                if (CheckWalk()) return;
+                Move();
                 break;
 
             case ActionState.WALK:
                 if (CheckJump()) return;
+                if (CheckSlide()) return;
+                if (CheckGroundFall()) return;
+
+                if (CheckIdle()) return;
+                if (CheckRun()) return;
+                Move();
                 break;
 
             case ActionState.RUN:
                 if (CheckJump()) return;
+                if (CheckSlide()) return;
+                if (CheckGroundFall()) return;
+
+                if (CheckRunStop()) return;
+                Move();
                 break;
 
             case ActionState.JUMP:
+                if (CheckJumpFall()) return;
                 break;
 
             case ActionState.FALL:
                 if (CheckJump()) return;
+                if (CheckBounceCheck()) return;
+                if (CheckFallToGround()) return;
+
+                savedXVelocity = vel.x;
                 break;
 
             case ActionState.WALLSLIDE:
                 if (CheckWallJump()) return;
+                if (CheckBounceCheck()) return;
+                if (CheckWallSlideToGround()) return;
+
+                if (input.axisY < -0.5f)
+                {
+                    SetFallState(true);
+                    return;
+                }
+
+                if (wallSlideWatchdog <= 0)
+                {
+                    SetFallState(true);
+                    return;
+                }
+                
+                //벽을 지속적으로 누르면 슬라이딩 유지를 할 수 있도록 시간을 갱신한다.
+                if (mIsPressAgainstWall )
+                {
+                    wallSlideWatchdog = wallSlideWatchdogDuration;
+                    skeletonAnimation.Skeleton.FlipX = wallSlideFlip;
+                }
+                else wallSlideWatchdog -= Time.deltaTime;
+
                 break;
 
             case ActionState.SLIDE:
@@ -375,14 +456,33 @@ public class FighterController : GamePlayer
         // LADDER_CLIMB,LADDER_CLIMB_MOVE,
         // LOOKUP,
     }
+
+    bool CheckWallSlideToGround()
+    {
+        //지상이고, x속도가 없고 월슬라이드 한지 최소 0.2f 는 넘었을때  idle 로 가자.
+        if (OnGround == false) return false;
+        if (vel.x != 0f) return false; // ? 이건 왜? 
+        if (Time.time - wallSlideStartTime < 0.2f) return false;
+
+        SoundPalette.PlaySound(landSound, 1, 1, transform.position);
+        SetState(ActionState.IDLE);
+
+        //
+        if (input.axisX == 0) SetState(ActionState.SLIDE);
+        else SetState(ActionState.WALK);
+
+        return true;
+    }
     //--------------------------------------------------------------------------------------------
     // state 변경 조건 검사
     //--------------------------------------------------------------------------------------------
 
     bool CheckSlide()
     {
-        //idle, walk, run 중 슬라이딩 시도( 입력 ) 했을 때 
-        return false;
+        if (input.specailATrigger == false) return false;
+
+        SetState(ActionState.SLIDE);
+        return true;
     }
 
     bool CheckWallJump()
@@ -421,7 +521,7 @@ public class FighterController : GamePlayer
         {
             SetState(ActionState.JUMP);
         }
-        
+
         return true;
     }
 
@@ -436,6 +536,100 @@ public class FighterController : GamePlayer
 
         return true;
     }
+
+    bool CheckWalk()
+    {
+        if (input.axisX == 0f) return false;
+        SetState(ActionState.WALK);
+        return true;
+    }
+
+    bool CheckIdle()
+    {
+        if (input.axisX != 0f) return false;
+        SetState(ActionState.IDLE);
+        return true;
+    }
+
+    bool CheckRun()
+    {
+        if (input.inputRun == false) return false;
+        SetState(ActionState.RUN);
+        return true;
+    }
+
+    bool CheckRunStop()
+    {
+        if (input.inputRun) return false;
+
+        if (input.axisX != 0f) SetState(ActionState.WALK);
+        else SetState(ActionState.IDLE);
+        return true;
+    }
+
+    bool CheckGroundFall()
+    {
+        if (OnGround) return false;//movingplatform 검사해야 하나?
+
+        SetFallState(true);
+        return true;
+    }
+
+    bool CheckJumpFall()
+    {
+        //jump의 loop 가 섞여 있다.
+        float jumpTime = Time.time - mJumpStartTime;
+        savedXVelocity = vel.x;
+
+        if (input.jumpPressed == false || jumpTime >= jumpDuration || downAttackRecovery)
+        {
+            mJumpStartTime -= jumpDuration;
+
+            if (vel.y > 0) vel.y = Mathf.MoveTowards(vel.y, 0, Time.deltaTime * 30);
+
+            if (vel.y <= 0 || (jumpTime < jumpDuration && OnGround))
+            {
+                if (downAttackRecovery == false)
+                {
+                    SetFallState(false);
+                }
+                else
+                {
+                    downAttackRecovery = false;
+                }
+
+            }
+        }
+        //
+        SetFallState(false);
+        return true;
+    }
+
+    bool CheckFallToGround()
+    {
+        if (OnGround == false) return false;
+
+        SoundPalette.PlaySound(landSound, 1, 1, transform.position);
+
+        if (input.axisX == 0) SetState(ActionState.SLIDE);
+        else SetState(ActionState.WALK);
+
+        return true;
+    }
+
+    bool CheckBounceCheck()
+    {
+        if (mStompableObject == null) return false;
+
+        mStompableObject.SendMessage("Hit", 1, SendMessageOptions.DontRequireReceiver);
+
+        vel.y = headBounceSpeed;
+        //이후 JumpEnter 에서 위 헤더 점프 바운스가 무시되다. 수정하자.
+        SetState(ActionState.JUMP);
+        return true;
+    }
+
+    //----------------------------------------------------------------
 
     override protected void FixedUpdate()
     {
@@ -489,7 +683,7 @@ public class FighterController : GamePlayer
 
         if (Mathf.Abs(x) < 0.1f)
         {
-            x = mAxis.x;
+            x = input.axisX;
             if (Mathf.Abs(x) <= deadZone)
             {
                 mIsPressAgainstWall = false;

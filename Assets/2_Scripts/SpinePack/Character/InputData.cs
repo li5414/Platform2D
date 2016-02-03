@@ -5,6 +5,8 @@ public struct InputData
 {
 	public float axisX;
 	public float axisY;
+    
+    public float axisXabs;
 
 	public bool jumpTrigger;
 	public bool jumpPressed;

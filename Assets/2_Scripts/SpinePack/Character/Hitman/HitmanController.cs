@@ -916,174 +916,26 @@ public class HitmanController : TempGameCharacter
 //         //------------------------------------------------------------------------------
 //         // do sliding
 //         //------------------------------------------------------------------------------
-//         else if (doSlide)
-//         {
-//             SoundPalette.PlaySound(slideSound, 1, 1, transform.position);
-//             slideStartTime = Time.time;
-//             SetState( ActionState.SLIDE );
-//             SetFriction(movingFriction);
-//             doSlide = false;
-//             velocity.x = mFlipped ? -slideVelocity : slideVelocity;
-//             savedXVelocity = velocity.x;
-//             velocity.x += platformXVelocity;
-//             primaryCollider.transform.localScale = new Vector3(1, slideSquish, 1);
-//             IgnoreCharacterCollisions(true);
-
-//             if (skeletonGhost != null) skeletonGhost.ghostingEnabled = true;
-//         }
         
 //         //------------------------------------------------------------------------------
 //         // x move
 //         //------------------------------------------------------------------------------
-//         //IDLE WALK RUN. 즉 점프나 슬라이딩을 하지 않았다면.
-//         if (state < ActionState.JUMP)
-//         {
-//             if (OnGround || movingPlatform)
-//             {
-//                 mJumpCount = 0;
-//                 upAttackUsed = false;
-                
-//                 // > run
-//                 if (absX > runThreshold)
-//                 {
-//                     xVelocity = runSpeed * Mathf.Sign(axisX);
-//                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 15);
-//                     if (movingPlatform) velocity.y = platformYVelocity;
-//                     SetState( ActionState.RUN );
-//                     SetFriction(movingFriction);
-//                 }
-//                 // > walk
-//                 else if (absX > deadZone)
-//                 {
-//                     xVelocity = walkSpeed * Mathf.Sign(axisX);
-//                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 25);
-//                     if (movingPlatform) velocity.y = platformYVelocity;
-//                     SetState( ActionState.WALK );
-//                     SetFriction(movingFriction);
-//                 }
-//                 // > idle
-//                 else
-//                 {
-//                     velocity.x = movingPlatform ? platformXVelocity : Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 10);
-//                     if (movingPlatform) velocity.y = platformYVelocity;
-//                     SetState( ActionState.IDLE );
-//                     SetFriction(movingPlatform ? movingFriction : idleFriction);
-//                 }
-
-//                 if (attackWasPressed)
-//                 {
-//                     if (mAxis.y < 0.5f)
-//                     {
-//                         SetState( ActionState.ATTACK );
-//                         skeletonAnimation.AnimationName = attackAnim;
-//                     }
-//                     else
-//                     {
-//                         SetState( ActionState.UPATTACK );
-//                         skeletonAnimation.AnimationName = upAttackAnim;
-//                         upAttackUsed = true;
-//                     }
-//                 }
-//             }
-//             //IDLE WALK RUN 이였는데 땅에 닿는게 없는경우.
-//             else
-//             {
-//                 SetFallState(true);
-//             }
-//         }
 //         //JUMP loop
 //         else if (state == ActionState.JUMP)
 //         {
 //             float jumpTime = Time.time - mJumpStartTime;
 //             savedXVelocity = velocity.x;
-            
-//             if ( mJumpPressed == false || jumpTime >= jumpDuration || downAttackRecovery )
-//             {
-//                 mJumpStartTime -= jumpDuration;
-
-//                 if (velocity.y > 0) velocity.y = Mathf.MoveTowards(velocity.y, 0, Time.deltaTime * 30);
-
-//                 if (velocity.y <= 0 || (jumpTime < jumpDuration && OnGround))
-//                 {
-//                     if ( downAttackRecovery == false )
-//                     {
-//                         SetFallState(false);
-//                     }
-//                     else
-//                     {
-//                         downAttackRecovery = false;
-//                     }
-
-//                 }
-//             }
-//         }
-//         //fall loop
-//         else if (state == ActionState.FALL)
-//         {
-//             if (OnGround)
-//             {
-//                 SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-//                 if (absX > runThreshold)
-//                 {
-//                     velocity.x = savedXVelocity;
-//                     SetState( ActionState.RUN );
-//                 }
-//                 else if (absX > deadZone)
-//                 {
-//                     velocity.x = savedXVelocity;
-//                     SetState( ActionState.WALK );
-//                 }
-//                 else
-//                 {
-//                     velocity.x = savedXVelocity;
-//                     SetState( ActionState.IDLE );
-//                 }
-//             }
-//             else
-//             {
-//                 EnemyBounceCheck(ref velocity);
-//                 savedXVelocity = velocity.x;
-//             }
 //         }
 //         //wall slide loop
 //         else if (state == ActionState.WALLSLIDE)
 //         {
-//             mJumpCount = 0;
-//             if (OnGround && Mathf.Abs(velocity.x) < 0.1f && Time.time > (wallSlideStartTime + 0.2f))
-//             {
-//                 SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-//                 SetState( ActionState.IDLE );
-//             }
-// 			else if ( IsPressingAgainstWall == false )
-//             {
-// 				if ( EnemyBounceCheck(ref velocity) == false )
-//                 {
-//                     if (axisY > -0.5f)
-//                     {
-//                         wallSlideWatchdog -= Time.deltaTime;
-//                         if (wallSlideWatchdog <= 0)
-//                         {
-//                             SetFallState(true);
-//                         }
-//                     }
-//                     else
-//                     {
-//                         SetFallState(true);
-//                     }
-//                 }
-//             }
-//             else
-//             {
-//                 EnemyBounceCheck(ref velocity);
-//                 wallSlideWatchdog = wallSlideWatchdogDuration;
-//                 skeletonAnimation.Skeleton.FlipX = wallSlideFlip;
-//             }
 //         }
         
 //         //------------------------------------------------------------------------------
 //         // x move
 //         //------------------------------------------------------------------------------
-//         //air control
+//         -- todo
+//air control
 //         if (state == ActionState.JUMP || state == ActionState.FALL)
 //         {
 //             if (Time.time > airControlLockoutTime)
