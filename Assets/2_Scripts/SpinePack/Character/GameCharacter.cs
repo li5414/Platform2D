@@ -91,10 +91,6 @@ public class GameCharacter : MonoBehaviour
     public GameObject groundJumpPrefab;
     public GameObject airJumpPrefab;
 
-    [Header("Input")]
-    public float deadZone = 0.05f;
-    public float runThreshold = 0.5f;
-
     //raycasting
     [Header("Raycasting")]
     public LayerMask characterMask;

@@ -1,8 +1,32 @@
 {
-"skeleton": { "hash": "nWF86Mx4abNkuKL7qkJlzFGGEBE", "spine": "3.0.08", "width": 402.97, "height": 591.25, "images": "./images/" },
+"skeleton": { "hash": "Kszcg8fGWxmFpwlUHfP2Ctmqp0w", "spine": "2.1.27", "width": 399.63, "height": 591.21, "images": "./images/" },
 "bones": [
 	{ "name": "root" },
+	{ "name": "B_Leg_Goal", "parent": "root", "x": 19.26, "y": 2.83, "color": "ff3f00ff" },
+	{ "name": "F_Leg_Goal", "parent": "root", "x": -39.09, "y": 0.63, "color": "ff3f00ff" },
 	{ "name": "Hip", "parent": "root", "y": 157.1, "color": "989c9aff" },
+	{
+		"name": "B_Thigh",
+		"parent": "Hip",
+		"length": 97.48,
+		"x": 25.68,
+		"y": 5.18,
+		"scaleX": 0.715,
+		"scaleY": 0.715,
+		"rotation": -91.32,
+		"color": "ff0000ff"
+	},
+	{
+		"name": "F_Thigh",
+		"parent": "Hip",
+		"length": 97.48,
+		"x": -34.06,
+		"y": 5.18,
+		"scaleX": 0.715,
+		"scaleY": 0.715,
+		"rotation": -91.32,
+		"color": "00ff00ff"
+	},
 	{
 		"name": "Torso",
 		"parent": "Hip",
@@ -14,6 +38,28 @@
 		"rotation": 89.54,
 		"color": "989c9aff"
 	},
+	{ "name": "B_Shin", "parent": "B_Thigh", "length": 117.02, "x": 92.14, "y": -0.52, "rotation": -0.92, "color": "ff0000ff" },
+	{
+		"name": "B_UpperArm",
+		"parent": "Torso",
+		"length": 99.25,
+		"x": 171.76,
+		"y": -42.42,
+		"scaleX": 1.025,
+		"rotation": -144.97,
+		"color": "ff0000ff"
+	},
+	{ "name": "F_Shin", "parent": "F_Thigh", "length": 117.02, "x": 92.12, "y": 0.36, "rotation": -0.92, "color": "00ff00ff" },
+	{
+		"name": "F_UpperArm",
+		"parent": "Torso",
+		"length": 110.93,
+		"x": 168.94,
+		"y": 59.02,
+		"scaleX": 1.025,
+		"rotation": 142.14,
+		"color": "00ff00ff"
+	},
 	{
 		"name": "Neck",
 		"parent": "Torso",
@@ -24,6 +70,28 @@
 		"rotation": 1.35,
 		"color": "989c9aff"
 	},
+	{
+		"name": "B_Foot",
+		"parent": "B_Shin",
+		"length": 47.69,
+		"x": 112.26,
+		"y": -1.87,
+		"rotation": -30.34,
+		"inheritRotation": false,
+		"color": "ff0000ff"
+	},
+	{ "name": "B_Forearm", "parent": "B_UpperArm", "length": 190.52, "x": 94.34, "y": -0.48, "rotation": -4.05, "color": "ff0000ff" },
+	{
+		"name": "F_Foot",
+		"parent": "F_Shin",
+		"length": 47.69,
+		"x": 112.21,
+		"y": -0.71,
+		"rotation": -34.26,
+		"inheritRotation": false,
+		"color": "00ff00ff"
+	},
+	{ "name": "F_Forearm", "parent": "F_UpperArm", "length": 184.11, "x": 107.05, "y": -1.04, "rotation": 8.06, "color": "00ff00ff" },
 	{
 		"name": "Head",
 		"parent": "Neck",
@@ -45,74 +113,6 @@
 		"scaleY": 0.715,
 		"rotation": 149.03,
 		"color": "989c9aff"
-	},
-	{
-		"name": "F_UpperArm",
-		"parent": "Torso",
-		"length": 110.93,
-		"x": 168.94,
-		"y": 59.02,
-		"scaleX": 1.025,
-		"rotation": 142.14,
-		"color": "00ff00ff"
-	},
-	{ "name": "F_Forearm", "parent": "F_UpperArm", "length": 184.11, "x": 107.05, "y": -1.04, "rotation": 8.06, "color": "00ff00ff" },
-	{
-		"name": "B_UpperArm",
-		"parent": "Torso",
-		"length": 99.25,
-		"x": 171.76,
-		"y": -42.42,
-		"scaleX": 1.025,
-		"rotation": -144.97,
-		"color": "ff0000ff"
-	},
-	{ "name": "B_Forearm", "parent": "B_UpperArm", "length": 190.52, "x": 94.34, "y": -0.48, "rotation": -4.05, "color": "ff0000ff" },
-	{ "name": "F_Leg_Goal", "parent": "root", "x": -39.09, "y": 0.63, "color": "ff3f00ff" },
-	{
-		"name": "F_Thigh",
-		"parent": "Hip",
-		"length": 97.48,
-		"x": -34.06,
-		"y": 5.18,
-		"scaleX": 0.715,
-		"scaleY": 0.715,
-		"rotation": -91.32,
-		"color": "00ff00ff"
-	},
-	{ "name": "F_Shin", "parent": "F_Thigh", "length": 117.02, "x": 92.12, "y": 0.36, "rotation": -0.92, "color": "00ff00ff" },
-	{
-		"name": "F_Foot",
-		"parent": "F_Shin",
-		"length": 47.69,
-		"x": 112.21,
-		"y": -0.71,
-		"rotation": -34.26,
-		"inheritRotation": false,
-		"color": "00ff00ff"
-	},
-	{ "name": "B_Leg_Goal", "parent": "root", "x": 19.26, "y": 2.83, "color": "ff3f00ff" },
-	{
-		"name": "B_Thigh",
-		"parent": "Hip",
-		"length": 97.48,
-		"x": 25.68,
-		"y": 5.18,
-		"scaleX": 0.715,
-		"scaleY": 0.715,
-		"rotation": -91.32,
-		"color": "ff0000ff"
-	},
-	{ "name": "B_Shin", "parent": "B_Thigh", "length": 117.02, "x": 92.14, "y": -0.52, "rotation": -0.92, "color": "ff0000ff" },
-	{
-		"name": "B_Foot",
-		"parent": "B_Shin",
-		"length": 47.69,
-		"x": 112.26,
-		"y": -1.87,
-		"rotation": -30.34,
-		"inheritRotation": false,
-		"color": "ff0000ff"
 	}
 ],
 "ik": [
@@ -284,6 +284,14 @@
 					{ "time": 0.8333, "angle": 3.25 },
 					{ "time": 1, "angle": 0.33 },
 					{ "time": 1.5, "angle": 6.67 }
+				],
+				"flipX": [
+					{ "time": 0 },
+					{ "time": 1.5 }
+				],
+				"flipY": [
+					{ "time": 0 },
+					{ "time": 1.5 }
 				]
 			},
 			"B_Leg_Goal": {
@@ -450,6 +458,14 @@
 					{ "time": 0.3333, "angle": -4.31 },
 					{ "time": 1, "angle": 7.52 },
 					{ "time": 1.5, "angle": 3.67 }
+				],
+				"flipX": [
+					{ "time": 0 },
+					{ "time": 1.5 }
+				],
+				"flipY": [
+					{ "time": 0 },
+					{ "time": 1.5 }
 				]
 			},
 			"B_Leg_Goal": {
@@ -472,6 +488,14 @@
 				"translate": [
 					{ "time": 0, "x": 10.32, "y": -8.71, "curve": "stepped" },
 					{ "time": 1.5, "x": 10.32, "y": -8.71 }
+				],
+				"flipX": [
+					{ "time": 0 },
+					{ "time": 1.5 }
+				],
+				"flipY": [
+					{ "time": 0 },
+					{ "time": 1.5 }
 				]
 			},
 			"F_Foot": {
@@ -511,6 +535,10 @@
 					{ "time": 1, "angle": 2.03 },
 					{ "time": 1.1333, "angle": -4.43 },
 					{ "time": 1.5, "angle": 9.78 }
+				],
+				"flipY": [
+					{ "time": 0 },
+					{ "time": 1.5 }
 				]
 			},
 			"F_Thigh": {
@@ -900,6 +928,9 @@
 					{ "time": 2.7, "x": 3.96, "y": -40.02 },
 					{ "time": 2.8, "x": 4.34, "y": -46.81, "curve": "stepped" },
 					{ "time": 3.3333, "x": 4.34, "y": -46.81 }
+				],
+				"flipX": [
+					{ "time": 0 }
 				]
 			},
 			"F_Forearm": {
@@ -924,6 +955,17 @@
 					{ "time": 0.5333, "x": 27.44, "y": 2.29, "curve": "stepped" },
 					{ "time": 2, "x": 27.44, "y": 2.29, "curve": "stepped" },
 					{ "time": 2.7, "x": 27.44, "y": 2.29 }
+				],
+				"flipX": [
+					{ "time": 0.2333 },
+					{ "time": 0.2666 },
+					{ "time": 0.5 },
+					{ "time": 0.5333 },
+					{ "time": 2 },
+					{ "time": 2.7 }
+				],
+				"flipY": [
+					{ "time": 0 }
 				]
 			},
 			"Neck": {
@@ -1305,6 +1347,9 @@
 				"translate": [
 					{ "time": 0, "x": 39.57, "y": -10.73, "curve": "stepped" },
 					{ "time": 0.2, "x": 39.57, "y": -10.73 }
+				],
+				"flipX": [
+					{ "time": 0 }
 				]
 			},
 			"F_Forearm": {
@@ -1315,6 +1360,9 @@
 				"translate": [
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.2, "x": 0, "y": 0 }
+				],
+				"flipY": [
+					{ "time": 0 }
 				]
 			},
 			"B_UpperArm": {
@@ -1517,6 +1565,9 @@
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.2666, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 2.3333, "x": 0, "y": 0 }
+				],
+				"flipX": [
+					{ "time": 0 }
 				]
 			},
 			"B_Shin": {
@@ -1569,6 +1620,9 @@
 				"translate": [
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 2.3333, "x": 0, "y": 0 }
+				],
+				"flipY": [
+					{ "time": 0 }
 				]
 			},
 			"Head": {
@@ -1742,6 +1796,9 @@
 				"translate": [
 					{ "time": 0, "x": -9.98, "y": 2.89, "curve": "stepped" },
 					{ "time": 0.2, "x": -9.98, "y": 2.89 }
+				],
+				"flipX": [
+					{ "time": 0 }
 				]
 			},
 			"F_Foot": {
@@ -1802,6 +1859,9 @@
 				"translate": [
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.2, "x": 0, "y": 0 }
+				],
+				"flipY": [
+					{ "time": 0 }
 				]
 			}
 		},
@@ -2124,6 +2184,12 @@
 					{ "time": 0.3666, "x": 17.71, "y": 5.13 },
 					{ "time": 0.4, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.4333, "x": 0, "y": 0 }
+				],
+				"flipY": [
+					{ "time": 0 },
+					{ "time": 0.3, "y": true },
+					{ "time": 0.4333, "y": true },
+					{ "time": 0.4666 }
 				]
 			},
 			"B_UpperArm": {
@@ -2304,6 +2370,12 @@
 					{ "time": 1.0666, "x": 35.58, "y": -89.26 },
 					{ "time": 1.1, "x": 44.72, "y": -79.6, "curve": "stepped" },
 					{ "time": 1.1666, "x": 44.72, "y": -79.6 }
+				],
+				"flipX": [
+					{ "time": 0 },
+					{ "time": 0.3333 },
+					{ "time": 0.4 },
+					{ "time": 0.4333 }
 				]
 			},
 			"Hair": {
@@ -2442,6 +2514,12 @@
 					{ "time": 0.2, "x": 74.14, "y": 2.64 },
 					{ "time": 0.5666, "x": 1.65, "y": 2.64 },
 					{ "time": 0.7333, "x": 0, "y": -7.94 }
+				],
+				"flipX": [
+					{ "time": 0.2 }
+				],
+				"flipY": [
+					{ "time": 0.2 }
 				]
 			},
 			"Torso": {
@@ -2485,6 +2563,9 @@
 					{ "time": 0.3666, "x": 24.04, "y": -16.28 },
 					{ "time": 0.5666, "x": 12.58, "y": -86.8 },
 					{ "time": 0.7333, "x": 9.41, "y": -55.48 }
+				],
+				"flipX": [
+					{ "time": 0 }
 				]
 			},
 			"B_Shin": {
@@ -2558,6 +2639,9 @@
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.3666, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.7333, "x": 0, "y": 0 }
+				],
+				"flipY": [
+					{ "time": 0 }
 				]
 			},
 			"Head": {
@@ -2716,6 +2800,10 @@
 				"translate": [
 					{ "time": 0, "x": 33.81, "y": -19.47 },
 					{ "time": 0.2, "x": 43.58, "y": -21.57 }
+				],
+				"flipX": [
+					{ "time": 0, "x": true },
+					{ "time": 0.2, "x": true }
 				]
 			},
 			"Torso": {
@@ -2776,6 +2864,10 @@
 				"translate": [
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.2, "x": 0, "y": 0 }
+				],
+				"flipY": [
+					{ "time": 0, "y": true },
+					{ "time": 0.2, "y": true }
 				]
 			},
 			"B_UpperArm": {
@@ -2796,6 +2888,10 @@
 				"translate": [
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.2, "x": 0, "y": 0 }
+				],
+				"flipY": [
+					{ "time": 0 },
+					{ "time": 0.2 }
 				]
 			},
 			"B_Shin": {
@@ -2852,11 +2948,6 @@
 				"attachment": [
 					{ "time": 0.1333, "name": "UpperCut" },
 					{ "time": 0.2, "name": null }
-				]
-			},
-			"B_Hand": {
-				"attachment": [
-					{ "time": 0, "name": "B_Hand_FistIn" }
 				]
 			},
 			"F_Hand": {
@@ -3182,6 +3273,9 @@
 					{ "time": 0, "x": 0.41, "y": -51.16 },
 					{ "time": 0.4666, "x": 0.09, "y": -11.66 },
 					{ "time": 0.9333, "x": 0.41, "y": -51.16 }
+				],
+				"flipX": [
+					{ "time": 0 }
 				]
 			},
 			"B_Shin": {
@@ -3221,6 +3315,14 @@
 					{ "time": 0.4666, "angle": 20.92 },
 					{ "time": 0.6666, "angle": 37.94 },
 					{ "time": 0.9333, "angle": 44.19 }
+				],
+				"flipX": [
+					{ "time": 0 },
+					{ "time": 0.9333 }
+				],
+				"flipY": [
+					{ "time": 0 },
+					{ "time": 0.9333 }
 				]
 			},
 			"F_Forearm": {
@@ -3234,6 +3336,14 @@
 				"translate": [
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.9333, "x": 0, "y": 0 }
+				],
+				"flipX": [
+					{ "time": 0 },
+					{ "time": 0.9333 }
+				],
+				"flipY": [
+					{ "time": 0 },
+					{ "time": 0.9333 }
 				]
 			},
 			"Head": {

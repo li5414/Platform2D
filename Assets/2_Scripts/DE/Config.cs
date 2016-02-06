@@ -3,6 +3,7 @@ using System.Collections;
 
 public class Config
 {
+    //#define IN_CONTROL
 	//-- Scene
     public const string SC_MAIN = "Title";
     public const string SC_WORLD = "World";

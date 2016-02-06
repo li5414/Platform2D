@@ -138,6 +138,7 @@ public class HitmanController : TempGameCharacter
     override protected void Start()
     {
         base.Start();
+        Time.timeScale = 2;
     }
 
     override protected void HandleComplete(Spine.AnimationState state, int trackIndex, int loopCount)
@@ -196,8 +197,7 @@ public class HitmanController : TempGameCharacter
             switch (e.Data.Name)
             {
                 case "Footstep":
-                    if (OnFootstep != null)
-                        OnFootstep(transform);
+                    if (OnFootstep != null) OnFootstep(transform);
                     break;
                 case "Sound":
                     SoundPalette.PlaySound(e.String, 1f, 1, transform.position);
@@ -913,198 +913,10 @@ public class HitmanController : TempGameCharacter
 //     //cache x velocity to ensure speed restores after heavy impact that results in physics penalties
 //     override protected void HandlePhysics()
 //     {
-//         //------------------------------------------------------------------------------
-//         // do sliding
-//         //------------------------------------------------------------------------------
         
-//         //------------------------------------------------------------------------------
-//         // x move
-//         //------------------------------------------------------------------------------
-//         //JUMP loop
-//         else if (state == ActionState.JUMP)
-//         {
-//             float jumpTime = Time.time - mJumpStartTime;
-//             savedXVelocity = velocity.x;
-//         }
-//         //wall slide loop
-//         else if (state == ActionState.WALLSLIDE)
-//         {
-//         }
-        
-//         //------------------------------------------------------------------------------
-//         // x move
-//         //------------------------------------------------------------------------------
 //         -- todo
 //air control
-//         if (state == ActionState.JUMP || state == ActionState.FALL)
-//         {
-//             if (Time.time > airControlLockoutTime)
-//             {
-//                 if (absX > runThreshold)
-//                 {
-//                     velocity.x = Mathf.MoveTowards(velocity.x, runSpeed * Mathf.Sign(axisX), Time.deltaTime * 8);
-//                 }
-//                 else if (absX > deadZone)
-//                 {
-//                     velocity.x = Mathf.MoveTowards(velocity.x, walkSpeed * Mathf.Sign(axisX), Time.deltaTime * 8);
-//                 }
-//                 else
-//                 {
-//                     velocity.x = Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 8);
-//                 }
-//             }
-//             else
-//             {
-//                 if (wasWallJump)
-//                 {
-//                     //벽점프를 한상태에서 움직이면 에어컨트롤lock을 캔슬 한다.
-//                     if (absX > deadZone) airControlLockoutTime = Time.time - 1;
-//                 }
-//             }
-            
-//             //아래를 누르고 공격을 눌렀다면 다운 어택으로 간다.
-//             if (attackWasPressed && mAxis.y < -0.5f)
-//             {
-//                 velocity.x = 0;
-//                 velocity.y = 0;
-//                 SetState( ActionState.DOWNATTACK );
-//                 upAttackUsed = true;
-//                 skeletonAnimation.AnimationName = downAttackAnim;
-//             }
-//             //위를 누르고 공격을 눌렀다면 공중에서 업어택을 한다.
-//             else if (attackWasPressed && mAxis.y > 0.5f)
-//             {
-// 				if ( upAttackUsed== false )
-//                 {
-//                     SetState( ActionState.UPATTACK );
-//                     skeletonAnimation.AnimationName = upAttackAnim;
-//                     upAttackUsed = true;
-//                     velocity.y = 1;
-//                 }
-//             }
-            
-//             //공중 어택을 하지 않아 여전히 jump 이거나 fall 인 경우.
-//             if (state == ActionState.JUMP || state == ActionState.FALL)
-//             {
-//                 if (Time.time != mJumpStartTime && IsPressingAgainstWall)
-//                 {
-//                     //Mathf.Abs(mRb.velocity.x) > 0.1f 를 absX 검사 외에 따로 검사하는 이유는? 
-//                     if (Mathf.Abs(mRb.velocity.x) > 0.1f || (state == ActionState.FALL && absX > deadZone))
-//                     {
-//                         if ( wasWallJump ==false && state == ActionState.JUMP)
-//                         {
-//                             //dont do anything if still going up
-//                         }
-//                         else
-//                         {
-//                             //벽타자
-//                             SetState( ActionState.WALLSLIDE );
-//                             mJumpCount = 0;
-//                             wallSlideWatchdog = wallSlideWatchdogDuration;
-//                             wallSlideStartTime = Time.time;
-//                             upAttackUsed = false;
-//                             if (Mathf.Abs(mRb.velocity.x) > 0.1)
-//                             {
-//                                 wallSlideFlip = mRb.velocity.x > 0;
-//                             }
-//                             else
-//                             {
-//                                 wallSlideFlip = axisX > 0;
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
 
-//         //떨어지자
-//         if (state == ActionState.FALL)
-// 		{
-// 			velocity.y += fallGravity * Time.deltaTime;
-// 		}
-//         else if (state == ActionState.WALLSLIDE)
-//         {
-//             velocity.y = Mathf.Clamp(velocity.y, wallSlideSpeed, 0);
-//         }
-
-//         //슬라이딩 loop
-//         if (state == ActionState.SLIDE)
-//         {
-//             float slideTime = Time.time - slideStartTime;
-
-// 			//슬라이딩 멈추고 idle 로 가자.
-//             if (slideTime > slideDuration)
-//             {
-//                 primaryCollider.transform.localScale = Vector3.one;
-//                 IgnoreCharacterCollisions(false);
-//                 if (skeletonGhost != null) skeletonGhost.ghostingEnabled = false;
-//                 SetState( ActionState.IDLE );
-//             }
-//             else
-//             {
-//                 axisX = Mathf.Sign(savedXVelocity);
-//                 velocity.x = savedXVelocity + platformXVelocity;
-//                 if (movingPlatform) velocity.y = platformYVelocity;
-//             }
-
-// 			if ( OnGround == false )
-//             {
-//                 //Fell off edge while sliding
-//                 primaryCollider.transform.localScale = Vector3.one;
-//                 IgnoreCharacterCollisions(false);
-//                 if (skeletonGhost != null) skeletonGhost.ghostingEnabled = false;
-//                 SetFallState(true);
-//             }
-//         }
-
-//         //공격
-//         if (state == ActionState.ATTACK)
-//         {
-//             if (attackWasPressed)
-//             {
-//                 attackWasPressed = false;
-
-// 				//다음 공격 입력 대기 상태이면 다음 공격을 플레이 한다.
-//                 if (waitingForAttackInput)
-//                 {
-//                     waitingForAttackInput = false;
-//                     skeletonAnimation.state.GetCurrent(0).TimeScale = 1;
-//                 }
-//             }
-
-//             //무빙플랫폼 적용
-//             velocity.x = Mathf.MoveTowards(velocity.x, platformXVelocity, Time.deltaTime * 8);
-//             if (movingPlatform) velocity.y = Mathf.MoveTowards(velocity.y, platformYVelocity, Time.deltaTime * 15);
-
-// 			//콤보 대기 상태이면 지속적으로 입력 대기 시간을 감소시킨다.
-//             if (waitingForAttackInput)
-//             {
-//                 SetFriction(idleFriction);
-//                 attackWatchdog -= Time.deltaTime;
-//                 //cancel combo
-//                 if (attackWatchdog < 0) SetState( ActionState.IDLE );
-//             }
-//             else
-//             {
-//                 SetFriction(movingFriction);
-//             }
-//         }
-
-// 		//ActionState.IDLE,WALK,RUN,JUMP,FALL,WALLSLIDE,SLIDE 에서 WALLSLIDE 제외.
-//         if (state < ActionState.ATTACK && state != ActionState.WALLSLIDE)
-//         {
-//             if (Time.time > airControlLockoutTime)
-//             {
-//                 if (axisX > deadZone) skeletonAnimation.Skeleton.FlipX = false;
-//                 else if (axisX < -deadZone) skeletonAnimation.Skeleton.FlipX = true;
-//             }
-//             else
-//             {
-// 				//airControllLockout 상태라면 입력받은 방향에 상관없이 현재 속도에 따라 플립 결정한다.
-//                 if (velocity.x > deadZone) skeletonAnimation.Skeleton.FlipX = false;
-//                 else if (velocity.x < deadZone) skeletonAnimation.Skeleton.FlipX = true;
-//             }
-//         }
 
 //         //down attack loop.
 //         if (state == ActionState.DOWNATTACK)
