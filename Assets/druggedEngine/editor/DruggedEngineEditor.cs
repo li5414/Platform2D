@@ -40,7 +40,7 @@ namespace druggedcode.engine
 
             if (UseDrawCollider)
             {
-                if (go.GetComponent<Platform>() != null)
+                if (go.GetComponent<TempPlatform>() != null)
                 {
                     DrawCollider(go, Color.green);
                 }

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System;
 
 namespace druggedcode.engine
 {
@@ -7,58 +6,32 @@ namespace druggedcode.engine
     [ExecuteInEditMode]
     public class Platform : MonoBehaviour
     {
-        [Range(0f,1f)]
+        [Range(0f, 1f)]
         public float friction = 1f;
-        public WallClinType WallClingType = WallClinType.NOTHING;
-        
-        public enum WallClinType
+
+        public bool movable;
+
+		public Collider2D collider{get;private set;}
+        PathFollow mPathFollow;
+
+        void Awake()
         {
-            NOTHING,
-            LEFT,
-            RIGHT,
-            BOTH
+			collider = GetComponent<Collider2D>();
+
+            mPathFollow = GetComponent<PathFollow>();
         }
-        
-        protected Collider2D _collider;
-        protected PathFollow _pathFollow;
-        virtual protected void Awake()
+
+        void Start()
         {
-            _collider = GetComponent<Collider2D>();
-            if (_collider == null)
+            if (Application.isPlaying == false) return;
+
+            LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_ENVIRONMENT);
+            LayerUtil.ChanageSortingLayer(gameObject, DruggedEngine.SORTING_LAYER_ENVIRONMENT);
+
+            if (mPathFollow != null)
             {
-                throw new Exception("Platform have to attaced 'Collider2D'!  gameObject: [ " + gameObject.name + " ]");
-            }
-
-            _pathFollow = GetComponent<PathFollow>();
-
-        }
-
-        virtual protected void Start()
-        {
-            UpdateLayer();
-            UpdateSortingLayer();
-        }
-
-        virtual protected void UpdateLayer()
-        {
-            LayerUtil.ChangeLayer(gameObject, DruggedEngine.NormalPlatform);
-        }
-        
-        virtual protected void UpdateSortingLayer()
-        {
-            Renderer[] renderers = GetComponentsInChildren<Renderer>();
-            foreach (var ren in renderers)
-            {
-                ren.sortingLayerName = DruggedEngine.SORTING_LAYER_PLATFORM;
-            }
-        }
-
-        public bool isMovable
-        {
-            get
-            {
-                if( _pathFollow == null ) return false;
-                else return true;
+                movable = true;
+                mPathFollow.updateType = DruggedEngine.MOVE_PLATFORM;
             }
         }
 
@@ -66,13 +39,13 @@ namespace druggedcode.engine
         {
             get
             {
-                if( _pathFollow == null )
+                if (mPathFollow == null)
                 {
                     return Vector2.zero;
                 }
                 else
                 {
-                    return _pathFollow.translateVector;
+                    return mPathFollow.deltaVector;
                 }
             }
         }
@@ -81,16 +54,16 @@ namespace druggedcode.engine
         {
             get
             {
-                if( _pathFollow == null )
+                if (mPathFollow == null)
                 {
                     return Vector2.zero;
                 }
                 else
                 {
-                    return _pathFollow.velocity;
+                    return mPathFollow.velocity;
                 }
             }
         }
     }
-    
+
 }

@@ -31,8 +31,8 @@ namespace druggedcode.engine
                 EditorGUILayout.LabelField("Falling", _state.IsFalling.ToString());
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Grounded", _state.IsGrounded.ToString());
-                EditorGUILayout.ObjectField("StandingPlatform",_state.StandingPlatfom,typeof(Platform),true);
-                EditorGUILayout.ObjectField("HittedClingWall",_state.HittedClingWall,typeof(Platform),true);
+                EditorGUILayout.ObjectField("StandingPlatform",_state.StandingPlatfom,typeof(TempPlatform),true);
+                EditorGUILayout.ObjectField("HittedClingWall",_state.HittedClingWall,typeof(TempPlatform),true);
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Slope Angle", _state.SlopeAngle.ToString());
                 EditorGUILayout.LabelField("GravityScale", _controller.GravityScale.ToString());

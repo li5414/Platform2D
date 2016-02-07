@@ -63,11 +63,8 @@ namespace druggedcode
 
         public void FadeOut(float duration)
         {
-            Color newBackgroundColor = new Color(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, 0);
-            Color newTextColor = new Color(_textColor.r, _textColor.g, _textColor.b, 0);
-
-            StartCoroutine(MotionUI.ChangeColor(TextPanel, duration, newBackgroundColor));
-            StartCoroutine(MotionUI.ChangeColor(TextPanelArrowDown, duration, newBackgroundColor));
+            StartCoroutine(MotionUI.FadeAlpha(TextPanel, duration, 0f));
+			StartCoroutine(MotionUI.FadeAlpha(TextPanelArrowDown, duration, 0f));
             StartCoroutine(MotionUI.FadeAlpha(DialogueText, duration, 0f ));
             StartCoroutine(Motion2D.FadeAlpha(_buttonSpriteRenderer, duration, 0f ));
         }

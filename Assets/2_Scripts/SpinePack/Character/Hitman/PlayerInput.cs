@@ -9,6 +9,7 @@ public class PlayerInput : MonoBehaviour
 	public KeyCode rightKey = KeyCode.D;
 	public KeyCode upKey = KeyCode.W;
 	public KeyCode downKey = KeyCode.S;
+    public KeyCode runKey = KeyCode.LeftShift;
 
 	public KeyCode jumpKey = KeyCode.Space;
 	public KeyCode attackKey = KeyCode.J;
@@ -34,6 +35,7 @@ public class PlayerInput : MonoBehaviour
 		data.jumpPressed = Input.GetKey (jumpKey);
 		data.attackTrigger = Input.GetKey (attackKey);
 		data.specailATrigger = Input.GetKey (specialKey);
+        data.inputRun = Input.GetKey( runKey );
         
 		mPlayer.input = data;
 	}

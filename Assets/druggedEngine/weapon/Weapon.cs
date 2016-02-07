@@ -21,20 +21,25 @@ namespace druggedcode.engine
         public Transform ProjectileFireLocation;
         public AudioClip GunShootFx;
 
+		ParticleSystem.EmissionModule mFrameEM;
+		ParticleSystem.EmissionModule mGunEM;
         void Start()
         {
+			mFrameEM = GunFlames.emission;
+			mGunEM = GunShells.emission;
+
             SetGunFlamesEmission(false);
             SetGunShellsEmission(false);
         }
 
         public void SetGunFlamesEmission(bool state)
         {
-            GunFlames.enableEmission = state;
+			mFrameEM.enabled = state;
         }
 
         public void SetGunShellsEmission(bool state)
         {
-            GunShells.enableEmission = state;
+			mGunEM.enabled = state;
         }
     }
 }

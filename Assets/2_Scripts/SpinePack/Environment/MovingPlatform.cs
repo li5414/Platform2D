@@ -2,38 +2,28 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class MovingPlatform : MonoBehaviour {
+public class MovingPlatform : MonoBehaviour
+{
+    public Vector2 treadmill;
 
-	public Vector2 DeltaPosition {
-		get {
-			return deltaPosition;
-		}
-	}
+    public Vector2 Velocity;
+    public Vector2 deltaPosition;
+    Vector2 mLastPosition;
 
-	public Vector2 Velocity {
-		get {
-			return velocity;
-		}
-	}
+    void Awake()
+    {
+        mLastPosition = transform.position;
+    }
 
-	public Vector2 treadmill;
+    void FixedUpdate()
+    {
+        Vector2 pos = transform.position;
+        deltaPosition = (pos - mLastPosition);
 
-	Vector2 deltaPosition;
-	Vector2 lastPosition;
-	Vector2 velocity;
+        Velocity = deltaPosition / Time.deltaTime;
+        Velocity += (Vector2)transform.TransformDirection(treadmill);
 
-	void Awake () {
-		lastPosition = transform.position;
-	}
-
-	void FixedUpdate () {
-		Vector2 pos = transform.position;
-		deltaPosition = (pos - lastPosition);
-
-		velocity = deltaPosition / Time.deltaTime;
-		velocity += (Vector2)transform.TransformDirection(treadmill);
-
-		lastPosition = pos;
-	}
+        mLastPosition = pos;
+    }
 }
 

@@ -24,8 +24,8 @@ namespace druggedcode.engine
         public bool IsGrounded { get { return (IsCollidingBelow && StandingPlatfom != null );}}
         
         //IsCollidingBelow 와 같이 변해야 한다.
-        public Platform StandingPlatfom { get; set; }
-        public Platform HittedClingWall { get; set; }
+        public TempPlatform StandingPlatfom { get; set; }
+        public TempPlatform HittedClingWall { get; set; }
         
         //지난프레임상태
         public bool WasColldingBelowLastFrame { get; set; }

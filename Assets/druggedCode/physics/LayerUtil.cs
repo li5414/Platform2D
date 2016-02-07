@@ -55,8 +55,7 @@ namespace druggedcode
 
         static private void ChangeLayer(GameObject obj, int layerid, bool changeChild = true, string ignoreTypeString = "")
         {
-            if (obj.GetComponent(ignoreTypeString) != null)
-                return;
+            if (obj.GetComponent(ignoreTypeString) != null) return;
 
             obj.layer = layerid;
 
@@ -99,7 +98,9 @@ namespace druggedcode
         {
             Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
             foreach (Renderer ren in renderers)
+            {
                 ren.sortingLayerName = layername;
+            }
         }
     }
 }

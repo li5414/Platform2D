@@ -135,7 +135,7 @@ public class BoxmanController : TempGameCharacter
         }
     }
 
-    void FixedUpdate()
+    override protected void FixedUpdate()
     {
         if (mRb == null)
             return;

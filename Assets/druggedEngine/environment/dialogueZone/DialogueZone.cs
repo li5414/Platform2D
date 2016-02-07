@@ -151,6 +151,8 @@ namespace druggedcode.engine
                 _dialogueBox.transform.position=new Vector2(mBoxCollider.bounds.center.x,mBoxCollider.bounds.max.y+distanceFromTop); 
 
                 return;
+				//TODO
+				/*
                 // 컬러지정
                 _dialogueBox.ChangeColor(textBackgroundColor,textColor);
                 // 버튼을 눌러 활성화 시킬지 아닐지 설정(대화상자의 버튼 A아이콘 표시 여부)
@@ -160,6 +162,7 @@ namespace druggedcode.engine
                 if ( arrowVisible == false ) _dialogueBox.HideArrow();          
 
                 mIsPlaying = true;
+				*/
             }
 
             StartCoroutine( PlayNextDialogue() );

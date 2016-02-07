@@ -25,6 +25,8 @@ public class HitmanController : TempGameCharacter
         ActionState.UPATTACK
     };
     */
+    
+    public Vector2 currentVelocity;
 
     public float wallJumpXSpeed = 3;
 
@@ -138,7 +140,7 @@ public class HitmanController : TempGameCharacter
     override protected void Start()
     {
         base.Start();
-        Time.timeScale = 2;
+        //Time.timeScale = 2;
     }
 
     override protected void HandleComplete(Spine.AnimationState state, int trackIndex, int loopCount)
@@ -222,6 +224,8 @@ public class HitmanController : TempGameCharacter
         ProcessInput();
 
         UpdateAnim();
+        
+        currentVelocity = mRb.velocity;
     }
 
     void ProcessInput()

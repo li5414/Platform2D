@@ -481,7 +481,7 @@ namespace druggedcode.engine
 
         public void JumpBelow()
         {
-            if( _controllerState.IsGrounded && _controllerState.StandingPlatfom is OneWayPlatform )
+            if( _controllerState.IsGrounded && _controllerState.StandingPlatfom is TempOneWayPlatform )
             {
                 _character.DoJumpBelow();
                 SetState(PlayerState.FALL);

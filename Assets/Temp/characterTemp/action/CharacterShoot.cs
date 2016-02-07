@@ -124,8 +124,12 @@ namespace druggedcode.engine
 
             //  // 발사 초기화
             //  _character.State.FiringDirection = 3;
-            _weapon.GunFlames.enableEmission = false;
-            _weapon.GunShells.enableEmission = false;
+
+			ParticleSystem.EmissionModule em = _weapon.GunFlames.emission;
+			ParticleSystem.EmissionModule em2 = _weapon.GunShells.emission;
+
+			em.enabled = false;
+			em2.enabled = false;
         }
 
         /// 무기의 탄환을 발사 한다

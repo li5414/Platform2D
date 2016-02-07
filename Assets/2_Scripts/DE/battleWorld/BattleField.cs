@@ -14,7 +14,11 @@ public class BattleField : ALocation
     override protected void Awake()
     {
         base.Awake();
-        
         GetComponentsInChildren<EnemySpawner>( mSpawners );
     }
+
+	void Test()
+	{
+		mSpawners.Clear();
+	}
 }

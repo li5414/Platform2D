@@ -1,57 +1,63 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class DruggedEngine
+public class DruggedEngine : MonoBehaviour
 {
-    //-- SortingLayer
-    
     public const string SORTING_LAYER_SKYBOX = "SkyBox";
     public const string SORTING_LAYER_BACKGROUND = "Background";
-    public const string SORTING_LAYER_BACKPARTICLE = "BackPartile";
-    public const string SORTING_LAYER_PLATFORM = "Platform";
+    public const string SORTING_LAYER_BACK_FX = "BackFX";
+    public const string SORTING_LAYER_ENVIRONMENT = "Environment";
     public const string SORTING_LAYER_DEFAULT = "Default";
-    public const string SORTING_LAYER_ENEMY = "Enemy";
-    public const string SORTING_LAYER_PLAYER = "Player";
-    public const string SORTING_LAYER_FRONTPARTICLE = "FrontParticle";
+    public const string SORTING_LAYER_CHARACTER = "Character";
+    public const string SORTING_LAYER_FRONT_FX = "FrontFX";
     public const string SORTING_LAYER_FOREGROUND = "Foreground";
     public const string SORTING_LAYER_UI = "UI";
-    
-	public static float Gravity;
 
-    // public static LayerMask NormalPlatform;
-    // public static LayerMask OneWayPlatform;
+    public static LayerMask MASK_PLAYER;
+    public static LayerMask MASK_ENEMY;
+    public static LayerMask MASK_TRIGGER_AT_PLAYER;
+    public static LayerMask MASK_ENVIRONMENT;
+    public static LayerMask MASK_ONEWAY;
+    public static LayerMask MASK_ALL_PLATFORM;
+
+    public static float Gravity;
     
-    public static LayerMask NormalPlatform = 1 << LayerMask.NameToLayer("Platform");
-    public static LayerMask OneWayPlatform = 1 << LayerMask.NameToLayer("OnewayPlatform");
+    public static UpdateType MOVE_PLATFORM;
+    public static UpdateType MOVE_CHARACTER;
     
-    private DruggedEngine()
+    //----------------------------------------------------------------------------------------------
+    // instance
+    //----------------------------------------------------------------------------------------------
+
+    public LayerMask player;
+
+    public LayerMask enemy;
+    
+    public LayerMask triggerAtPlayer;
+
+    public LayerMask environment;
+
+    public LayerMask oneway;
+    
+    
+    public UpdateType platformMove;
+    public UpdateType characterMove;
+
+    void Awake()
     {
-        //인스턴스를 생성할 수 없다.
-    }
-    
-    static public void Init()
-    {
-        Gravity = -70f;
-		//Gravity = -( 9.81f * 9.81f );
+        MASK_PLAYER = player;
+        MASK_ENEMY = enemy;
+        MASK_TRIGGER_AT_PLAYER = triggerAtPlayer;
+
+        MASK_ENVIRONMENT = environment;
+        MASK_ONEWAY = oneway;
         
-        //init layer
-        // NormalPlatform = 1 << LayerMask.NameToLayer("Platform");
-        // OneWayPlatform = 1 << LayerMask.NameToLayer("OnewayPlatform");
-    }
-    
-    static public LayerMask AllPlatform
-    {
-        get
-        {
-            return NormalPlatform + OneWayPlatform;
-        }
-    }
-
-    static public LayerMask ExceptOnewayPlatform
-    {
-        get
-        {
-            return AllPlatform - OneWayPlatform;
-        }
+        MASK_ALL_PLATFORM = MASK_ENVIRONMENT + MASK_ONEWAY;
+        
+        //Ragdoll 은 안쓰는거 같은데
+        MOVE_PLATFORM = platformMove;
+        MOVE_CHARACTER = characterMove;
+        
+        Gravity = 0f;
     }
 }

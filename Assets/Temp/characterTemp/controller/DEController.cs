@@ -62,8 +62,6 @@ namespace druggedcode.engine
         //----------------------------------------------------------------------------------------------------------
         // caching components
         //----------------------------------------------------------------------------------------------------------
-        LayerMask _allPlatform;
-        LayerMask _exceptOnewayPlatform;
         Transform _transform;
         BoxCollider2D _collider;
         Vector2 _colliderDefaultSize;
@@ -99,9 +97,6 @@ namespace druggedcode.engine
 
         void Start()
         {
-            _allPlatform = DruggedEngine.AllPlatform;
-            _exceptOnewayPlatform = DruggedEngine.ExceptOnewayPlatform;
-
             CollisionsOn();
             UpdateBound();
         }
@@ -243,7 +238,7 @@ namespace druggedcode.engine
             for (int i = 0; i < VERTICAL_RAY_NUM; i++)
             {
                 _rayOriginPoint = Vector2.Lerp(verticalRayCastFromLeft, verticalRayCastToRight, (float)rayIndex / (float)(VERTICAL_RAY_NUM - 1));
-                _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, -Vector2.up, rayLength, _allPlatform, Color.red);
+                _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_PLATFORM, Color.red);
 
                 if (_hit2D)
                 {
@@ -257,7 +252,7 @@ namespace druggedcode.engine
                     //HIT 된 Y 가 넘어갈 수 있는 높이 높고 허용 각도보다 가파르고 원웨이가 아닌 경우 막혔다고 판단한다.
                     if (hitY > _bound.yBottom + _toleranceHeight &&
                         Vector2.Angle(_hit2D.point - _bound.bottom, _moveDirection) > MaximumSlopeAngle &&
-                        _hit2D.collider.gameObject.GetComponent<Platform>() is OneWayPlatform == false)
+                        _hit2D.collider.gameObject.GetComponent<TempPlatform>() is TempOneWayPlatform == false)
                     {
                         _translateVector.x = 0;
                     }
@@ -283,9 +278,9 @@ namespace druggedcode.engine
 
             _hit2D = _groundHit2Ds[closestIndex];
 
-            Platform hittedPlatform = _hit2D.collider.gameObject.GetComponent<Platform>();
+            TempPlatform hittedPlatform = _hit2D.collider.gameObject.GetComponent<TempPlatform>();
 
-            if (_state.WasColldingBelowLastFrame == false && lowestY > _bound.yBottom && hittedPlatform is OneWayPlatform)
+            if (_state.WasColldingBelowLastFrame == false && lowestY > _bound.yBottom && hittedPlatform is TempOneWayPlatform)
             {
                 return;
             }
@@ -324,9 +319,9 @@ namespace druggedcode.engine
                 _rayOriginPoint = Vector2.Lerp(horizontalRayCastToTop, horizontalRayCastFromBottom, (float)i / (float)(RayHorizontalCount - 1));
 
                 if (_state.WasColldingBelowLastFrame && i == RayHorizontalCount - 1)
-                    _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, _moveDirection, horizontalRayLength, _allPlatform, Color.red);
+                    _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_PLATFORM, Color.red);
                 else
-                    _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, _moveDirection, horizontalRayLength, _exceptOnewayPlatform, Color.red);
+                    _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_ENVIRONMENT, Color.red);
 
                 if (_hit2D)
                 {
@@ -357,20 +352,20 @@ namespace druggedcode.engine
 
             if (_state.IsGrounded == false)
             {
-                Platform wall = _hit2D.collider.gameObject.GetComponent<Platform>();
+                TempPlatform wall = _hit2D.collider.gameObject.GetComponent<TempPlatform>();
                 if (CheckWallCling(wall)) _state.HittedClingWall = wall;
             }
 
             if (_hit2D.rigidbody != null) _sideHittedPushableObject.Add(_hit2D.rigidbody);
         }
 
-        bool CheckWallCling(Platform wall)
+        bool CheckWallCling(TempPlatform wall)
         {
             if (wall == null) return false;
-            if (wall.WallClingType == Platform.WallClinType.NOTHING) return false;
-            if (wall.WallClingType == Platform.WallClinType.BOTH) return true;
-            if (wall.WallClingType == Platform.WallClinType.LEFT && _state.IsCollidingRight) return true;
-            if (wall.WallClingType == Platform.WallClinType.RIGHT && _state.IsCollidingLeft) return true;
+            if (wall.WallClingType == TempPlatform.WallClinType.NOTHING) return false;
+            if (wall.WallClingType == TempPlatform.WallClinType.BOTH) return true;
+            if (wall.WallClingType == TempPlatform.WallClinType.LEFT && _state.IsCollidingRight) return true;
+            if (wall.WallClingType == TempPlatform.WallClinType.RIGHT && _state.IsCollidingLeft) return true;
             return false;
         }
 
@@ -389,7 +384,7 @@ namespace druggedcode.engine
             for (int i = 0; i < VERTICAL_RAY_NUM; i++)
             {
                 _rayOriginPoint = Vector2.Lerp(verticalRayCastStart, verticalRayCastEnd, (float)i / (float)(VERTICAL_RAY_NUM - 1));
-                _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, Vector2.up, rayLength, _exceptOnewayPlatform, Color.blue);
+                _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, Vector2.up, rayLength, DruggedEngine.MASK_ENVIRONMENT, Color.blue);
 
                 if (_hit2D)
                 {

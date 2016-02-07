@@ -43,7 +43,6 @@ public class GameManager : Singleton<GameManager>
 		mUI = UISystem.SetParent( sInstance.transform );
 
         Config.Init();
-        DruggedEngine.Init();
 
 		mUI.Init();
     }
