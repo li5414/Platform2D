@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 
+using druggedcode.engine;
+
 public enum ActionState
 {
     NULL,
@@ -68,6 +70,9 @@ public class GameCharacter : MonoBehaviour
     [SpineBone(dataField: "skeletonAnimation")]
     public string footEffectBone;
 
+
+    public float CurrentSpeed { get; protected set; }
+
     //--------------------------------------------------------------------------
     // Inspector에 표시되지 않는 public 
     //--------------------------------------------------------------------------
@@ -86,7 +91,8 @@ public class GameCharacter : MonoBehaviour
     protected SkeletonGhost mGhost;
 
     //character state
-    protected int mJumpCount = 0;
+    public int JumpCount { get; protected set; }
+
 
     protected float mJumpStartTime;
 
@@ -174,13 +180,17 @@ public class GameCharacter : MonoBehaviour
 
     public void SetState(ActionState next)
     {
-        if (state == next) return;
-
-        StateExit();
-
-        Debug.Log(state + " > " + next);
-
-        state = next;
+        if (state == next)
+        {
+            Debug.Log("---------same state!!!!! " + state + " > " + next );
+            //return;
+        }
+        else
+        {
+            StateExit();
+            Debug.Log(state + " > " + next);
+            state = next;
+        }
 
         StateEnter();
     }
@@ -219,10 +229,12 @@ public class GameCharacter : MonoBehaviour
     // ?
     //--------------------------------------------------------------------------
 
-    //Enter the fall state, optionally using a jump counter.  IE: to prevent jumping after slipping off a platform
+    //ActionState.FALL은 직접적으로 호출 하지 말도록 하자. 점프 후 떨어지는 것과 지면에서 갑자기 떨어지는 것은 차이가 있따.
+    //이 차이는 점프 수를 소비하냐 아니냐의 차이이다.
+    //가령 이미 점프 중이였다면 fall 상태로 가면서 점프 수는 변동이 되지 않지만 갑자기 지면에서 떨어진 경우 점프를 소비 시켜야 한다.
     protected void SetFallState(bool useJump)
     {
-        if (useJump) mJumpCount++;
+        if (useJump) JumpCount++;
         SetState(ActionState.FALL);
     }
     //Special effects helper function

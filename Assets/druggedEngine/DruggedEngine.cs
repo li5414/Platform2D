@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using druggedcode;
 
 public class DruggedEngine : MonoBehaviour
 {
@@ -16,9 +17,9 @@ public class DruggedEngine : MonoBehaviour
     public static LayerMask MASK_PLAYER;
     public static LayerMask MASK_ENEMY;
     public static LayerMask MASK_TRIGGER_AT_PLAYER;
-    public static LayerMask MASK_ENVIRONMENT;
-    public static LayerMask MASK_ONEWAY;
-    public static LayerMask MASK_ALL_PLATFORM;
+	public static LayerMask MASK_ENVIRONMENT;
+    public static LayerMask MASK_PLATFORM;
+	public static LayerMask MASK_ALL_GROUND;
 
     public static float Gravity;
     
@@ -35,10 +36,8 @@ public class DruggedEngine : MonoBehaviour
     
     public LayerMask triggerAtPlayer;
 
-    public LayerMask environment;
-
-    public LayerMask oneway;
-    
+	public LayerMask environment;
+	public LayerMask platform;
     
     public UpdateType platformMove;
     public UpdateType characterMove;
@@ -49,15 +48,15 @@ public class DruggedEngine : MonoBehaviour
         MASK_ENEMY = enemy;
         MASK_TRIGGER_AT_PLAYER = triggerAtPlayer;
 
-        MASK_ENVIRONMENT = environment;
-        MASK_ONEWAY = oneway;
+        MASK_PLATFORM = platform;
+		MASK_ENVIRONMENT = environment;
         
-        MASK_ALL_PLATFORM = MASK_ENVIRONMENT + MASK_ONEWAY;
-        
+		MASK_ALL_GROUND = MASK_PLATFORM + MASK_ENVIRONMENT;
+
         //Ragdoll 은 안쓰는거 같은데
         MOVE_PLATFORM = platformMove;
         MOVE_CHARACTER = characterMove;
-        
+
         Gravity = 0f;
     }
 }

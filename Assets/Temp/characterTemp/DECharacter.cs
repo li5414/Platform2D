@@ -511,7 +511,7 @@ namespace druggedcode.engine
             {
                 if (_headExtents != Vector3.zero)
                 {
-                    bool check = Physics2D.OverlapArea(_tr.position + _headCheckerPos - _headExtents, _tr.position + _headCheckerPos + _headExtents, DruggedEngine.MASK_ENVIRONMENT);
+                    bool check = Physics2D.OverlapArea(_tr.position + _headCheckerPos - _headExtents, _tr.position + _headCheckerPos + _headExtents, DruggedEngine.MASK_PLATFORM);
                     return check;
                 }
                 else

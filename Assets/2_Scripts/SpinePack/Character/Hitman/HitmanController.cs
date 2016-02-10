@@ -171,7 +171,7 @@ public class HitmanController : TempGameCharacter
                     case "YVelocity":
                         velocity = mRb.velocity;
                         velocity.y = uppercutVelocity * e.Float;
-                        if (movingPlatform) velocity.y += movingPlatform.Velocity.y;
+                        if (movingPlatform) velocity.y += movingPlatform.velocity.y;
                         mRb.velocity = velocity;
                         break;
                     case "Pause":
@@ -353,8 +353,8 @@ public class HitmanController : TempGameCharacter
         movingPlatform = GetMovingPlatform();
         if (movingPlatform)
         {
-            platformXVelocity = movingPlatform.Velocity.x;
-            platformYVelocity = movingPlatform.Velocity.y;
+            platformXVelocity = movingPlatform.velocity.x;
+            platformYVelocity = movingPlatform.velocity.y;
         }
         
         //------------------------------------------------------------------------------
@@ -776,7 +776,7 @@ public class HitmanController : TempGameCharacter
 					skeletonAnimation.state.GetCurrent(0).Time = (downAttackFrameSkip / 30f);
 
 					if (downAttackPrefab) Instantiate(downAttackPrefab, transform.position + new Vector3(0, 0.25f, 0), Quaternion.identity);
-					if (movingPlatform) velocity = movingPlatform.Velocity;
+					if (movingPlatform) velocity = movingPlatform.velocity;
 				}
 				else
 				{
@@ -790,7 +790,7 @@ public class HitmanController : TempGameCharacter
 				{
 					downAttackRecoveryTime -= Time.deltaTime;
 					velocity = Vector2.zero;
-					if (movingPlatform) velocity = movingPlatform.Velocity;
+					if (movingPlatform) velocity = movingPlatform.velocity;
 				}
 				//회복이 끝나면 점프 상태로 변경한다.
 				else

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using druggedcode.engine;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -131,8 +132,8 @@ public class TempGameCharacter : MonoBehaviour
 
     protected PhysicsMaterial2D mPhysicsMaterial;
 
-    protected OneWayPlatform mPassThroughPlatform;
-	protected MovingPlatform movingPlatform; //handlePhysics 에서 결정
+	protected Platform mPassThroughPlatform;
+	protected Platform movingPlatform; //handlePhysics 에서 결정
 
 	protected float mSlope;
     protected bool mIsOnSlope = false;
@@ -152,8 +153,8 @@ public class TempGameCharacter : MonoBehaviour
     
     //통합 과정 시 추가한 것들 & 임시
     
-    protected OneWayPlatform mPlatformOneWay;
-    protected MovingPlatform mPlatformMoving;
+	protected Platform mPlatformOneWay;
+	protected Platform mPlatformMoving;
     
     //
     public InputData input;
@@ -261,18 +262,18 @@ public class TempGameCharacter : MonoBehaviour
     // behaviour
     //--------------------------------------------------------------------------
     
-    protected void DoPassThrough(OneWayPlatform platform)
+	protected void DoPassThrough(Platform platform)
     {
         StartCoroutine(PassthroughRoutine(platform));
     }
 
-    IEnumerator PassthroughRoutine(OneWayPlatform platform)
+	IEnumerator PassthroughRoutine(Platform platform)
     {
         currentMask = passThroughMask;//원웨이를 제외한 레이어 마스크
-        Physics2D.IgnoreCollision(primaryCollider, platform.collider, true);
+		Physics2D.IgnoreCollision(primaryCollider, platform.GetCollider(), true);
         mPassThroughPlatform = platform;
         yield return new WaitForSeconds(0.5f);
-        Physics2D.IgnoreCollision(primaryCollider, platform.collider, false);
+		Physics2D.IgnoreCollision(primaryCollider, platform.GetCollider(), false);
         currentMask = groundMask;
         mPassThroughPlatform = null;
     }
@@ -322,9 +323,9 @@ public class TempGameCharacter : MonoBehaviour
 
     }
     
-    protected MovingPlatform GetMovingPlatform()
+	protected Platform GetMovingPlatform()
     {
-        MovingPlatform mp = MovingPlatformCast(mCastOriginCenterGround);
+		Platform mp = MovingPlatformCast(mCastOriginCenterGround);
         if (mp == null) mp = MovingPlatformCast(mCastOrginBackGround);
         if (mp == null) mp = MovingPlatformCast(mCastOriginForwardGround);
         return mp;
@@ -415,26 +416,26 @@ public class TempGameCharacter : MonoBehaviour
     //--------------------------------------------------------------------------------
     
 	//see if character is on a one-way platform
-	protected OneWayPlatform PlatformCast(Vector3 origin)
+	protected Platform PlatformCast(Vector3 origin)
 	{
-		OneWayPlatform platform = null;
+		Platform platform = null;
 		RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(origin), Vector2.down, 0.5f, currentMask);
 		if (hit.collider != null && !hit.collider.isTrigger)
 		{
-			platform = hit.collider.GetComponent<OneWayPlatform>();
+			platform = hit.collider.GetComponent<Platform>();
 		}
 
 		return platform;
 	}
 
 	//see if character is on a moving platform
-	protected MovingPlatform MovingPlatformCast(Vector3 origin)
+	protected Platform MovingPlatformCast(Vector3 origin)
 	{
-		MovingPlatform platform = null;
+		Platform platform = null;
 		RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(origin), Vector2.down, 0.5f, currentMask);
 		if (hit.collider != null && !hit.collider.isTrigger)
 		{
-			platform = hit.collider.GetComponent<MovingPlatform>();
+			platform = hit.collider.GetComponent<Platform>();
 		}
 
 		return platform;
@@ -514,7 +515,7 @@ public class TempGameCharacter : MonoBehaviour
             RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(mCastOriginWall), new Vector2(x, 0).normalized, mCastOriginWallDistance + (usingVelocity ? x * Time.deltaTime : 0), currentMask);
             if (hit.collider != null && !hit.collider.isTrigger)
             {
-                if (hit.collider.GetComponent<OneWayPlatform>()) return false;
+				if (hit.collider.GetComponent<Platform>()) return false;
 
                 return true;
             }

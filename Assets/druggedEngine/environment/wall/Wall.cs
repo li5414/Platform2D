@@ -21,7 +21,7 @@ namespace druggedcode.engine
         {
             if (Application.isPlaying == false) return;
 
-            LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_ENVIRONMENT);
+            LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_PLATFORM);
             LayerUtil.ChanageSortingLayer(gameObject, DruggedEngine.SORTING_LAYER_ENVIRONMENT);
         }
     }

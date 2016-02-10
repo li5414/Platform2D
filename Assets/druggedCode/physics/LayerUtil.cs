@@ -71,7 +71,7 @@ namespace druggedcode
             }
         }
 
-        static private int GetLayerIdFromLayerMask(int maskValue)
+        static public int GetLayerIdFromLayerMask(int maskValue)
         {
             if (maskValue < 0)
                 return -1;

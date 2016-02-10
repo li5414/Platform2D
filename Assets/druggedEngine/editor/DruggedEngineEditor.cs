@@ -23,10 +23,12 @@ namespace druggedcode.engine
             UseDrawOriginRect = !UseDrawOriginRect;
             Menu.SetChecked("DEngine/DrawOriginPos", UseDrawOriginRect);
         }
-
+        
         [DrawGizmo(GizmoType.NotInSelectionHierarchy | GizmoType.Active)]
         static void ColliderGizmoDraw(GameObject go, GizmoType gt)
         {
+            return;
+            
             if (UseDrawCollider == false && UseDrawOriginRect == false)
             {
                 return;
@@ -40,18 +42,23 @@ namespace druggedcode.engine
 
             if (UseDrawCollider)
             {
-                if (go.GetComponent<TempPlatform>() != null)
-                {
-                    DrawCollider(go, Color.green);
-                }
-                else if (go.GetComponent<Ladder>() != null)
-                {
-                    DrawCollider(go, Color.red);
-                }
-                else if (go.GetComponent<PhysicsSpace>() != null)
+                if (go.GetComponent<OneWayTrigger>() != null)
                 {
                     DrawCollider(go, Color.yellow);
                 }
+                
+                // if (go.GetComponent<TempPlatform>() != null)
+                // {
+                //     DrawCollider(go, Color.green);
+                // }
+                // else if (go.GetComponent<Ladder>() != null)
+                // {
+                //     DrawCollider(go, Color.red);
+                // }
+                // else if (go.GetComponent<PhysicsSpace>() != null)
+                // {
+                //     DrawCollider(go, Color.yellow);
+                // }
                     
             }
         }

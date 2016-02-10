@@ -310,8 +310,8 @@ public class GunmanController : TempGameCharacter
         movingPlatform = GetMovingPlatform();
         if (movingPlatform)
         {
-            platformXVelocity = movingPlatform.Velocity.x;
-            platformYVelocity = movingPlatform.Velocity.y;
+			platformXVelocity = movingPlatform.velocity.x;
+			platformYVelocity = movingPlatform.velocity.y;
         }
 
         if (mDoJump && mJumpCount >= maxJumps)

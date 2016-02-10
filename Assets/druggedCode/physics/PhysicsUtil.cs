@@ -15,7 +15,7 @@ namespace druggedcode
             float rayDistance,
             LayerMask mask,
             Color color )
-        {           
+        {
             if( Application.isEditor ) Debug.DrawRay( rayOriginPoint, rayDirection*rayDistance, color );
 
             return Physics2D.Raycast(rayOriginPoint,rayDirection,rayDistance,mask);

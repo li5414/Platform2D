@@ -8,7 +8,7 @@ namespace druggedcode.engine
     {
         /// 사다리의 정상에 있는 플랫폼
         [SerializeField]
-        TempOneWayPlatform _ladderPlatform;
+		Platform _ladderPlatform;
 
         BoxCollider2D _col;
         

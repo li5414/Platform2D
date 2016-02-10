@@ -238,7 +238,7 @@ namespace druggedcode.engine
             for (int i = 0; i < VERTICAL_RAY_NUM; i++)
             {
                 _rayOriginPoint = Vector2.Lerp(verticalRayCastFromLeft, verticalRayCastToRight, (float)rayIndex / (float)(VERTICAL_RAY_NUM - 1));
-                _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_PLATFORM, Color.red);
+                _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
 
                 if (_hit2D)
                 {
@@ -252,7 +252,7 @@ namespace druggedcode.engine
                     //HIT 된 Y 가 넘어갈 수 있는 높이 높고 허용 각도보다 가파르고 원웨이가 아닌 경우 막혔다고 판단한다.
                     if (hitY > _bound.yBottom + _toleranceHeight &&
                         Vector2.Angle(_hit2D.point - _bound.bottom, _moveDirection) > MaximumSlopeAngle &&
-                        _hit2D.collider.gameObject.GetComponent<TempPlatform>() is TempOneWayPlatform == false)
+						_hit2D.collider.gameObject.GetComponent<Platform>() is Platform == false)
                     {
                         _translateVector.x = 0;
                     }
@@ -280,7 +280,7 @@ namespace druggedcode.engine
 
             TempPlatform hittedPlatform = _hit2D.collider.gameObject.GetComponent<TempPlatform>();
 
-            if (_state.WasColldingBelowLastFrame == false && lowestY > _bound.yBottom && hittedPlatform is TempOneWayPlatform)
+			if (_state.WasColldingBelowLastFrame == false && lowestY > _bound.yBottom && hittedPlatform is Platform)
             {
                 return;
             }
@@ -319,9 +319,9 @@ namespace druggedcode.engine
                 _rayOriginPoint = Vector2.Lerp(horizontalRayCastToTop, horizontalRayCastFromBottom, (float)i / (float)(RayHorizontalCount - 1));
 
                 if (_state.WasColldingBelowLastFrame && i == RayHorizontalCount - 1)
-                    _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_PLATFORM, Color.red);
+                    _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
                 else
-                    _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_ENVIRONMENT, Color.red);
+                    _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_PLATFORM, Color.red);
 
                 if (_hit2D)
                 {
@@ -384,7 +384,7 @@ namespace druggedcode.engine
             for (int i = 0; i < VERTICAL_RAY_NUM; i++)
             {
                 _rayOriginPoint = Vector2.Lerp(verticalRayCastStart, verticalRayCastEnd, (float)i / (float)(VERTICAL_RAY_NUM - 1));
-                _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, Vector2.up, rayLength, DruggedEngine.MASK_ENVIRONMENT, Color.blue);
+                _hit2D = PhysicsUtil.DrawRayCast(_rayOriginPoint, Vector2.up, rayLength, DruggedEngine.MASK_PLATFORM, Color.blue);
 
                 if (_hit2D)
                 {

@@ -18,8 +18,9 @@ public class PlayerEditor : Editor
 	{
 		if (Application.isPlaying)
 		{
-			EditorGUILayout.LabelField ("some", mCharacter.IsFlipped.ToString());
-			DrawDefaultInspector ();
+			EditorGUILayout.LabelField ("state", mCharacter.state.ToString());
+            EditorGUILayout.LabelField ("jump", mCharacter.JumpCount + " / " +mCharacter.maxJumps );
+			// DrawDefaultInspector ();
 		}
 		else
 		{

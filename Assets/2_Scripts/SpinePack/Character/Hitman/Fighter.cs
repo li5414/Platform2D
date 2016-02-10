@@ -173,7 +173,7 @@ public class Fighter : GamePlayer
                     switch (e.String)
                     {
                         case "GroundJump":
-                            if (groundJumpPrefab && controller.OnGround)
+                            if (groundJumpPrefab && controller.state.OnGround)
                             {
                                 SpawnAtFoot(groundJumpPrefab, Quaternion.identity, new Vector3(IsFlipped ? -1 : 1, 1, 1));
                             }
@@ -205,6 +205,11 @@ public class Fighter : GamePlayer
         }
     }
 
+    void Move()
+    {
+        controller.vx = input.axisX * CurrentSpeed;
+    }
+
 
     override protected void StateEnter()
     {
@@ -212,55 +217,56 @@ public class Fighter : GamePlayer
         {
             //모든 땅에서의 움직임은 Idle에서 시작한다.
             case ActionState.IDLE:
-                if (controller.CenterOnGround) PlayAnimation(idleAnim);
-                else if (controller.IsOnSlope) PlayAnimation(idleAnim);
-                else if (controller.BackOnGround) PlayAnimation(balanceForward);
-                else if (controller.ForwardOnGround) PlayAnimation(balanceBackward);
+                if (controller.state.OnCenterGround) PlayAnimation(idleAnim);
+                else if (controller.state.IsOnSlope) PlayAnimation(idleAnim);
+                else if (controller.state.OnBackGround) PlayAnimation(balanceForward);
+                else if (controller.state.OnForwardGround) PlayAnimation(balanceBackward);
 
-                if (controller.standingPlatform == null) controller.SetFriction(movingFriction);
+                if (controller.state.StandingPlatform == null) controller.SetFriction(movingFriction);
                 else controller.SetFriction(idleFriction);
 
-                controller.CurrentSpeed = 0f;
+                CurrentSpeed = walkSpeed;
 
-                mJumpCount = 0;
+                JumpCount = 0;
                 break;
 
             case ActionState.WALK:
                 PlayAnimation(walkAnim);
                 controller.SetFriction(movingFriction);
-                controller.CurrentSpeed = walkSpeed;
                 break;
 
             case ActionState.RUN:
                 PlayAnimation(runAnim);
                 controller.SetFriction(movingFriction);
-                controller.CurrentSpeed = runSpeed;
+                CurrentSpeed = runSpeed;
                 break;
 
             case ActionState.JUMP:
-                PlayAnimation(jumpAnim);
+                if (JumpCount == 0)
+                {
+                    controller.state.ClearPlatform();
+                    PlayAnimation(jumpAnim);
+                    SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
+                    controller.vy = jumpSpeed;
+                    // controller.AddForceVertical(mJumpCount > 0 ? airJumpSpeed : jumpSpeed);
+                    if (groundJumpPrefab != null)
+                    {
+                        if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? 90 : -90), new Vector3(controller.vx >= 0 ? 1 : -1, -1, 1));
+                        else SpawnAtFoot(groundJumpPrefab, Quaternion.identity, new Vector3(IsFlipped ? -1 : 1, 1, 1));
+                    }
+                }
+                else
+                {
+                    PlayAnimation(jumpAnim);
+                    SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
+                    controller.vy = airJumpSpeed;
+                    // controller.AddForceVertical(mJumpCount > 0 ? airJumpSpeed : jumpSpeed);
+                    if (airJumpPrefab != null) Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
+                }
 
-                controller.ClearPlatform();
-
-                SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-                
-                controller.vy = 0f;
-                controller.vy = mJumpCount > 0 ? airJumpSpeed : jumpSpeed;
-                // controller.AddForceVertical(mJumpCount > 0 ? airJumpSpeed : jumpSpeed);
                 mJumpStartTime = Time.time;
 
-                //jump 이펙트 생성
-                if (airJumpPrefab != null && mJumpCount > 0)
-                {
-                    Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
-                }
-                else if (groundJumpPrefab != null && mJumpCount == 0)
-                {
-                    if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? 90 : -90), new Vector3(controller.vx >= 0 ? 1 : -1, -1, 1));
-                    else SpawnAtFoot(groundJumpPrefab, Quaternion.identity, new Vector3(IsFlipped ? -1 : 1, 1, 1));
-                }
-
-                mJumpCount++;
+                JumpCount++;
                 if (OnJump != null) OnJump(transform);
                 break;
 
@@ -270,7 +276,7 @@ public class Fighter : GamePlayer
 
             case ActionState.WALLSLIDE:
                 PlayAnimation(wallSlideAnim);
-                mJumpCount = 0;
+                JumpCount = 0;
                 wallSlideStartTime = Time.time;
                 wallSlideWatchdog = wallSlideWatchdogDuration;
 
@@ -293,7 +299,7 @@ public class Fighter : GamePlayer
                 SoundPalette.PlaySound(slideSound, 1, 1, transform.position);
                 slideStartTime = Time.time;
 
-                controller.CurrentSpeed = slideSpeed;
+                CurrentSpeed = slideSpeed;
 
                 IgnoreCharacterCollisions(true);
 
@@ -324,6 +330,8 @@ public class Fighter : GamePlayer
 
                 if (CheckWalk()) return;
 
+                Move();
+
                 break;
 
             case ActionState.WALK:
@@ -335,6 +343,7 @@ public class Fighter : GamePlayer
                 if (CheckRun()) return;
 
                 UpdateFacing();
+                Move();
                 break;
 
             case ActionState.RUN:
@@ -345,14 +354,18 @@ public class Fighter : GamePlayer
                 if (CheckRunStop()) return;
 
                 UpdateFacing();
+                Move();
                 break;
 
             case ActionState.JUMP:
+                if (CheckJump()) return;
                 if (CheckJumpFall()) return;
                 if (CheckAirAttack()) return;
                 if (CheckWallSlide()) return;
 
                 UpdateFacing();
+                Move();
+
 
                 float jumpElapsedTime = Time.time - mJumpStartTime;
                 if (input.jumpPressed == false || jumpElapsedTime >= jumpDuration || downAttackRecovery)
@@ -369,6 +382,7 @@ public class Fighter : GamePlayer
                 if (CheckFallToGround()) return;
 
                 UpdateFacing();
+                Move();
                 break;
 
             case ActionState.WALLSLIDE:
@@ -425,7 +439,7 @@ public class Fighter : GamePlayer
                 if (downAttackRecovery == false)
                 {
                     //땅에 닿았다.
-                    if (controller.OnGround)
+                    if (controller.state.OnGround)
                     {
                         SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
                         downAttackRecoveryTime = 2f;//적절한 연출을 위해 하드코딩으로 회복시간을 가진다.
@@ -435,7 +449,7 @@ public class Fighter : GamePlayer
                         DownAttackStart(clearAttackAnim, downAttackFrameSkip / 30f);
                         if (downAttackPrefab) Instantiate(downAttackPrefab, transform.position + new Vector3(0, 0.25f, 0), Quaternion.identity);
 
-                        controller.CurrentSpeed = 0f;
+                        CurrentSpeed = 0f;
                     }
                     else
                     {
@@ -458,7 +472,7 @@ public class Fighter : GamePlayer
                     }
                 }
 
-                if (velocityLock) controller.CurrentSpeed = 0f;
+                if (velocityLock) CurrentSpeed = 0f;
                 break;
 
             case ActionState.UPATTACK:
@@ -517,7 +531,7 @@ public class Fighter : GamePlayer
     bool CheckWallSlideToGround()
     {
         //지상이고, x속도가 없고 월슬라이드 한지 최소 0.2f 는 넘었을때  idle 로 가자.
-        if (controller.OnGround == false) return false;
+        if (controller.state.OnGround == false) return false;
         if (controller.vx != 0f) return false; // ? 이건 왜? 
         if (Time.time - wallSlideStartTime < 0.2f) return false;
 
@@ -576,14 +590,14 @@ public class Fighter : GamePlayer
     {
         if (input.jumpTrigger == false) return false;
 
-        print("Cehckjump: " + mJumpCount + " : " + maxJumps);
+        print("Cehckjump: " + JumpCount + " : " + maxJumps);
 
-        if (mJumpCount >= maxJumps) return false;
+        if (JumpCount >= maxJumps) return false;
 
         if (IsAblePassOneWay())
         {
-            controller.PassOneway();
-            SetState(ActionState.FALL);
+            controller.PassThroughPlatform();
+            SetFallState( true );
         }
         else
         {
@@ -597,8 +611,7 @@ public class Fighter : GamePlayer
     {
         if (input.axisY > -0.1f) return false;
         //사다리를 타는 중이라면 가능.
-        // 현재 밟은 바닥이 원웨이인지 확인해야한다. 모든 바닥이 원웨이.
-        if (controller.OnOneway == false) return false;
+        if (controller.state.OnOneway == false) return false;
 
         return true;
     }
@@ -651,7 +664,7 @@ public class Fighter : GamePlayer
 
     bool CheckGroundFall()
     {
-        if (controller.OnGround) return false;//movingplatform 검사해야 하나?
+        if (controller.state.OnGround) return false;//movingplatform 검사해야 하나?
 
         SetFallState(true);
         return true;
@@ -659,21 +672,19 @@ public class Fighter : GamePlayer
 
     bool CheckJumpFall()
     {
-        if (controller.vx > 0) return false;
-
+        //if( Time.time == mJumpStartTime + 0.1f ) return false;
+        if (controller.vy > 0) return false;
         SetFallState(false);
         return true;
     }
 
     bool CheckFallToGround()
     {
-        if (controller.OnGround == false) return false;
+        if (controller.state.OnGround == false) return false;
 
         SoundPalette.PlaySound(landSound, 1, 1, transform.position);
 
-        if (input.axisX == 0) SetState(ActionState.IDLE);
-        else SetState(ActionState.WALK);
-
+        SetState(ActionState.IDLE);
         return true;
     }
 

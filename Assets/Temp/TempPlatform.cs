@@ -41,7 +41,7 @@ namespace druggedcode.engine
 
         virtual protected void UpdateLayer()
         {
-            LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_ENVIRONMENT);
+            LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_PLATFORM);
         }
         
         virtual protected void UpdateSortingLayer()

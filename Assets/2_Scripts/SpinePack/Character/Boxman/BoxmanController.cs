@@ -150,8 +150,8 @@ public class BoxmanController : TempGameCharacter
             if (track.Animation.Name == idleAnim)
             {
                 Vector3 velocity = mRb.velocity;
-                velocity.x = movingPlatform.Velocity.x;
-                velocity.y = movingPlatform.Velocity.y;
+                velocity.x = movingPlatform.velocity.x;
+                velocity.y = movingPlatform.velocity.y;
                 mRb.velocity = velocity;
             }
 
