@@ -64,14 +64,12 @@ public class GameCharacter : MonoBehaviour
     public float movingFriction = 0;
 
     [Header("References")]
+    public Transform body;
     public GameObject groundJumpPrefab;
     public GameObject airJumpPrefab;
 
     [SpineBone(dataField: "skeletonAnimation")]
     public string footEffectBone;
-
-
-    public float CurrentSpeed { get; protected set; }
 
     //--------------------------------------------------------------------------
     // Inspector에 표시되지 않는 public 
@@ -89,6 +87,7 @@ public class GameCharacter : MonoBehaviour
 
     SkeletonAnimation mSkeletonAnimation;
     protected SkeletonGhost mGhost;
+    protected Facing mFacaing;
 
     //character state
     public int JumpCount { get; protected set; }
@@ -162,6 +161,25 @@ public class GameCharacter : MonoBehaviour
         mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
     }
 
+
+    //todo 플립 적용
+    public void SetFacing(Facing facing)
+    {
+        if (mFacaing == facing) return;
+
+        mFacaing = facing;
+        switch (mFacaing)
+        {
+            case Facing.RIGHT:
+                body.localScale = new Vector3(1f, body.localScale.y, body.localScale.z);
+                break;
+
+            case Facing.LEFT:
+                body.localScale = new Vector3(-1f, body.localScale.y, body.localScale.z);
+                break;
+        }
+    }
+
     //실제 고개 방향과 별도로 캐릭터만 반대로 돌리고 싶을 때 사용한다.
     protected bool AnimFlip
     {
@@ -182,7 +200,7 @@ public class GameCharacter : MonoBehaviour
     {
         if (state == next)
         {
-            Debug.Log("---------same state!!!!! " + state + " > " + next );
+            Debug.Log("---------same state!!!!! " + state + " > " + next);
             //return;
         }
         else
@@ -238,10 +256,11 @@ public class GameCharacter : MonoBehaviour
         SetState(ActionState.FALL);
     }
     //Special effects helper function
-    protected void SpawnAtFoot(GameObject prefab, Quaternion rotation, Vector3 scale)
+    protected void SpawnAtFoot(GameObject prefab, Quaternion rotation )
     {
         var bone = mSkeletonAnimation.Skeleton.FindBone(footEffectBone);
         Vector3 pos = mSkeletonAnimation.transform.TransformPoint(bone.WorldX, bone.WorldY, 0);
+        Vector3 scale = new Vector3( mFacaing == Facing.RIGHT ? 1:-1,1,1);
         ((GameObject)Instantiate(prefab, pos, rotation)).transform.localScale = scale;
     }
 

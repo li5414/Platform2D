@@ -285,6 +285,8 @@ namespace druggedcode.engine
 			yield return new WaitForRealSeconds( duration );
             mMoveLocked = false;
         }
+        
+        
 
         //----------------------------------------------------------------------------------------------------------
         // behaviour

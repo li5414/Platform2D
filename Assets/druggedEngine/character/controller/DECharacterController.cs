@@ -20,8 +20,8 @@ namespace druggedcode.engine
         public float raySafetyDis = 0.1f;
 
         [Header("Move")]
-        public UpdateType updateType;
         public SmoothType smoothType;
+        UpdateType updateType;
 
 
         //--------------------------------------------------------------------------
@@ -37,38 +37,26 @@ namespace druggedcode.engine
 
         PhysicsMaterial2D mPhysicsMaterial;
 
-        //통합 과정 시 추가한 것들 & 임시
-
-        public Rigidbody2D StompableObject { get; private set; }
-
-        public DECharacterControllerState state { get; private set; }
-
-        //보통 검사 시 movingPlatform 과 같이 검사한다. 통합 고려하자.
-        //ground
-
-        //side
-
-        public bool IsPressAgainstWall { get; private set; }
-
-        public float addedGravity { get; protected set; }
-
         Vector2 mMovingPlatformVelocity;
-
-        Facing mFacaing;
-
-        public float axisX { get; set; }
 
         List<Platform> mPlatformList;
         List<bool> mGroundList;
         List<float> mAngleList;
         List<Vector3> mOriginList;
 
+        bool mMoveLocked;
+        Coroutine mLockMoveRoutine;
+
         //--------------------------------------------------------------------------
         // get;set
         //--------------------------------------------------------------------------
-        float mPassedVX = 0f;
+        public Rigidbody2D StompableObject { get; private set; }
+        public DECharacterControllerState state { get; private set; }
+        public float addedGravity { get; protected set; }
+        public float axisX { get; set; }
+        public float targetSpeed { get; set; }
         public Vector2 velocity { get { return mRb.velocity; } }
-        public float vx { get { return mRb.velocity.x; } set { mPassedVX = value; } }
+        public float vx { get { return mRb.velocity.x; } set { mRb.velocity = new Vector2(value, mRb.velocity.y); } }
         public float vy { get { return mRb.velocity.y; } set { mRb.velocity = new Vector2(mRb.velocity.x, value); } }
 
         void Awake()
@@ -100,6 +88,7 @@ namespace druggedcode.engine
         void Start()
         {
             currentMask = DruggedEngine.MASK_ALL_GROUND;
+            updateType = DruggedEngine.MOVE_CHARACTER;
         }
 
         void CalculateRayBounds(Collider2D coll)
@@ -135,22 +124,6 @@ namespace druggedcode.engine
         // behaviour
         //--------------------------------------------------------------------------
 
-        //todo 플립 적용
-        public void SetFacing(Facing facing)
-        {
-            mFacaing = facing;
-            switch (mFacaing)
-            {
-                case Facing.RIGHT:
-                    mTr.localRotation = Quaternion.Euler(0f, 0f, 0f);
-                    break;
-
-                case Facing.LEFT:
-                    mTr.localRotation = Quaternion.Euler(0f, 180f, 0f);
-                    break;
-            }
-        }
-
         //work-around for Box2D not updating friction values at runtime...
         public void SetFriction(float friction)
         {
@@ -164,15 +137,15 @@ namespace druggedcode.engine
 
         public void PassThroughPlatform()
         {
-            state.StandingPlatform.PassThough( this );
+            state.StandingPlatform.PassThough(this);
         }
-        
-        public void IgnoreCollision( Collider2D collider, bool ignore )
+
+        public void IgnoreCollision(Collider2D collider, bool ignore)
         {
             print("ignore");
-            Physics2D.IgnoreCollision( primaryCollider, collider, ignore );
+            Physics2D.IgnoreCollision(primaryCollider, collider, ignore);
         }
-        
+
         public void UpdateColliderSize(float xScale, float yScale)
         {
             UpdateColliderSize(new Vector3(xScale, yScale, 1f));
@@ -228,21 +201,45 @@ namespace druggedcode.engine
             mIsLockVY = false;
             mLockedVY = 0f;
         }
+        
+        public void LockMove(float duration)
+        {
+            if( mLockMoveRoutine != null ) StopCoroutine( mLockMoveRoutine );
+            mLockMoveRoutine = StartCoroutine(LockMoveRoutine(duration));
+        }
+
+        IEnumerator LockMoveRoutine(float duration )
+        {
+            mMoveLocked = true;
+            yield return new WaitForRealSeconds(duration);
+            mMoveLocked = false;
+        }
 
         //character에서 호출된다.
         public void Move(float delta)
         {
-            float movementFactor = 25f;//15,25 //지상과 공중의 차이가 있어야 한다. 공중에서 급격한 방향 전환이 어렵도록.var movementFactor = _controller.State.IsGrounded ? AccelOnGround : AccelOnAir;
-
             Vector2 current = mRb.velocity;
 
-            if (state.OnGround)
+            //x
+            if (mMoveLocked == false)
             {
-                mPassedVX += mMovingPlatformVelocity.x;
-                //print("더하자 : " + mMovingPlatformVelocity.x);
-                current.y += mMovingPlatformVelocity.y;
+                float targetVX = axisX * targetSpeed;
+                targetVX += mMovingPlatformVelocity.x;
+                float movementFactor = 25f;//15,25 //지상과 공중의 차이가 있어야 한다. 공중에서 급격한 방향 전환이 어렵도록.var movementFactor = _controller.State.IsGrounded ? AccelOnGround : AccelOnAir;
+                switch (smoothType)
+                {
+                    case SmoothType.MoveTowards:
+                        current.x = Mathf.MoveTowards(current.x, targetVX, delta * movementFactor);
+                        break;
+                    case SmoothType.Lerp:
+                        current.x = Mathf.Lerp(current.x, targetVX, delta * movementFactor);
+                        break;
+                }
             }
-            else
+
+            //y
+            current.y += mMovingPlatformVelocity.y;
+            if (state.OnGround == false)
             {
                 if (mIsLockVY)
                 {
@@ -261,15 +258,6 @@ namespace druggedcode.engine
             //wallSlide 인 경우 velocity.y = Mathf.Clamp(velocity.y, wallSlideSpeed, 0);
 
             //apply
-            switch (smoothType)
-            {
-                case SmoothType.MoveTowards:
-                    current.x = Mathf.MoveTowards(current.x, mPassedVX, delta * movementFactor);
-                    break;
-                case SmoothType.Lerp:
-                    current.x = Mathf.Lerp(current.x, mPassedVX, delta * movementFactor);
-                    break;
-            }
 
 
             mRb.velocity = current;
@@ -287,13 +275,17 @@ namespace druggedcode.engine
 
         void FixedUpdate()
         {
-            if (updateType == UpdateType.FixedUpdate) Move(Time.deltaTime);
+            if (updateType == UpdateType.FixedUpdate)
+            {
+                print("d");
+                Move(Time.fixedDeltaTime);
+            }
 
             state.Reset();
 
             //detect
-            DetectOnGround();
-            DetectPressAgainstWall();
+            DetectGround();
+            DetectFront();
 
             //위를 체크 하긴 해야함. 앉아 있다가 일어서려고 할 때 하기만 하면 될까?
             DetectStompObject();//Stompable.cs 참고. 밟히는 쪽에 설치하는게 올바른 것 같다.
@@ -302,14 +294,9 @@ namespace druggedcode.engine
             state.Save();
         }
 
-        void DetectOnGround()
+        void DetectGround()
         {
-            if (mRb.velocity.y > 0f)
-            {
-                return;
-            }
-
-            state.ClearPlatform();
+            if (mRb.velocity.y > 0f) return;
 
             GroundCast(0);
             GroundCast(1);
@@ -364,19 +351,6 @@ namespace druggedcode.engine
             mAngleList[idx] = angle;
         }
 
-        //see if character is on a one-way platform
-        protected Platform PlatformCast(Vector3 origin)
-        {
-            Platform platform = null;
-            RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(origin), Vector2.down, 0.5f, currentMask);
-            if (hit.collider != null && !hit.collider.isTrigger)
-            {
-                platform = hit.collider.GetComponent<Platform>();
-            }
-
-            return platform;
-        }
-
         void DetectStompObject()
         {
             StompableObject = GetRelevantCharacterCast(mOriginList[0], 0.15f);
@@ -384,46 +358,37 @@ namespace druggedcode.engine
             if (StompableObject == null) StompableObject = GetRelevantCharacterCast(mOriginList[2], 0.15f);
         }
 
-        void DetectPressAgainstWall()
+        void DetectFront()
         {
             float x = mRb.velocity.x;
-            bool usingVelocity = true;
+            if (x == 0f) return;
+            Vector3 origin = mTr.TransformPoint(mCastOriginWall);
+            Vector2 direction = Vector2.right * axisX;
+            float rayLength = mCastOriginWallDistance + x * Time.deltaTime;
+            RaycastHit2D hit = PhysicsUtil.DrawRayCast(origin, direction, rayLength, currentMask, Color.red);
 
-            if (Mathf.Abs(x) < 0.1f)
+            if (hit && hit.collider != null && hit.collider.isTrigger == false)
             {
-                x = axisX;
-                if (x == 0f)
-                {
-                    IsPressAgainstWall = false;
-                    return;
-                }
-                else
-                {
-                    usingVelocity = false;
-                }
+                state.CollidingFront = hit.collider;
+
+                //각도도 검사해야 할 수도?
             }
+        }
 
-            RaycastHit2D hit = Physics2D.Raycast
-                (
-                                   transform.TransformPoint(mCastOriginWall),
-                                   new Vector2(x, 0).normalized,
-                                   mCastOriginWallDistance + (usingVelocity ? x * Time.deltaTime : 0),
-                                   currentMask
-                               );
-
-            if (hit.collider != null && !hit.collider.isTrigger)
+        public bool IsPressAgainstWall
+        {
+            get
             {
-                if (hit.collider.GetComponent<Platform>())
-                {
-                    IsPressAgainstWall = false;
-                    return;
-                }
+                if (state.IsCollidingFront == false) return false;
+                Wall wall = state.CollidingFront.GetComponent<Wall>();
+                if (wall == null) return false;
 
-                IsPressAgainstWall = true;
-                return;
+                if (wall.slideWay == Wall.WallSlideWay.NOTHING) return false;
+                else if (wall.slideWay == Wall.WallSlideWay.BOTH) return true;
+                else if (wall.slideWay == Wall.WallSlideWay.LEFT && axisX > 0) return true;
+                else if (wall.slideWay == Wall.WallSlideWay.RIGHT && axisX < 0) return true;
+                return false;
             }
-
-            IsPressAgainstWall = false;
         }
 
         //--------------------------------------------------------------------------------
@@ -480,26 +445,29 @@ namespace druggedcode.engine
         public bool WasOnGroundLastFrame { get; set; }
         public bool JustGotGrounded { get; set; }
 
+        public bool IsCollidingFront { get { return CollidingFront != null; } }
+        public Collider2D CollidingFront { get; set; }
+
         //slope
         public bool IsOnSlope { get; set; }
         public float Slope { get; set; }
         public float ForwardAngle { get; set; }
         public float CenterAngle { get; set; }
         public float BackAngle { get; set; }
-        
+
         //ground
         public bool OnGround { get { return OnCenterGround || OnBackGround || OnForwardGround; } }
         public bool OnForwardGround { get; set; }
         public bool OnCenterGround { get; set; }
         public bool OnBackGround { get; set; }
-        
+
         public bool OnOneway
         {
             get
             {
-                if( OnGround == false ) return false;
-                if( StandingPlatform == false ) return false;
-                if( StandingPlatform.oneway == false ) return false;
+                if (OnGround == false) return false;
+                if (StandingPlatform == false) return false;
+                if (StandingPlatform.oneway == false) return false;
                 return true;
             }
         }
@@ -528,10 +496,11 @@ namespace druggedcode.engine
         public void Reset()
         {
             JustGotGrounded = false;
-            // IsFalling = false;           
-            // SlopeAngle = 0;
-            // StandingPlatfom = null;
-            // HittedClingWall = null;
+            Slope = 0f;
+
+            CollidingFront = null;
+
+            ClearPlatform();
         }
 
         public void ClearPlatform()

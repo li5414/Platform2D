@@ -21,6 +21,7 @@ public class CharacterControllerEditor : Editor
 		if (Application.isPlaying)
 		{
 			EditorGUILayout.LabelField ("vel", mController.velocity.ToString ());
+            EditorGUILayout.LabelField ("targetSpeed", mController.targetSpeed.ToString());
 			EditorGUILayout.LabelField ("OnGround", mController.state.OnGround.ToString ());
 			EditorGUILayout.LabelField ("OnForward", mController.state.OnForwardGround.ToString ());
 			EditorGUILayout.LabelField ("OnCenter", mController.state.OnCenterGround.ToString ());
