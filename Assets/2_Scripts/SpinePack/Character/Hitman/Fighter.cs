@@ -166,7 +166,7 @@ public class Fighter : GamePlayer
                     switch (e.String)
                     {
                         case "GroundJump":
-                            if (groundJumpPrefab && controller.state.OnGround)
+                            if (groundJumpPrefab && controller.state.IsGround)
                             {
                                 SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
                             }
@@ -207,13 +207,14 @@ public class Fighter : GamePlayer
         {
             //모든 땅에서의 움직임은 Idle에서 시작한다.
             case ActionState.IDLE:
-                if (controller.state.OnCenterGround) PlayAnimation(idleAnim);
+                if (controller.state.IsGroundCenter) PlayAnimation(idleAnim);
                 else if (controller.state.IsOnSlope) PlayAnimation(idleAnim);
-                else if (controller.state.OnBackGround) PlayAnimation(balanceForward);
-                else if (controller.state.OnForwardGround) PlayAnimation(balanceBackward);
+                else if (controller.state.IsGroundBack) PlayAnimation(balanceForward);
+                else if (controller.state.IsGroundForward) PlayAnimation(balanceBackward);
 
-                if (controller.state.StandingPlatform == null) controller.SetFriction(movingFriction);
-                else controller.SetFriction(idleFriction);
+				controller.SetFriction(idleFriction);
+//                if (controller.state.StandingPlatform == null) controller.SetFriction(movingFriction);
+//                else controller.SetFriction(idleFriction);
 
                 controller.targetSpeed = walkSpeed;
                 JumpCount = 0;
@@ -402,7 +403,7 @@ public class Fighter : GamePlayer
                 if (downAttackRecovery == false)
                 {
                     //땅에 닿았다.
-                    if (controller.state.OnGround)
+                    if (controller.state.IsGround)
                     {
                         SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
                         downAttackRecoveryTime = 2f;//적절한 연출을 위해 하드코딩으로 회복시간을 가진다.
@@ -505,7 +506,7 @@ public class Fighter : GamePlayer
     bool CheckWallSlideToGround()
     {
         if (Time.time < wallSlideStartTime + 0.2f) return false;
-        if (controller.state.OnGround == false) return false;
+        if (controller.state.IsGround == false) return false;
 
         SetState(ActionState.IDLE);
         return true;
@@ -568,7 +569,7 @@ public class Fighter : GamePlayer
     {
         if (input.axisY > -0.1f) return false;
         //사다리를 타는 중이라면 가능.
-        if (controller.state.OnOneway == false) return false;
+		if (controller.state.IsOnOneway == false) return false;
 
         return true;
     }
@@ -621,7 +622,7 @@ public class Fighter : GamePlayer
 
     bool CheckGroundFall()
     {
-        if (controller.state.OnGround) return false;//movingplatform 검사해야 하나?
+        if (controller.state.IsGround) return false;//movingplatform 검사해야 하나?
 
         SetFallState(true);
         return true;
@@ -637,7 +638,7 @@ public class Fighter : GamePlayer
 
     bool CheckFallToGround()
     {
-        if (controller.state.OnGround == false) return false;
+        if (controller.state.IsGround == false) return false;
 
         SoundPalette.PlaySound(landSound, 1, 1, transform.position);
 

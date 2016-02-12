@@ -22,10 +22,11 @@ public class CharacterControllerEditor : Editor
 		{
 			EditorGUILayout.LabelField ("vel", mController.velocity.ToString ());
             EditorGUILayout.LabelField ("targetSpeed", mController.targetSpeed.ToString());
-			EditorGUILayout.LabelField ("OnGround", mController.state.OnGround.ToString ());
-			EditorGUILayout.LabelField ("OnForward", mController.state.OnForwardGround.ToString ());
-			EditorGUILayout.LabelField ("OnCenter", mController.state.OnCenterGround.ToString ());
-			EditorGUILayout.LabelField ("OnBack", mController.state.OnBackGround.ToString ());
+			EditorGUILayout.LabelField ("Slope", mController.state.IsOnSlope.ToString() + " (" + mController.state.SlopeAngle +")");
+			EditorGUILayout.LabelField ("OnGround", mController.state.IsGround.ToString ());
+			EditorGUILayout.LabelField ("OnForward", mController.state.IsGroundForward.ToString ());
+			EditorGUILayout.LabelField ("OnCenter", mController.state.IsGroundCenter.ToString ());
+			EditorGUILayout.LabelField ("OnBack", mController.state.IsGroundBack.ToString ());
 			EditorGUILayout.ObjectField ("forwardPlatform", mController.state.ForwardPlatform, typeof(Platform), true);
 			EditorGUILayout.ObjectField ("centerPlatform", mController.state.CenterPlatofrm, typeof(Platform), true);
 			EditorGUILayout.ObjectField ("backPlatform", mController.state.BackPlatform, typeof(Platform), true);

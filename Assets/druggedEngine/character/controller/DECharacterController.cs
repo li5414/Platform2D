@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
-
 //PassOneway 와 Platform 의 trigger 과 동시에 실행되면서 중첩된다
 namespace druggedcode.engine
 {
@@ -24,6 +24,11 @@ namespace druggedcode.engine
         UpdateType updateType;
 
 
+		//--------------------------------------------------------------------------
+		// event
+		//--------------------------------------------------------------------------
+		public UnityAction OnJustGotGround;
+
         //--------------------------------------------------------------------------
         // private protected
         //--------------------------------------------------------------------------
@@ -34,14 +39,15 @@ namespace druggedcode.engine
 
         Vector3 mCastOriginWall;
         float mCastOriginWallDistance;
+		float mCastGroundRayLength;
 
         PhysicsMaterial2D mPhysicsMaterial;
 
         Vector2 mMovingPlatformVelocity;
 
-        List<Platform> mPlatformList;
-        List<bool> mGroundList;
-        List<float> mAngleList;
+        List<Platform> mPlatformResults;
+        List<bool> mIsGroundResults;
+        List<float> mSlopeAngleResults;
         List<Vector3> mOriginList;
 
         bool mMoveLocked;
@@ -70,9 +76,9 @@ namespace druggedcode.engine
 
             state = new DECharacterControllerState();
 
-            mPlatformList = new List<Platform>(new Platform[] { null, null, null });
-            mAngleList = new List<float>(new float[] { 0f, 0f, 0f });
-            mGroundList = new List<bool>(new bool[] { false, false, false });
+            mPlatformResults = new List<Platform>(new Platform[] { null, null, null });
+            mSlopeAngleResults = new List<float>(new float[] { 0f, 0f, 0f });
+            mIsGroundResults = new List<bool>(new bool[] { false, false, false });
             mOriginList = new List<Vector3>(new Vector3[] { Vector3.zero, Vector3.zero, Vector3.zero });
 
             CalculateRayBounds(primaryCollider);
@@ -103,13 +109,13 @@ namespace druggedcode.engine
             Vector3 backGround = new Vector3();
 
             forwadGround.x = max.x;
-            forwadGround.y = min.y + raySafetyDis;
+			forwadGround.y = center.y;
 
             centerGround.x = center.x;
-            centerGround.y = min.y + raySafetyDis;
+			centerGround.y = center.y;
 
             backGround.x = min.x;
-            backGround.y = min.y + raySafetyDis;
+			backGround.y = center.y;
 
 
             mOriginList[0] = forwadGround;
@@ -118,6 +124,7 @@ namespace druggedcode.engine
 
             mCastOriginWall = center;
             mCastOriginWallDistance = b.extents.x + raySafetyDis;
+			mCastGroundRayLength = b.extents.y + raySafetyDis;
         }
 
         //--------------------------------------------------------------------------
@@ -239,7 +246,7 @@ namespace druggedcode.engine
 
             //y
             current.y += mMovingPlatformVelocity.y;
-            if (state.OnGround == false)
+            if (state.IsGround == false)
             {
                 if (mIsLockVY)
                 {
@@ -290,25 +297,34 @@ namespace druggedcode.engine
             //위를 체크 하긴 해야함. 앉아 있다가 일어서려고 할 때 하기만 하면 될까?
             DetectStompObject();//Stompable.cs 참고. 밟히는 쪽에 설치하는게 올바른 것 같다.
 
+			if( state.WasOnGroundLastFrame == false && state.IsGround )
+			{
+				if( OnJustGotGround != null ) OnJustGotGround();
+			}
+				
             //save
             state.Save();
         }
 
         void DetectGround()
         {
-            if (mRb.velocity.y > 0f) return;
+            //if (mRb.velocity.y > 0f) return;
 
             GroundCast(0);
             GroundCast(1);
             GroundCast(2);
 
-            state.OnForwardGround = mGroundList[0];
-            state.OnCenterGround = mGroundList[1];
-            state.OnBackGround = mGroundList[2];
+			state.IsGroundForward = mIsGroundResults[0];
+            state.IsGroundCenter = mIsGroundResults[1];
+            state.IsGroundBack = mIsGroundResults[2];
 
-            state.ForwardPlatform = mPlatformList[0];
-            state.CenterPlatofrm = mPlatformList[1];
-            state.BackPlatform = mPlatformList[2];
+			state.ForwardPlatform = mPlatformResults[0];
+            state.CenterPlatofrm = mPlatformResults[1];
+            state.BackPlatform = mPlatformResults[2];
+
+			state.ForwardAngle = mSlopeAngleResults[0];
+			state.CenterAngle = mSlopeAngleResults[1];
+			state.BackAngle = mSlopeAngleResults[2];
 
             //			state.Slope = hit.normal.y;
 
@@ -319,36 +335,22 @@ namespace druggedcode.engine
         void GroundCast(int idx)
         {
             Vector3 origin = mTr.TransformPoint(mOriginList[idx]);
-            float rayLength = 0.15f;
-            RaycastHit2D hit = PhysicsUtil.DrawRayCast(origin, Vector2.down, rayLength, currentMask, Color.red);
+			RaycastHit2D hit = PhysicsUtil.DrawRayCast(origin, Vector2.down, mCastGroundRayLength, currentMask, Color.red);
             Platform platform = null;
             float angle = 0f;
-            bool isOn = false;
+			bool isGrounded = false;
 
             if (hit && hit.collider != null && hit.collider.isTrigger == false)
             {
-                isOn = true;
+                isGrounded = true;
                 platform = hit.collider.GetComponent<Platform>();
-                angle = hit.normal.y;
-                //angle = Vector2.Angle( hit.normal, Vector2.up );
-                //_state.SlopeAngle = _groundAngles[closestIndex];
-
-                //특정 각도 범위가 아니면 지면이 아니라고 판단.
-                //지면이지만 특정 각도 범위면 경사에 있다고 판단.
-
-                // if (hit.normal.y < 0.4f)
-                //     return false;
-                // else if (hit.normal.y < 0.95f)
-                //     state.IsOnSlope = true;
-
-                // platform = hit.collider.GetComponent<Platform>();
-
-                // return true;
+                //angle = hit.normal.y;
+                angle = Vector2.Angle( hit.normal, Vector2.up );
             }
 
-            mGroundList[idx] = isOn;
-            mPlatformList[idx] = platform;
-            mAngleList[idx] = angle;
+            mIsGroundResults[idx] = isGrounded;
+			mPlatformResults[idx] = platform;
+			mSlopeAngleResults[idx] = angle;
         }
 
         void DetectStompObject()
@@ -427,7 +429,7 @@ namespace druggedcode.engine
             if (!Application.isPlaying)
                 return;
 
-            if (state.OnGround)
+            if (state.IsGround)
                 Gizmos.color = Color.green;
             else
                 Gizmos.color = Color.grey;
@@ -443,36 +445,36 @@ namespace druggedcode.engine
     {
         //
         public bool WasOnGroundLastFrame { get; set; }
-        public bool JustGotGrounded { get; set; }
 
+		//side
         public bool IsCollidingFront { get { return CollidingFront != null; } }
         public Collider2D CollidingFront { get; set; }
 
         //slope
-        public bool IsOnSlope { get; set; }
-        public float Slope { get; set; }
+		public bool IsOnSlope { get{ return Mathf.Abs( SlopeAngle ) > 5; }}
+		public float SlopeAngle { get{ return ForwardAngle; }}
         public float ForwardAngle { get; set; }
         public float CenterAngle { get; set; }
         public float BackAngle { get; set; }
 
         //ground
-        public bool OnGround { get { return OnCenterGround || OnBackGround || OnForwardGround; } }
-        public bool OnForwardGround { get; set; }
-        public bool OnCenterGround { get; set; }
-        public bool OnBackGround { get; set; }
+        public bool IsGround { get { return IsGroundCenter || IsGroundBack || IsGroundForward; } }
+        public bool IsGroundForward { get; set; }
+        public bool IsGroundCenter { get; set; }
+        public bool IsGroundBack { get; set; }
 
-        public bool OnOneway
+		//platform
+        public bool IsOnOneway
         {
             get
             {
-                if (OnGround == false) return false;
+                if (IsGround == false) return false;
                 if (StandingPlatform == false) return false;
                 if (StandingPlatform.oneway == false) return false;
                 return true;
             }
         }
 
-        //platform
         public Platform StandingPlatform
         {
             get
@@ -495,9 +497,6 @@ namespace druggedcode.engine
 
         public void Reset()
         {
-            JustGotGrounded = false;
-            Slope = 0f;
-
             CollidingFront = null;
 
             ClearPlatform();
@@ -505,9 +504,9 @@ namespace druggedcode.engine
 
         public void ClearPlatform()
         {
-            OnForwardGround = false;
-            OnCenterGround = false;
-            OnBackGround = false;
+            IsGroundForward = false;
+            IsGroundCenter = false;
+            IsGroundBack = false;
 
             ForwardPlatform = null;
             CenterPlatofrm = null;
@@ -520,7 +519,7 @@ namespace druggedcode.engine
 
         public void Save()
         {
-            WasOnGroundLastFrame = OnGround;
+            WasOnGroundLastFrame = IsGround;
         }
     }
 }
