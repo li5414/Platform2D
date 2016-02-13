@@ -7,14 +7,6 @@ namespace druggedcode.engine
     [ExecuteInEditMode]
     public class Wall : MonoBehaviour
     {
-        public enum WallSlideWay
-        {
-            NOTHING,
-            LEFT,
-            RIGHT,
-            BOTH
-        }
-
         public WallSlideWay slideWay;
 
         void Start()

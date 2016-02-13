@@ -132,6 +132,8 @@ namespace druggedcode
 
 			if (points.Count < 2) return;
 
+			Gizmos.color = Color.yellow;
+
 			for (var i = 1; i < points.Count; i++)
 			{
 				Gizmos.DrawLine (points [i - 1].position, points [i].position);

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Fighter : GamePlayer
+public class Fighter : GameCharacter
 {
     public float wallJumpXSpeed = 3;
 
@@ -43,19 +43,23 @@ public class Fighter : GamePlayer
     public string runAnim;
     [SpineAnimation]
     public string idleAnim;
+
     [SpineAnimation]
     public string balanceBackward;
     [SpineAnimation]
     public string balanceForward;
+
     [SpineAnimation]
     public string jumpAnim;
     [SpineAnimation]
     public string fallAnim;
     [SpineAnimation]
+
     public string wallSlideAnim;
     [SpineAnimation]
     public string slideAnim;
     [SpineAnimation]
+
     public string attackAnim;
     [SpineAnimation]
     public string downAttackAnim;

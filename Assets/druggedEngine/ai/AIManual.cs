@@ -33,7 +33,7 @@ namespace druggedcode.engine
 			float v = Input.GetAxisRaw("Vertical");
 
             if( mPlayer.currentManualLinker != null &&
-                mPlayer.controller.State.IsGrounded &&
+                mPlayer.controller.state.IsGrounded &&
                 v > 0.5f )
             {
                 mPlayer.currentManualLinker.In( mPlayer );
@@ -49,20 +49,20 @@ namespace druggedcode.engine
 //            }
             
             //run
-			if (Input.GetButtonDown("Run")) mPlayer.Run();
-			if (Input.GetButtonUp("Run")) mPlayer.StopRun();
+//			if (Input.GetButtonDown("Run")) mPlayer.Run();
+//			if (Input.GetButtonUp("Run")) mPlayer.StopRun();
 
             //대쉬    
             //            if ( CrossPlatformInputManager.GetButtonDown("Dash") )
             //                _player.Dash();
 
             //점프시작      
-			if (Input.GetButtonDown("Jump")) mPlayer.Jump();
+			//if (Input.GetButtonDown("Jump")) mPlayer.Jump();
 
             //근접공격
 			if (Input.GetButtonDown("Fire1"))
             {
-                mPlayer.Attack();
+                //mPlayer.Attack();
                 //_player.GetComponent<CharacterMelee>().Melee();
             }
 

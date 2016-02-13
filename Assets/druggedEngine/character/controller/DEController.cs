@@ -52,13 +52,13 @@ namespace druggedcode.engine
 		Vector2 _addForce;
 		float _passedVX = 0f;
 		Vector2 _velocity;
-		//최종 적용된 속도
 		Vector2 _moveDirection = Vector2.right;
 
-		public Vector2 moveDirection { get { return _moveDirection; } }
+		float mPlatformFriction = 1f;
+		Vector2 mPlatofrmVelocity = Vector2.zero;
 
-		Vector2 _translateVector;
 		//현재 velocity 에 의해 현재 프레임에서 움직일 벡터
+		Vector2 _translateVector;
 
 		PhysicInfo _physicSpaceInfo;
 
@@ -187,11 +187,10 @@ namespace druggedcode.engine
 				//x lock
 			}
 
-
 			//속도계산
 			if (state.IsGrounded)
 			{
-				_velocity.x += (_passedVX - _velocity.x) * state.StandingPlatfom.friction;
+				_velocity.x += (_passedVX - _velocity.x) * mPlatformFriction;
 			}
 			else
 			{
@@ -329,15 +328,28 @@ namespace druggedcode.engine
 
 			Platform hittedPlatform = _hit2D.collider.gameObject.GetComponent<Platform> ();
 
-			if (state.WasColldingBelowLastFrame == false && lowestY > _bound.yBottom && hittedPlatform.oneway )
-			{
-				return;
-			}
+			//아래 조건이 어떤상황인지 모르겠다.
+//			if (state.WasColldingBelowLastFrame == false && lowestY > _bound.yBottom && hittedPlatform.oneway )
+//			{
+//				return;
+//			}
 
 			state.IsCollidingBelow = true;
-			state.StandingPlatfom = hittedPlatform;
 			state.SlopeAngle = mGroundAngles [closestIndex];
 			_translateVector.y = 0;
+			if( hittedPlatform == null )
+			{
+				state.StandingPlatfom = null;
+				mPlatofrmVelocity = Vector2.zero;
+			}
+			else
+			{
+				state.StandingPlatfom = hittedPlatform;
+				mPlatformFriction = hittedPlatform.friction;
+				mPlatofrmVelocity = hittedPlatform.velocity;
+			}
+			
+				
 
 			if (state.SlopeAngle > 0)
 			{
@@ -398,20 +410,20 @@ namespace druggedcode.engine
 
 			if (state.IsGrounded == false)
 			{
-				Wall wall = _hit2D.collider.gameObject.GetComponent<TempPlatform> ();
-				if (CheckWallCling (wall)) state.HittedClingWall = Wall;
+				Wall wall = _hit2D.collider.gameObject.GetComponent<Wall> ();
+				if (CheckWallCling (wall)) state.HittedClingWall = wall;
 			}
 
 			if (_hit2D.rigidbody != null) _sideHittedPushableObject.Add (_hit2D.rigidbody);
 		}
 
-		bool CheckWallCling (TempPlatform wall)
+		bool CheckWallCling (Wall wall)
 		{
 			if (wall == null) return false;
-			if (wall.WallClingType == TempPlatform.WallClinType.NOTHING) return false;
-			if (wall.WallClingType == TempPlatform.WallClinType.BOTH) return true;
-			if (wall.WallClingType == TempPlatform.WallClinType.LEFT && state.IsCollidingRight) return true;
-			if (wall.WallClingType == TempPlatform.WallClinType.RIGHT && state.IsCollidingLeft) return true;
+			if (wall.slideWay == WallSlideWay.NOTHING) return false;
+			if (wall.slideWay == WallSlideWay.BOTH) return true;
+			if (wall.slideWay == WallSlideWay.LEFT && state.IsCollidingRight) return true;
+			if (wall.slideWay == WallSlideWay.RIGHT && state.IsCollidingLeft) return true;
 			return false;
 		}
 

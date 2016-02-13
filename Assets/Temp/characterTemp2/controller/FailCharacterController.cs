@@ -384,10 +384,10 @@ namespace druggedcode.engine
                 Wall wall = state.CollidingFront.GetComponent<Wall>();
                 if (wall == null) return false;
 
-                if (wall.slideWay == Wall.WallSlideWay.NOTHING) return false;
-                else if (wall.slideWay == Wall.WallSlideWay.BOTH) return true;
-                else if (wall.slideWay == Wall.WallSlideWay.LEFT && axisX > 0) return true;
-                else if (wall.slideWay == Wall.WallSlideWay.RIGHT && axisX < 0) return true;
+                if (wall.slideWay == WallSlideWay.NOTHING) return false;
+                else if (wall.slideWay == WallSlideWay.BOTH) return true;
+                else if (wall.slideWay == WallSlideWay.LEFT && axisX > 0) return true;
+                else if (wall.slideWay == WallSlideWay.RIGHT && axisX < 0) return true;
                 return false;
             }
         }

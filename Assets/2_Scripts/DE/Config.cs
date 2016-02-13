@@ -55,3 +55,11 @@ public enum AnimationType
 	SPRITE,
 	NONE
 }
+
+public enum WallSlideWay
+{
+	NOTHING,
+	LEFT,
+	RIGHT,
+	BOTH
+}

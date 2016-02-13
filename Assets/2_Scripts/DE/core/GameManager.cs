@@ -197,12 +197,12 @@ public class GameManager : Singleton<GameManager>
     {
         if( player == null ) return;
         player.Stop();
-        player.Controllable( false );
+		player.controllable = false;
     }
 
     public void PlayerResume()
     {
-        player.Controllable( true );
+		player.controllable = true;
     }
 
     public void PlayerKill()

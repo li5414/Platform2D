@@ -6,7 +6,6 @@ namespace druggedcode.engine
     /// <summary>
     /// 플랫폼에 추가하면 CorgiController 를 가진 캐릭터가 접촉 할 경우 자동으로 공중으로 날려보낸다.
     /// </summary>
-    [RequireComponent(typeof(Collider2D))]
     public class Jumper : MonoBehaviour 
     {
         public Vector2 jumpPower;
@@ -14,8 +13,6 @@ namespace druggedcode.engine
 
         DEController _tg;
         Collider2D _col;
-
-
 
         void Awake()
         {

@@ -68,11 +68,11 @@ namespace druggedcode.engine
 			if ( distance > RunDistance )
 			{
 				_speed = 1;
-				_character.Run();
+				//_character.Run();
 			}
 			else
 			{
-				_character.StopRun();
+				//_character.StopRun();
 			}
 	
 			//걷기
@@ -99,7 +99,7 @@ namespace druggedcode.engine
 			//앞뒤로 무엇인가 충돌 되는 것이 있다면 점프를 하게 한다.
 			if ( _controller.state.IsCollidingRight || _controller.state.IsCollidingLeft )
 			{
-				_character.Jump();
+				//_character.Jump();
 			}
 			
 			/*

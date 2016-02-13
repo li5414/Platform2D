@@ -72,7 +72,7 @@ public class GameCharacter : MonoBehaviour
     public System.Action<Transform> OnFootstep;
     public System.Action<Transform> OnJump;
 
-
+	public InputData input;
     //--------------------------------------------------------------------------
     // protected, private
     //--------------------------------------------------------------------------

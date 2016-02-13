@@ -3,6 +3,10 @@ using UnityEngine.Events;
 using System.Collections;
 using Spine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace druggedcode.engine
 {
 	public class DECharacter : MonoBehaviour, IDamageable
@@ -33,6 +37,20 @@ namespace druggedcode.engine
 		public float JumpHeightOnAir = 2f;
 		public int jumpMax = 3;
 
+		[Header("Animations")]
+		[SpineAnimation]
+		public string idleAnim;
+		[SpineAnimation]
+		public string walkAnim;
+		[SpineAnimation]
+		public string runAnim;
+		[SpineAnimation]
+		public string jumpAnim;
+		[SpineAnimation]
+		public string fallAnim;
+		[SpineAnimation]
+		public string attackAnim;
+
 		//----------------------------------------------------------------------------------------------------------
 		// event
 		//----------------------------------------------------------------------------------------------------------
@@ -43,10 +61,13 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 		public Ladder currentLadder{ get;set; }
 		public DEController controller{get; private set;}
-		public int jumpCount{get;protected set;}
+		public int jumpCount{get;set;}
 		public float horizontalAxis { get; set;}
 		public float verticalAxis { get; set; }
-		public float CurrentVX { get; set; }
+		public float currentVX { get; set; }
+		public bool controllable{get;set;}
+		public InputData input{get;set;}
+		public ActionState state { get; protected set; }
 
 		//----------------------------------------------------------------------------------------------------------
 		// private,protected
@@ -76,7 +97,7 @@ namespace druggedcode.engine
 
 		virtual protected void Start()
 		{
-			switch (AnimationType)
+			switch (bodyType)
 			{
 				case AnimationType.SPINE:
 					mSkeletonAnimation = GetComponentInChildren<SkeletonAnimation>();
@@ -88,21 +109,53 @@ namespace druggedcode.engine
 			}
 		}
 
-		virtual protected void HandleEvent()
+		virtual protected void HandleEvent( Spine.AnimationState state, int trackIndex, Spine.Event e )
 		{
 
 		}
 
-		virtual protected void HandleComplete()
+		virtual protected void HandleComplete( Spine.AnimationState state, int trackIndex, int loopCount )
 		{
 
+		}
+
+		public void SetState(ActionState next)
+		{
+			if (state == next)
+			{
+				Debug.Log("---------same state!!!!! " + state + " > " + next);
+				//return;
+			}
+			else
+			{
+				StateExit();
+				Debug.Log(state + " > " + next);
+				state = next;
+			}
+
+			StateEnter();
 		}
 
 		void Update()
 		{
-			if( OnUpdateInput != null ) OnUpdateInput( this );
+			if( controllable && OnUpdateInput != null ) OnUpdateInput( this );
 
-			FSMUpdate();
+			StateUpdate();
+		}
+
+		virtual protected void StateExit()
+		{
+
+		}
+
+		virtual protected void StateUpdate()
+		{
+
+		}
+
+		virtual protected void StateEnter()
+		{
+
 		}
 
 		void LateUpdate()
@@ -114,9 +167,42 @@ namespace druggedcode.engine
 			}
 		}
 
-		virtual protected void FSMUpdate()
+		protected void Move()
 		{
+			if( mMoveLocked ) return;
 
+			if ( mFacaing == Facing.LEFT && input.axisX > 0.1f)
+			{
+				SetFacing(Facing.RIGHT);
+			}
+			else if (mFacaing == Facing.RIGHT && input.axisX < -0.1f)
+			{
+				SetFacing(Facing.LEFT);
+			}
+
+			if ( horizontalAxis == 0)
+			{
+				controller.vx = 0f;
+			}
+			else
+			{
+				float vx = horizontalAxis * currentVX;
+				var movementFactor = controller.state.IsGrounded ? AccelOnGround : AccelOnAir;
+				controller.vx = Mathf.Lerp(controller.vx, vx, Time.deltaTime * movementFactor);
+				// _controller.vx = vx;
+			}
+
+			//spine
+//			controller.axisX = input.axisX;
+//
+//			if (mFacaing == Facing.LEFT && controller.axisX > 0.1f)
+//			{
+//				SetFacing(Facing.RIGHT);
+//			}
+//			else if (mFacaing == Facing.RIGHT && controller.axisX < -0.1f)
+//			{
+//				SetFacing(Facing.LEFT);
+//			}
 		}
 
 		public void DeActive()
@@ -174,87 +260,16 @@ namespace druggedcode.engine
 			gameObject.SetActive(true);
 		}
 
-		//----------------------------------------------------------------------------------------------------------
-		// bodyHandle
-		//----------------------------------------------------------------------------------------------------------
-
-		void SetFacing(Facing facing)
+		public void Stop()
 		{
-			mFacaing = facing;
-
-			switch (mFacaing)
-			{
-				case Facing.RIGHT:
-					body.localScale = new Vector3(1f, body.localScale.y, body.localScale.z);
-					break;
-
-				case Facing.LEFT:
-					body.localScale = new Vector3(-1f, body.localScale.y, body.localScale.z);
-					break;
-			}
-		}
-
-		public bool AnimFilp
-		{
-			set
-			{
-				switch (bodyType)
-				{
-					case AnimationType.SPINE:
-						mSkeletonAnimation.Skeleton.FlipX = value;
-						break;
-				}
-			}
-		}
-
-
-		public float currentAnimationDuration
-		{
-			get
-			{
-				switch (bodyType)
-				{
-					case AnimationType.SPINE:
-						return mSkeletonAnimation.state.GetCurrent(0).animation.Duration;
-						break;
-				}
-			}
-		}
-
-
-		protected void PlayAnimation(string animName, bool loop = true, int trackIndex = 0 )
-		{
-			switch (bodyType)
-			{
-				case AnimationType.SPINE:
-					mSkeletonAnimation.state.SetAnimation( trackIndex, animName, loop );
-					break;
-			}
-		}
-
-		protected bool HasAnim( string animName )
-		{
-			bool animContain;
-			switch (bodyType)
-			{
-				case AnimationType.SPINE:
-					animContain = mSkeletonAnimation.state.Data.SkeletonData.FindAnimation(animName) == null ? false : true;
-					break;
-			}
-
-			return animContain;
-		}
-
-		protected void NextAttack()
-		{
-			mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
+			controller.Stop();
 		}
 
 		//----------------------------------------------------------------------------------------------------------
 		// ientface
 		//----------------------------------------------------------------------------------------------------------
 
-		void TakeDamage(int damage, GameObject attacker)
+		public void TakeDamage(int damage, GameObject attacker)
 		{
 			//hit sound play
 			//hit effect instantiate
@@ -314,6 +329,93 @@ namespace druggedcode.engine
 		{
 			controller.ResetPhysicInfo();
 		}
+
+		//----------------------------------------------------------------------------------------------------------
+		// bodyHandle
+		//----------------------------------------------------------------------------------------------------------
+
+		void SetFacing(Facing facing)
+		{
+			mFacaing = facing;
+
+			switch (mFacaing)
+			{
+				case Facing.RIGHT:
+					body.localScale = new Vector3(1f, body.localScale.y, body.localScale.z);
+					break;
+
+				case Facing.LEFT:
+					body.localScale = new Vector3(-1f, body.localScale.y, body.localScale.z);
+					break;
+			}
+		}
+
+		public bool AnimFilp
+		{
+			set
+			{
+				switch (bodyType)
+				{
+					case AnimationType.SPINE:
+						mSkeletonAnimation.Skeleton.FlipX = value;
+						break;
+				}
+			}
+		}
+
+
+		public float currentAnimationDuration
+		{
+			get
+			{
+				switch (bodyType)
+				{
+					case AnimationType.SPINE:
+						return mSkeletonAnimation.state.GetCurrent(0).animation.Duration;
+						break;
+				}
+
+				return 0f;
+			}
+		}
+
+
+		protected void PlayAnimation(string animName, bool loop = true, int trackIndex = 0 )
+		{
+			switch (bodyType)
+			{
+				case AnimationType.SPINE:
+					mSkeletonAnimation.state.SetAnimation( trackIndex, animName, loop );
+					break;
+			}
+		}
+
+		protected bool HasAnim( string animName )
+		{
+			switch (bodyType)
+			{
+				case AnimationType.SPINE:
+					return mSkeletonAnimation.state.Data.SkeletonData.FindAnimation(animName) == null ? false : true;
+					break;
+			}
+
+			return false;
+		}
+
+		protected void NextAttack()
+		{
+			mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
+		}
+
+
+		#if UNITY_EDITOR
+		void OnDrawGizmos()
+		{
+			if (!Application.isPlaying) return;
+
+			Handles.Label(mTr.position + new Vector3(0, 1.2f, 0), state.ToString());
+		}
+		#endif
 	}
 }
 
