@@ -5,14 +5,14 @@ using System.Collections.Generic;
 using druggedcode;
 using druggedcode.engine;
 
-[CustomEditor (typeof(DECharacterController))]
+[CustomEditor (typeof(FailCharacterController))]
 public class CharacterControllerEditor : Editor
 {
-	DECharacterController mController;
+	FailCharacterController mController;
 
 	void OnEnable ()
 	{
-		mController = (DECharacterController)target;
+		mController = (FailCharacterController)target;
 	}
 
 	#if UNITY_EDITOR

@@ -47,3 +47,11 @@ public enum Facing
     RIGHT,
     LEFT
 }
+
+public enum AnimationType
+{
+	SPINE,
+	ANIMATION,
+	SPRITE,
+	NONE
+}

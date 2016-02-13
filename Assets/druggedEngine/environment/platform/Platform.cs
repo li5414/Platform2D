@@ -37,7 +37,6 @@ namespace druggedcode.engine
             if (mPathFollow != null)
             {
                 movable = true;
-                mPathFollow.updateType = DruggedEngine.MOVE_PLATFORM;
             }
 
             if (mOneWayTrigger != null)
@@ -51,7 +50,7 @@ namespace druggedcode.engine
             LayerUtil.ChanageSortingLayer(gameObject, DruggedEngine.SORTING_LAYER_ENVIRONMENT);
         }
 
-        public void PassThough(DECharacterController controller)
+        public void PassThough(FailCharacterController controller)
         {
             if (oneway == false) return;
 
@@ -77,7 +76,7 @@ namespace druggedcode.engine
             yield return new WaitForSeconds(0.1f);
 
             Physics2D.IgnoreCollision(other, mCollider, false);
-            DECharacterController controller = other.GetComponentInParent<DECharacterController>();
+            FailCharacterController controller = other.GetComponentInParent<FailCharacterController>();
             if (controller != null)
             {
                 controller.currentMask = DruggedEngine.MASK_ALL_GROUND;

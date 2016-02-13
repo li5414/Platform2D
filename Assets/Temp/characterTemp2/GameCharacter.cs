@@ -29,18 +29,10 @@ public enum ActionState
 // LADDER_CLIMB,LADDER_CLIMB_MOVE,
 // LOOKUP,
 
-[RequireComponent(typeof(DECharacterController))]
+[RequireComponent(typeof(FailCharacterController))]
 public class GameCharacter : MonoBehaviour
 {
     static List<GameCharacter> All = new List<GameCharacter>();
-
-    public enum AnimationType
-    {
-        SPINE,
-        ANIMATION,
-        SPRITE,
-        NONE
-    }
 
     public ActionState state { get; protected set; }
 
@@ -95,11 +87,11 @@ public class GameCharacter : MonoBehaviour
 
     protected float mJumpStartTime;
 
-    public DECharacterController controller { get; private set; }
+    public FailCharacterController controller { get; private set; }
 
     virtual protected void Awake()
     {
-        controller = GetComponent<DECharacterController>();
+        controller = GetComponent<FailCharacterController>();
     }
 
     virtual protected void Start()

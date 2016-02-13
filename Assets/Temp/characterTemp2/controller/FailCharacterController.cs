@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace druggedcode.engine
 {
     [RequireComponent(typeof(Rigidbody2D))]
-    public class DECharacterController : MonoBehaviour
+    public class FailCharacterController : MonoBehaviour
     {
         //--------------------------------------------------------------------------
         // Editor
@@ -94,7 +94,6 @@ namespace druggedcode.engine
         void Start()
         {
             currentMask = DruggedEngine.MASK_ALL_GROUND;
-            updateType = DruggedEngine.MOVE_CHARACTER;
         }
 
         void CalculateRayBounds(Collider2D coll)
