@@ -151,6 +151,21 @@ namespace druggedcode.engine
 
 		public float vy { get { return _velocity.y; } set { _velocity.y = value; } }
 
+		bool mMoveLocked;
+		Coroutine mLockMoveRoutine;
+		public void LockMove(float duration)
+		{
+			if( mLockMoveRoutine != null ) StopCoroutine( mLockMoveRoutine );
+			mLockMoveRoutine = StartCoroutine(LockMoveRoutine(duration));
+		}
+
+		IEnumerator LockMoveRoutine(float duration )
+		{
+			mMoveLocked = true;
+			yield return new WaitForRealSeconds(duration);
+			mMoveLocked = false;
+		}
+
 		public void Stop ()
 		{
 			_passedVX = 0f;
@@ -167,6 +182,12 @@ namespace druggedcode.engine
 
 		void LateUpdate ()
 		{
+			if (mMoveLocked == false)
+			{
+				//x lock
+			}
+
+
 			//속도계산
 			if (state.IsGrounded)
 			{
@@ -485,6 +506,17 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 		// 충돌판정을 끄고 켠다.
 		//----------------------------------------------------------------------------------------------------------
+
+		public void CollisionsOn()
+		{
+			mCheckCollisions = true;
+		}
+
+		public void CollisionsOff( float duration = 0f )
+		{
+			mCheckCollisions = false;
+		}
+
 		public void DisableCollisions (float duration)
 		{
 			StartCoroutine (DisableCollisionRoutine (duration));
