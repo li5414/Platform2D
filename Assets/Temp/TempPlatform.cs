@@ -49,7 +49,7 @@ namespace druggedcode.engine
             Renderer[] renderers = GetComponentsInChildren<Renderer>();
             foreach (var ren in renderers)
             {
-                ren.sortingLayerName = DruggedEngine.SORTING_LAYER_ENVIRONMENT;
+                ren.sortingLayerName = DruggedEngine.SORTING_LAYER_DEFAULT_BACK;
             }
         }
 

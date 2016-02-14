@@ -7,7 +7,7 @@ public class DruggedEngine : MonoBehaviour
 	public const string SORTING_LAYER_SKYBOX = "SkyBox";
 	public const string SORTING_LAYER_BACKGROUND = "Background";
 	public const string SORTING_LAYER_BACK_FX = "BackFX";
-	public const string SORTING_LAYER_ENVIRONMENT = "Environment";
+	public const string SORTING_LAYER_DEFAULT_BACK = "DefaultBack";
 	public const string SORTING_LAYER_DEFAULT = "Default";
 	public const string SORTING_LAYER_CHARACTER = "Character";
 	public const string SORTING_LAYER_FRONT_FX = "FrontFX";

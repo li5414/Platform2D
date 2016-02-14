@@ -38,5 +38,32 @@ namespace druggedcode.engine
             mEnteredColliders.Remove(other);
             if( OnOneWayExit != null ) OnOneWayExit( other );
 		}
+
+		/*
+		void OnOneWayEnter(Collider2D other)
+		{
+			//passThrough한 캐릭터는 여기로 들어오지 말아야 한다.이미 처리 되었기 때문
+			//걷거나, 점프하여 위로 올라가려고 하는 경우가 이곳으로 통해야 한다.
+
+			Physics2D.IgnoreCollision(other, mCollider, true);
+		}
+
+		void OnOneWayExit(Collider2D other)
+		{
+			StartCoroutine(DelayedCollision(other));
+		}
+
+		IEnumerator DelayedCollision(Collider2D other)
+		{
+			yield return new WaitForSeconds(0.1f);
+
+			Physics2D.IgnoreCollision(other, mCollider, false);
+			FailCharacterController controller = other.GetComponentInParent<FailCharacterController>();
+			if (controller != null)
+			{
+				controller.currentMask = DruggedEngine.MASK_ALL_GROUND;
+			}
+		}
+		*/
     }
 }

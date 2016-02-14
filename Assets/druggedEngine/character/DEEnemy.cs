@@ -5,7 +5,6 @@ namespace druggedcode.engine
 {
 	public class DEEnemy : DECharacter
 	{
-
 	}
 }
 

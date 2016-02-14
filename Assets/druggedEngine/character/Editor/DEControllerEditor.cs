@@ -9,13 +9,13 @@ namespace druggedcode.engine
 
 	public class DEControllerEditor : Editor
 	{
-		DEController _controller;
-		DEControllerState _state;
+		DEController controller;
+		DEControllerState state;
 
 		void OnEnable ()
 		{
-			_controller = (DEController)target;
-			_state = _controller.state;
+			controller = (DEController)target;
+			state = controller.state;
 		}
 
 		#if UNITY_EDITOR
@@ -23,22 +23,21 @@ namespace druggedcode.engine
 		{
 			if (Application.isPlaying)
 			{
-				if (_controller.gameObject.activeSelf == false) return;
+				if (controller.gameObject.activeSelf == false) return;
 
 				EditorGUILayout.Space ();
-				EditorGUILayout.LabelField ("Colliding Left", _state.IsCollidingLeft.ToString ());
-				EditorGUILayout.LabelField ("Colliding Right", _state.IsCollidingRight.ToString ());
-				EditorGUILayout.LabelField ("Colliding Above", _state.IsCollidingAbove.ToString ());
-				EditorGUILayout.LabelField ("Colliding Below", _state.IsGrounded.ToString ());
-				EditorGUILayout.LabelField ("Falling", _controller.Velocity.y < 0 ? "true" : "false" );
+				EditorGUILayout.LabelField ("Colliding Front", state.IsCollidingFront.ToString ());
+				EditorGUILayout.LabelField ("Colliding Above", state.IsCollidingAbove.ToString ());
 				EditorGUILayout.Space ();
-				EditorGUILayout.LabelField ("Grounded", _state.IsGrounded.ToString ());
-				EditorGUILayout.ObjectField ("StandingPlatform", _state.StandingPlatfom, typeof(Platform), true);
-				EditorGUILayout.ObjectField ("HittedClingWall", _state.HittedClingWall, typeof(Platform), true);
+				EditorGUILayout.LabelField ("Grounded", state.IsGrounded + "( " + state.IsGroundedForward + ", "+ state.IsGroundedCenter + ", " + state.IsGroundedBack + " )");
+				EditorGUILayout.LabelField ("Falling", controller.Velocity.y < 0 ? "true" : "false" );
 				EditorGUILayout.Space ();
-				EditorGUILayout.LabelField ("Slope Angle", _state.SlopeAngle.ToString ());
-				EditorGUILayout.LabelField ("GravityScale", _controller.GravityScale.ToString ());
-				EditorGUILayout.Vector2Field ("velocity", _controller.Velocity);
+				EditorGUILayout.ObjectField ("StandingPlatform", state.StandingPlatfom, typeof(Platform), true);
+				EditorGUILayout.ObjectField ("CollidingFront", state.CollidingFront, typeof(Collider2D), true);
+				EditorGUILayout.Space ();
+				EditorGUILayout.LabelField ("Slope Angle", state.SlopeAngle.ToString ());
+				EditorGUILayout.LabelField ("GravityScale", controller.GravityScale.ToString ());
+				EditorGUILayout.Vector2Field ("velocity", controller.Velocity);
 
 				DrawDefaultInspector ();
 

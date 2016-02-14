@@ -7,5 +7,15 @@ namespace druggedcode.engine
 	{
 		public LocationLinker currentManualLinker{ get;set; }
 		public DialogueZone currentDialogueZone{ get;set; }
+
+		public void Slide()
+		{
+
+		}
+
+		public void Dash()
+		{
+
+		}
 	}
 }

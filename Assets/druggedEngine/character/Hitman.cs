@@ -119,6 +119,7 @@ namespace druggedcode.engine
 
 				case ActionState.WALK:
 					PlayAnimation( walkAnim );
+					currentVX = WalkSpeed;
 					mCanJump = true;
 					break;
 
@@ -137,6 +138,15 @@ namespace druggedcode.engine
 					break;
 
 				case ActionState.WALLSLIDE:
+					//spine
+//					wallSlideStartTime = Time.time;
+//					controller.LockVY(wallSlideSpeed);
+
+					AnimFilp = true;
+					controller.GravityScale = 0.1f;
+					PlayAnimation( wallSlideAnim );
+					Stop();
+					ResetJump();
 					break;
 
 				case ActionState.SLIDE:
@@ -164,30 +174,30 @@ namespace druggedcode.engine
 		//----------------------ground
 		bool CheckIdle()
 		{
-			if (input.axisX != 0f) return false;
+			if (horizontalAxis != 0f) return false;
 			SetState(ActionState.IDLE);
 			return true;
 		}
 
 		bool CheckWalk()
 		{
-			if (input.axisX == 0f) return false;
+			if (horizontalAxis == 0f) return false;
 			SetState(ActionState.WALK);
 			return true;
 		}
 
 		bool CheckRun()
 		{
-			if (input.inputRun == false) return false;
+			if ( isRun == false) return false;
 			SetState(ActionState.RUN);
 			return true;
 		}
 
 		bool CheckRunStop()
 		{
-			if (input.inputRun) return false;
+			if (isRun) return false;
 
-			if (input.axisX != 0f) SetState(ActionState.WALK);
+			if ( horizontalAxis != 0f) SetState(ActionState.WALK);
 			else SetState(ActionState.IDLE);
 			return true;
 		}
@@ -195,15 +205,24 @@ namespace druggedcode.engine
 		//-----------------------jumpfall
 		bool CheckJumpFall()
 		{
-			if (controller.vy >= 0) return false;
+			if (controller.vy > 0) return false;
 			Fall( false );
 			return true;
 		}
 
-		bool CheckJumpToGround()
+		bool CheckAirToGround()
 		{
 			if (controller.state.IsGrounded == false) return false;
 			SetState(ActionState.IDLE);
+			return true;
+		}
+
+		bool CheckWallSlide()
+		{
+			if( jumpElapsedTime < 0.2f ) return false;
+			else if( controller.IsPressAgainstWall == false ) return false;
+
+			SetState( ActionState.WALLSLIDE );
 			return true;
 		}
 
@@ -256,8 +275,6 @@ namespace druggedcode.engine
 //					if (CheckAirAttack()) return;
 //					if (CheckWallSlide()) return;
 
-					print("jumpupdate");
-
 					if( CheckJumpFall()) return;
 
 					Move();
@@ -266,21 +283,42 @@ namespace druggedcode.engine
 
 				case ActionState.FALL:
 
-					print("fallupdate");
 					//spine
 //					if (CheckBounceCheck()) return;
 //					if (CheckAirAttack()) return;
-//					if (CheckWallSlide()) return;
 //					if (CheckLadderClimb()) return;
-//					if (CheckWallClinging()) return;
 
-					if (CheckJumpToGround()) return;
+					if( CheckWallSlide()) return;
+					if (CheckAirToGround()) return;
 
 					Move();
 
 					break;
 
 				case ActionState.WALLSLIDE:
+					//spine
+//					if (CheckWallJump()) return;
+//					if (CheckBounceCheck()) return;
+//					if (CheckWallSlideToFall()) return;
+//
+//					if (_controllerState.HittedClingWall == null || _character.horizontalAxis == 0f)
+//					{
+//						SetState(PlayerState.FALL);
+//						return;
+//					}
+					if (CheckAirToGround()) return;
+
+					if( verticalAxis < 0f ||
+						mFacaing == Facing.LEFT && horizontalAxis > 0f ||
+						mFacaing == Facing.RIGHT && horizontalAxis < 0f || controller.IsPressAgainstWall == false )
+					{
+						Fall();
+					}
+					else
+					{
+						Move();
+					}
+
 					break;
 
 				case ActionState.SLIDE:
@@ -318,6 +356,11 @@ namespace druggedcode.engine
 					break;
 
 				case ActionState.WALLSLIDE:
+
+					controller.GravityScale = 1f;
+					AnimFilp = false;
+
+					//controller.UnLockVY();
 					break;
 
 				case ActionState.SLIDE:

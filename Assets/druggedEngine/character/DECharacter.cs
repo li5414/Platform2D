@@ -54,7 +54,7 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 		// event
 		//----------------------------------------------------------------------------------------------------------
-		public UnityAction<DECharacter> OnUpdateInput;
+		public UnityAction OnUpdateInput;
 
 		//----------------------------------------------------------------------------------------------------------
 		// public
@@ -62,12 +62,16 @@ namespace druggedcode.engine
 		public Ladder currentLadder{ get;set; }
 		public DEController controller{get; private set;}
 		public int jumpCount{get;set;}
-		public float horizontalAxis { get; set;}
-		public float verticalAxis { get; set; }
 		public float currentVX { get; set; }
 		public bool controllable{get;set;}
-		public InputData input{get;set;}
 		public ActionState state { get; protected set; }
+
+		//----------------------------------------------------------------------------------------------------------
+		// input
+		//----------------------------------------------------------------------------------------------------------
+		public float horizontalAxis { get; set;}
+		public float verticalAxis { get; set; }
+		public bool isRun{get;set;}
 
 		//----------------------------------------------------------------------------------------------------------
 		// private,protected
@@ -85,6 +89,12 @@ namespace druggedcode.engine
 		protected SkeletonGhost mGhost;
 
 		bool mMoveLocked;
+
+
+		//----------------------------------------------------------------------------------------------------------
+		// behaviour
+		//----------------------------------------------------------------------------------------------------------
+		protected bool mCanJump;
 
 		virtual protected void Awake()
 		{
@@ -137,7 +147,7 @@ namespace druggedcode.engine
 
 		void Update()
 		{
-			if( controllable && OnUpdateInput != null ) OnUpdateInput( this );
+			if( controllable && OnUpdateInput != null ) OnUpdateInput();
 
 			StateUpdate();
 		}
@@ -194,11 +204,6 @@ namespace druggedcode.engine
 //			mIsActive = true;
 		}
 
-		public void ResetJump()
-		{
-			jumpCount = 0;
-		}
-
 		public void Kill()
 		{
 			//GravityActive(true);
@@ -226,11 +231,11 @@ namespace druggedcode.engine
 		{
 			if( mMoveLocked ) return;
 
-			if ( mFacaing == Facing.LEFT && input.axisX > 0.1f)
+			if ( mFacaing == Facing.LEFT && horizontalAxis > 0.1f)
 			{
 				SetFacing(Facing.RIGHT);
 			}
-			else if (mFacaing == Facing.RIGHT && input.axisX < -0.1f)
+			else if (mFacaing == Facing.RIGHT && horizontalAxis < -0.1f)
 			{
 				SetFacing(Facing.LEFT);
 			}
@@ -265,23 +270,41 @@ namespace druggedcode.engine
 			controller.Stop();
 		}
 
-		protected bool mCanJump;
+		virtual public void Attack()
+		{
 
-		public void Jump()
+		}
+
+		public void ResetJump()
+		{
+			jumpCount = 0;
+		}
+
+		bool IsAblePassOneWay()
+		{
+			if ( verticalAxis >= 0f ) return false;
+			if ( controller.state.IsOnOneway == false) return false;
+
+			return true;
+		}
+
+		virtual public void Jump()
 		{
 			if( mCanJump == false ) return;
 			if( jumpCount == jumpMax ) return;
 
 			//아래 점프 체크도 한다
-//			if (IsAblePassOneWay())
-//			{
-//				controller.PassThroughPlatform();
-//				SetFallState(true);
-//			}
-//			else
-//			{
-//				SetState(ActionState.JUMP);
-//			}
+			if( IsAblePassOneWay())
+			{
+				controller.PassThroughOneway();
+				//Fall();
+				return;
+			}
+			//사다리에서 떨어지기
+			else if( false )
+			{
+
+			}
 
 			//float jumpPower = Mathf.Clamp( Mathf.Sqrt( 2f * JumpHeight * Mathf.Abs( _controller.gravity )),3,100000);
 			float jumpPower;

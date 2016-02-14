@@ -14,8 +14,8 @@ namespace druggedcode.engine
 		public KeyCode runKey = KeyCode.LeftShift;
 
 		public KeyCode jumpKey = KeyCode.Space;
-		public KeyCode attackKey = KeyCode.J;
-		public KeyCode specialKey = KeyCode.K;
+		public KeyCode slideKey = KeyCode.Q;
+		public KeyCode dashKey = KeyCode.E;
 
 		DEPlayer mPlayer;
 
@@ -25,33 +25,17 @@ namespace druggedcode.engine
 			mPlayer.OnUpdateInput += OnUpdateInput;
 		}
 
-		void OnUpdateInput (DECharacter gamecontroller)
+		void OnUpdateInput ()
 		{
-			InputData data = new InputData ();
+			mPlayer.horizontalAxis = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));
+			mPlayer.verticalAxis = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
+			mPlayer.isRun = Input.GetKey (runKey);
 
-			float h = Input.GetAxisRaw("Horizontal");
-			float v = Input.GetAxisRaw("Vertical");
-
-			mPlayer.horizontalAxis = h;
-			mPlayer.verticalAxis = v;
-
-//			if (Input.GetButtonDown("Jump")) mPlayer.Jump();
 			if( Input.GetKeyDown (jumpKey)) mPlayer.Jump();
+			if( Input.GetKey (slideKey)) mPlayer.Slide();
+			if( Input.GetKey (dashKey)) mPlayer.Dash();
 
-			data.axisX = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));
-			data.axisY = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
-
-			data.axisXabs = Mathf.Abs (data.axisX);
-
-			//if (Input.GetButtonDown("Jump")) mPlayer.Jump();
-
-			data.jumpTrigger = Input.GetKeyDown (jumpKey);
-			data.jumpPressed = Input.GetKey (jumpKey);
-			data.attackTrigger = Input.GetKey (attackKey);
-			data.specailATrigger = Input.GetKey (specialKey);
-			data.inputRun = Input.GetKey (runKey);
-
-			mPlayer.input = data;
+			if (Input.GetButtonDown("Fire1")) mPlayer.Attack();
 		}
 
 		void Update ()

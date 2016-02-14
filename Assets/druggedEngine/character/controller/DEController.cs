@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace druggedcode.engine
 {
-	[RequireComponent(typeof(Collider2D),typeof(Rigidbody2D))]
+	[RequireComponent (typeof(Collider2D), typeof(Rigidbody2D))]
 	public class DEController : MonoBehaviour
 	{
 		//----------------------------------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 		const float LARGE_VALUE = 500000f;
 		const float SMALL_VALUE = 0.0001f;
-		const int VERTICAL_RAY_NUM = 3;
+		public const int VERTICAL_RAY_NUM = 3;
 
 		//----------------------------------------------------------------------------------------------------------
 		// Inspector
@@ -37,13 +37,12 @@ namespace druggedcode.engine
 		public int RayHorizontalCount = 3;
 		public float RaySafetyDis = 0.1f;
 		public float RayGroundOffset = 0.5f;
-		public LayerMask currentMask;
 
 		//----------------------------------------------------------------------------------------------------------
 		// 상태
 		//----------------------------------------------------------------------------------------------------------
 		//state
-		public DEControllerState state { get;private set; }
+		public DEControllerState state { get; private set; }
 
 		//----------------------------------------------------------------------------------------------------------
 		// 속도, 움직임. y가 마이너스인 경우가 낙하상태이다.
@@ -77,14 +76,12 @@ namespace druggedcode.engine
 		float _toleranceHeight;
 
 		//넘어갈수있는 장애물 높이
-		List<RaycastHit2D> mGroundHitted;
-		List<float> mGroundAngles;
 
 		// 충돌 체크 여부
-		int _hitCount;
+		int mHitCount;
 		//충돌 횟수
 		ColliderInfo _bound;
-		RaycastHit2D _hit2D;
+		RaycastHit2D mHit2D;
 		Vector2 _rayOriginPoint;
 		List<Rigidbody2D> _sideHittedPushableObject;
 		//좌우로 충돌된 플랫폼
@@ -92,9 +89,9 @@ namespace druggedcode.engine
 
 		void Awake ()
 		{
-			GetComponent<Rigidbody2D>().isKinematic = true;
+			GetComponent<Rigidbody2D> ().isKinematic = true;
 
-			if( headChecker != null )
+			if (headChecker != null)
 			{
 				mHeadCheckerPos = headChecker.transform.localPosition;
 				mHeadCheckerExtents = headChecker.bounds.extents;
@@ -102,12 +99,9 @@ namespace druggedcode.engine
 			}
 
 
-			mCollider = GetComponent<BoxCollider2D>();
+			mCollider = GetComponent<BoxCollider2D> ();
 
 			mTr = transform;
-
-			mGroundHitted = new List<RaycastHit2D> (new RaycastHit2D[VERTICAL_RAY_NUM]);
-			mGroundAngles = new List<float> (new float[VERTICAL_RAY_NUM]);
 
 			_colliderDefaultSize = mCollider.size;
 			_toleranceHeight = mCollider.bounds.size.y * ToleranceHeightRatio;
@@ -122,7 +116,6 @@ namespace druggedcode.engine
 
 		void Start ()
 		{
-			currentMask = DruggedEngine.MASK_ALL_GROUND;
 			UpdateBound ();
 		}
 
@@ -153,16 +146,17 @@ namespace druggedcode.engine
 
 		bool mMoveLocked;
 		Coroutine mLockMoveRoutine;
-		public void LockMove(float duration)
+
+		public void LockMove (float duration)
 		{
-			if( mLockMoveRoutine != null ) StopCoroutine( mLockMoveRoutine );
-			mLockMoveRoutine = StartCoroutine(LockMoveRoutine(duration));
+			if (mLockMoveRoutine != null) StopCoroutine (mLockMoveRoutine);
+			mLockMoveRoutine = StartCoroutine (LockMoveRoutine (duration));
 		}
 
-		IEnumerator LockMoveRoutine(float duration )
+		IEnumerator LockMoveRoutine (float duration)
 		{
 			mMoveLocked = true;
-			yield return new WaitForRealSeconds(duration);
+			yield return new WaitForRealSeconds (duration);
 			mMoveLocked = false;
 		}
 
@@ -219,7 +213,7 @@ namespace druggedcode.engine
 			if (mCheckCollisions)
 			{
 				CastRaysBelow ();
-				CastRaysToTheSides ();
+				CastRaysFront ();
 				CastRaysAbove ();
 
 				_velocity = _translateVector / Time.deltaTime; //충돌로 인해 변경된 벡터를 바탕으로 속도 재설정.
@@ -269,59 +263,63 @@ namespace druggedcode.engine
 			Vector2 verticalRayCastFromLeft = new Vector2 (_bound.xLeft + _translateVector.x, _bound.yCenter);
 			Vector2 verticalRayCastToRight = new Vector2 (_bound.xRight + _translateVector.x, _bound.yCenter);
 
-			_hitCount = 0;
+			mHitCount = 0;
 
 			float lowestY = -LARGE_VALUE;
 			float sumY = 0f;
 			float fowardY = 0;
-			int closestIndex = 0;
+			RaycastHit2D closestHit;
+			float closestAngle = 0f;
+			float tolerance = _bound.yBottom + _toleranceHeight;
+
 			float hitY, angle;
 
 			for (int i = 0; i < VERTICAL_RAY_NUM; i++)
 			{
 				_rayOriginPoint = Vector2.Lerp (verticalRayCastFromLeft, verticalRayCastToRight, (float)rayIndex / (float)(VERTICAL_RAY_NUM - 1));
-				_hit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, -Vector2.up, rayLength, currentMask, Color.red);
 
-				if (_hit2D)
+				if (i == 0) mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
+				else if (i == 1) mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_GROUND, Color.green);
+				else if (i == 2) mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_GROUND, Color.blue);
+
+				if (mHit2D)
 				{
-					hitY = _hit2D.point.y;
+					hitY = mHit2D.point.y;
 					if (i == 0) fowardY = hitY;
-					angle = Vector2.Angle (_hit2D.normal, Vector2.up);
+					angle = Vector2.Angle (mHit2D.normal, Vector2.up);
 
-					mGroundHitted [i] = _hit2D;
-					mGroundAngles [i] = angle;
-
-					//HIT 된 Y 가 넘어갈 수 있는 높이 높고 허용 각도보다 가파르면  막혔다가 판단한다.
-					//원웨이가 아니면 이라는 조건이 삭제되었다. 문제되면 복구할것
-					//_hit2D.collider.gameObject.GetComponent<Platform> () is Platform == false
-					if (hitY > _bound.yBottom + _toleranceHeight &&
-					    Vector2.Angle (_hit2D.point - _bound.bottom, _moveDirection) > MaximumSlopeAngle )
+					//바닥이 아니라고 무시해야하는 경우. oneway를 스으윽 발 아래로 내려볼때 발생하는 버그 해결해야함
+					if (false)
 					{
-						_translateVector.x = 0;
+						state.IsGroundedInfo [i] = false;
 					}
-					//아닌 경우 자동으로 올라 설 수 있는 바닥이라고 판단
 					else
 					{
-						++_hitCount;
+						++mHitCount;
 						sumY += hitY;
 						if (hitY > lowestY)
 						{
-							closestIndex = i;
+							closestHit = mHit2D;
+							closestAngle = angle;
 							lowestY = hitY;
 						}
+
+						state.IsGroundedInfo [i] = true;
 					}
+				}
+				else
+				{
+					state.IsGroundedInfo [i] = false;
 				}
 
 				rayIndex += increase;
 			}
 
 			//충돌된 것이 없다.
-			if (_hitCount == 0) return;
+			if (mHitCount == 0) return;
 			if (lowestY < _bound.yBottom + _translateVector.y) return;
 
-			_hit2D = mGroundHitted [closestIndex];
-
-			Platform hittedPlatform = _hit2D.collider.gameObject.GetComponent<Platform> ();
+			Platform hittedPlatform = closestHit.collider.gameObject.GetComponent<Platform> ();
 
 			//아래 조건이 어떤상황인지 모르겠다.
 //			if (state.WasColldingBelowLastFrame == false && lowestY > _bound.yBottom && hittedPlatform.oneway )
@@ -330,9 +328,10 @@ namespace druggedcode.engine
 //			}
 
 			state.IsCollidingBelow = true;
-			state.SlopeAngle = mGroundAngles [closestIndex];
+			state.SlopeAngle = closestAngle;
 			_translateVector.y = 0;
-			if( hittedPlatform == null )
+
+			if (hittedPlatform == null)
 			{
 				state.StandingPlatfom = null;
 				mPlatofrmVelocity = Vector2.zero;
@@ -343,8 +342,6 @@ namespace druggedcode.engine
 				mPlatformFriction = hittedPlatform.friction;
 				mPlatofrmVelocity = hittedPlatform.velocity;
 			}
-			
-				
 
 			if (state.SlopeAngle > 0)
 			{
@@ -352,7 +349,7 @@ namespace druggedcode.engine
 				{
 					_translateVector.x = 0;
 				}
-				mTr.position = new Vector3 (mTr.position.x, sumY / _hitCount, mTr.position.z);
+				mTr.position = new Vector3 (mTr.position.x, sumY / mHitCount, mTr.position.z);
 			}
 			else
 			{
@@ -360,66 +357,55 @@ namespace druggedcode.engine
 			}
 		}
 
-		void CastRaysToTheSides ()
+		void CastRaysFront ()
 		{
 			float horizontalRayLength = _bound.wHalf + RaySafetyDis + Mathf.Abs (_translateVector.x);
 
-			Vector2 horizontalRayCastFromBottom = new Vector2 (_bound.xCenter, _bound.yBottom + _toleranceHeight);
 			Vector2 horizontalRayCastToTop = new Vector2 (_bound.xCenter, _bound.yTop);
+			Vector2 horizontalRayCastFromBottom = new Vector2 (_bound.xCenter, _bound.yBottom + _toleranceHeight);
 
-			_hitCount = 0;
+			mHitCount = 0;
 
 			//위에서 아래로 내려가면서 지정한 분할 수 만큼 검사
 			for (int i = 0; i < RayHorizontalCount; i++)
 			{
 				_rayOriginPoint = Vector2.Lerp (horizontalRayCastToTop, horizontalRayCastFromBottom, (float)i / (float)(RayHorizontalCount - 1));
 
-				_hit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, _moveDirection, horizontalRayLength, currentMask, Color.red);
+				//if (_state.WasColldingBelowLastFrame && i == RayHorizontalCount - 1)
+				if (false)
+					mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
+				else
+					mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);
 
-				if (_hit2D)
+				if (mHit2D)
 				{
-					if (i == RayHorizontalCount - 1 && Vector2.Angle (_hit2D.normal, Vector2.up) < MaximumSlopeAngle)
+					if (i == RayHorizontalCount - 1 && Vector2.Angle (mHit2D.normal, Vector2.up) < MaximumSlopeAngle)
 					{
 						//가장 아래의 레이가 막혔지만 허용 가능한 경사이므로 막혔다고 체크하지 않는다.
 					}
 					else
 					{
-						++_hitCount;
+						++mHitCount;
 						break;
 					}
 				}
 			}
 
-			if (_hitCount == 0) return;
+			if (mHitCount == 0) return;
+
+			state.IsCollidingFront = true;
+			state.CollidingFront = mHit2D.collider;
 
 			if (_moveDirection.x == 1)
 			{
-				state.IsCollidingRight = true;
-				_translateVector.x = _hit2D.point.x - _bound.xRight - RaySafetyDis;
+				_translateVector.x = mHit2D.point.x - _bound.xRight - RaySafetyDis;
 			}
 			else
 			{
-				state.IsCollidingLeft = true;
-				_translateVector.x = _hit2D.point.x - _bound.xLeft + RaySafetyDis;
+				_translateVector.x = mHit2D.point.x - _bound.xLeft + RaySafetyDis;
 			}
 
-			if (state.IsGrounded == false)
-			{
-				Wall wall = _hit2D.collider.gameObject.GetComponent<Wall> ();
-				if (CheckWallCling (wall)) state.HittedClingWall = wall;
-			}
-
-			if (_hit2D.rigidbody != null) _sideHittedPushableObject.Add (_hit2D.rigidbody);
-		}
-
-		bool CheckWallCling (Wall wall)
-		{
-			if (wall == null) return false;
-			if (wall.slideWay == WallSlideWay.NOTHING) return false;
-			if (wall.slideWay == WallSlideWay.BOTH) return true;
-			if (wall.slideWay == WallSlideWay.LEFT && state.IsCollidingRight) return true;
-			if (wall.slideWay == WallSlideWay.RIGHT && state.IsCollidingLeft) return true;
-			return false;
+			if (mHit2D.rigidbody != null) _sideHittedPushableObject.Add (mHit2D.rigidbody);
 		}
 
 		void CastRaysAbove ()
@@ -432,28 +418,28 @@ namespace druggedcode.engine
 			Vector2 verticalRayCastStart = new Vector2 (_bound.xLeft + _translateVector.x, _bound.yCenter);
 			Vector2 verticalRayCastEnd = new Vector2 (_bound.xRight + _translateVector.x, _bound.yCenter);
 
-			_hitCount = 0;
+			mHitCount = 0;
 
 			for (int i = 0; i < VERTICAL_RAY_NUM; i++)
 			{
 				_rayOriginPoint = Vector2.Lerp (verticalRayCastStart, verticalRayCastEnd, (float)i / (float)(VERTICAL_RAY_NUM - 1));
-				_hit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, Vector2.up, rayLength, DruggedEngine.MASK_ENVIRONMENT, Color.blue);
+				mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, Vector2.up, rayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.blue);
 
-				if (_hit2D)
+				if (mHit2D)
 				{
-					++_hitCount;
+					++mHitCount;
 					break;
 				}
 
 			}
 
-			if (_hitCount == 0) return;
+			if (mHitCount == 0) return;
 
 			state.IsCollidingAbove = true;
 
 			if (state.IsCollidingBelow == false)
 			{
-				float ty = _hit2D.point.y - _bound.h - RaySafetyDis;
+				float ty = mHit2D.point.y - _bound.h - RaySafetyDis;
 				mTr.position = new Vector3 (mTr.position.x, ty, mTr.position.z);
 				_translateVector.y = 0;
 			}
@@ -500,6 +486,7 @@ namespace druggedcode.engine
 			if (Application.isEditor)
 			{
 				Color drawColor = Color.green;
+
 				Debug.DrawLine (new Vector2 (_bound.xLeft, _bound.yBottom), new Vector2 (_bound.xRight, _bound.yBottom), drawColor);
 				Debug.DrawLine (new Vector2 (_bound.xLeft, _bound.yCenter), new Vector2 (_bound.xRight, _bound.yCenter), drawColor);
 				Debug.DrawLine (new Vector2 (_bound.xLeft, _bound.yTop), new Vector2 (_bound.xRight, _bound.yTop), drawColor);
@@ -514,19 +501,41 @@ namespace druggedcode.engine
 		// 충돌판정을 끄고 켠다.
 		//----------------------------------------------------------------------------------------------------------
 
-		public void CollisionsOn()
+		public void PassThroughOneway ()
+		{
+			mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
+			state.ClearPlatform ();
+			CollisionsOff (0.1f);
+//			StartCoroutine (PassThroughOnewayRoutine());
+		}
+
+		IEnumerator PassThroughOnewayRoutine ()
+		{
+			Platform throughOneway = state.StandingPlatfom;
+			Transform throughTr = throughOneway.transform;
+
+			mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
+			state.ClearPlatform ();
+
+			CollisionsOff ();
+
+			while (throughTr.position.y < _bound.yCenter)
+			{
+				yield return null;
+			}
+
+			CollisionsOn ();
+		}
+
+		public void CollisionsOn ()
 		{
 			mCheckCollisions = true;
 		}
 
-		public void CollisionsOff( float duration = 0f )
+		public void CollisionsOff (float duration = 0f)
 		{
-			mCheckCollisions = false;
-		}
-
-		public void DisableCollisions (float duration)
-		{
-			StartCoroutine (DisableCollisionRoutine (duration));
+			if (duration == 0f) mCheckCollisions = false;
+			else StartCoroutine (DisableCollisionRoutine (duration));
 		}
 
 		IEnumerator DisableCollisionRoutine (float duration)
@@ -563,16 +572,29 @@ namespace druggedcode.engine
 			_physicSpaceInfo = new PhysicInfo (0, 1);
 		}
 
-		public bool IsCollidingHead
-		{
-			get
-			{
-				if ( mHeadCheckerExtents != Vector3.zero)
+		public bool IsPressAgainstWall {
+			get {
+				if( state.CollidingFront == null ) return false;
+				Wall wall = state.CollidingFront.GetComponent<Wall>();
+				if( wall == null ) return false;
+
+				if (wall.slideWay == WallSlideWay.NOTHING) return false;
+				else if (wall.slideWay == WallSlideWay.BOTH) return true;
+				else if (wall.slideWay == WallSlideWay.LEFT && _moveDirection.x > 0) return true;
+				else if (wall.slideWay == WallSlideWay.RIGHT && _moveDirection.x < 0) return true;
+				else return false;
+				return false;
+			}
+		}
+
+		public bool IsCollidingHead {
+			get {
+				if (mHeadCheckerExtents != Vector3.zero)
 				{
 
 					Vector2 pointA = mTr.position + mHeadCheckerPos - mHeadCheckerExtents;
 					Vector2 pointB = mTr.position + mHeadCheckerPos + mHeadCheckerExtents;
-					return Physics2D.OverlapArea( pointA, pointB, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND);
+					return Physics2D.OverlapArea (pointA, pointB, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND);
 				}
 				else
 				{
@@ -618,25 +640,36 @@ namespace druggedcode.engine
 
 		public bool IsCollidingBelow { get; set; }
 
-		public bool IsCollidingLeft { get; set; }
+		public bool IsCollidingFront { get; set; }
 
-		public bool IsCollidingRight { get; set; }
-
-		public bool HasCollisions { get { return IsCollidingRight || IsCollidingLeft || IsCollidingAbove || IsCollidingBelow; } }
+		public bool HasCollisions { get { return IsCollidingFront || IsCollidingAbove || IsCollidingBelow; } }
 
 		//wall 충돌여부
-		public bool IsCollidingWallRight { get { return IsCollidingRight; } }
-
-		public bool IsCollidingWallLeft { get { return IsCollidingLeft; } }
-
 		public bool IsGrounded { get { return IsCollidingBelow; } }
+
+		public bool IsGroundedForward { get { return IsGroundedInfo [0]; } }
+
+		public bool IsGroundedCenter { get { return IsGroundedInfo [1]; } }
+
+		public bool IsGroundedBack { get { return IsGroundedInfo [2]; } }
+
+		public List<bool> IsGroundedInfo{ get; private set; }
+
+		public bool IsOnOneway {
+			get {
+				if (IsGrounded == false) return false;
+				else if (StandingPlatfom == null) return false;
+				else return StandingPlatfom.oneway;
+			}
+		}
 
 		//IsCollidingBelow 와 같이 변해야 한다.
 		public Platform StandingPlatfom { get; set; }
-		public Wall HittedClingWall { get; set; }
+		public Collider2D CollidingFront { get; set; }
 
 		//지난프레임상태
 		public bool WasColldingBelowLastFrame { get; set; }
+
 		public bool WasColldingAdoveLastFrame { get; set; }
 
 		//막 지상에 닿은 프레임에서 true
@@ -647,10 +680,12 @@ namespace druggedcode.engine
 
 		public DEControllerState ()
 		{
+			IsGroundedInfo = new List<bool> (new bool[DEController.VERTICAL_RAY_NUM]);
+
 			Reset ();
 		}
 
-		public void ClearPlatform()
+		public void ClearPlatform ()
 		{
 			IsCollidingBelow = false;
 			StandingPlatfom = null;
@@ -658,12 +693,12 @@ namespace druggedcode.engine
 
 		public void Reset ()
 		{
-			IsCollidingAbove = IsCollidingBelow = IsCollidingLeft = IsCollidingRight = false;
+			IsCollidingAbove = IsCollidingBelow = IsCollidingFront = false;
 
 			JustGotGrounded = false;
 			SlopeAngle = 0;
 			StandingPlatfom = null;
-			HittedClingWall = null;
+			CollidingFront = null;
 		}
 
 		public void SaveLastStateAndReset ()

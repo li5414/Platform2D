@@ -12,7 +12,6 @@ namespace druggedcode.engine
         void Start()
         {
             LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_PLATFORM);
-            LayerUtil.ChanageSortingLayer(gameObject, DruggedEngine.SORTING_LAYER_ENVIRONMENT);
         }
     }
 
