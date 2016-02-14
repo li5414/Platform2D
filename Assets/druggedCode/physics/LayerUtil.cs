@@ -73,14 +73,10 @@ namespace druggedcode
 
         static public int GetLayerIdFromLayerMask(int maskValue)
         {
-            if (maskValue < 0)
-                return -1;
-
-            if (maskValue == 1)
-                return 1;
-
-            if (maskValue % 2 != 0)
-                return -1;
+			if( maskValue == 0 ) return 0;
+            if (maskValue < 0) return -1;
+            if (maskValue == 1) return 1;
+            if (maskValue % 2 != 0) return -1;
 
             int count = 0;
             do

@@ -230,11 +230,6 @@ namespace druggedcode.engine
 				if (state.WasColldingBelowLastFrame == false && state.IsGrounded) state.JustGotGrounded = true;
 			}
 
-			if (_translateVector.y < -SMALL_VALUE)
-				state.IsFalling = true;
-			else
-				state.IsFalling = false;
-
 			//캐릭터 이동
 			mTr.Translate (_translateVector, Space.World);
 		}
@@ -642,13 +637,11 @@ namespace druggedcode.engine
 
 		//지난프레임상태
 		public bool WasColldingBelowLastFrame { get; set; }
-
 		public bool WasColldingAdoveLastFrame { get; set; }
 
 		//막 지상에 닿은 프레임에서 true
 		public bool JustGotGrounded { get; set; }
 
-		public bool IsFalling { get; set; }
 		// 움직이고 있는 경사면의 각도
 		public float SlopeAngle { get; set; }
 
@@ -657,11 +650,16 @@ namespace druggedcode.engine
 			Reset ();
 		}
 
+		public void ClearPlatform()
+		{
+			IsCollidingBelow = false;
+			StandingPlatfom = null;
+		}
+
 		public void Reset ()
 		{
 			IsCollidingAbove = IsCollidingBelow = IsCollidingLeft = IsCollidingRight = false;
 
-			IsFalling = false;           
 			JustGotGrounded = false;
 			SlopeAngle = 0;
 			StandingPlatfom = null;

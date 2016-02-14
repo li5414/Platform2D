@@ -74,9 +74,8 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 
 		Transform mTr;
-		protected int mJumpCount;
-		protected float jumStartTime;
-		protected float jumpElapsedTime{ get{ return Time.time - jumStartTime; }} 
+		protected float jumpStartTime;
+		protected float jumpElapsedTime{ get{ return Time.time - jumpStartTime; }} 
 
 		//캐릭터의 중력을 활성화 하거나 비활성화 할때 이전 중력값을 기억하기 위한 용도
 		protected float _originalGravity;
@@ -163,46 +162,9 @@ namespace druggedcode.engine
 			if( controller.state.JustGotGrounded )
 			{
 				ResetJump();
+				//SoundPalette.PlaySound(landSound, 1, 1, transform.position);
 				//if (_effectAndSound.TouchTheGroundEffect != null) Instantiate(_effectAndSound.TouchTheGroundEffect, transform.position, transform.rotation);
 			}
-		}
-
-		protected void Move()
-		{
-			if( mMoveLocked ) return;
-
-			if ( mFacaing == Facing.LEFT && input.axisX > 0.1f)
-			{
-				SetFacing(Facing.RIGHT);
-			}
-			else if (mFacaing == Facing.RIGHT && input.axisX < -0.1f)
-			{
-				SetFacing(Facing.LEFT);
-			}
-
-			if ( horizontalAxis == 0)
-			{
-				controller.vx = 0f;
-			}
-			else
-			{
-				float vx = horizontalAxis * currentVX;
-				var movementFactor = controller.state.IsGrounded ? AccelOnGround : AccelOnAir;
-				controller.vx = Mathf.Lerp(controller.vx, vx, Time.deltaTime * movementFactor);
-				// _controller.vx = vx;
-			}
-
-			//spine
-//			controller.axisX = input.axisX;
-//
-//			if (mFacaing == Facing.LEFT && controller.axisX > 0.1f)
-//			{
-//				SetFacing(Facing.RIGHT);
-//			}
-//			else if (mFacaing == Facing.RIGHT && controller.axisX < -0.1f)
-//			{
-//				SetFacing(Facing.LEFT);
-//			}
 		}
 
 		public void DeActive()
@@ -234,7 +196,7 @@ namespace druggedcode.engine
 
 		public void ResetJump()
 		{
-			mJumpCount = 0;
+			jumpCount = 0;
 		}
 
 		public void Kill()
@@ -260,9 +222,118 @@ namespace druggedcode.engine
 			gameObject.SetActive(true);
 		}
 
+		protected void Move()
+		{
+			if( mMoveLocked ) return;
+
+			if ( mFacaing == Facing.LEFT && input.axisX > 0.1f)
+			{
+				SetFacing(Facing.RIGHT);
+			}
+			else if (mFacaing == Facing.RIGHT && input.axisX < -0.1f)
+			{
+				SetFacing(Facing.LEFT);
+			}
+
+			if ( horizontalAxis == 0)
+			{
+				controller.vx = 0f;
+			}
+			else
+			{
+				float vx = horizontalAxis * currentVX;
+				var movementFactor = controller.state.IsGrounded ? AccelOnGround : AccelOnAir;
+				controller.vx = Mathf.Lerp(controller.vx, vx, Time.deltaTime * movementFactor);
+				// _controller.vx = vx;
+			}
+
+			//spine
+			//			controller.axisX = input.axisX;
+			//
+			//			if (mFacaing == Facing.LEFT && controller.axisX > 0.1f)
+			//			{
+			//				SetFacing(Facing.RIGHT);
+			//			}
+			//			else if (mFacaing == Facing.RIGHT && controller.axisX < -0.1f)
+			//			{
+			//				SetFacing(Facing.LEFT);
+			//			}
+		}
+
 		public void Stop()
 		{
 			controller.Stop();
+		}
+
+		protected bool mCanJump;
+
+		public void Jump()
+		{
+			if( mCanJump == false ) return;
+			if( jumpCount == jumpMax ) return;
+
+			//아래 점프 체크도 한다
+//			if (IsAblePassOneWay())
+//			{
+//				controller.PassThroughPlatform();
+//				SetFallState(true);
+//			}
+//			else
+//			{
+//				SetState(ActionState.JUMP);
+//			}
+
+			//float jumpPower = Mathf.Clamp( Mathf.Sqrt( 2f * JumpHeight * Mathf.Abs( _controller.gravity )),3,100000);
+			float jumpPower;
+
+			if( jumpCount == 0 )
+			{
+				controller.state.ClearPlatform();
+				GravityActive( true );
+				PlayAnimation( jumpAnim );
+
+				jumpPower = Mathf.Sqrt( 2f * JumpHeight * Mathf.Abs( controller.gravity ));
+
+				//			if (groundJumpPrefab != null)
+				//			{
+				//				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
+				//				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
+				//			}
+			}
+			else
+			{
+				PlayAnimation( jumpAnim );
+				jumpPower = Mathf.Sqrt( 2f * JumpHeightOnAir * Mathf.Abs( controller.gravity ));
+
+				//if (airJumpPrefab != null) Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
+			}
+
+			controller.vy = jumpPower;
+			jumpStartTime = Time.time;
+
+
+//			SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
+			//if (_effectAndSound.JumpSfx != null) SoundManager.Instance.PlaySound(_effectAndSound.JumpSfx, transform.position);
+
+			jumpCount++;
+
+			SetState( ActionState.JUMP );
+		}
+
+		protected void DoJumpBelow()
+		{
+			//if can't try jump
+			Fall();
+		}
+
+		//ActionState.FALL은 직접적으로 호출 하지 말도록 하자. 점프 후 떨어지는 것과 지면에서 갑자기 떨어지는 것은 차이가 있따.
+		//이 차이는 점프 수를 소비하냐 아니냐의 차이이다.
+		//가령 이미 점프 중이였다면 fall 상태로 가면서 점프 수는 변동이 되지 않지만 갑자기 지면에서 떨어진 경우 점프를 소비 시켜야 한다.
+		protected void Fall(bool useJump = true )
+		{
+			if (useJump) jumpCount++;
+			PlayAnimation(fallAnim);
+			SetState(ActionState.FALL);
 		}
 
 		//----------------------------------------------------------------------------------------------------------

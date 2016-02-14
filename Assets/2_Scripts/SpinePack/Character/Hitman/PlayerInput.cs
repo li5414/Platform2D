@@ -35,10 +35,15 @@ namespace druggedcode.engine
 			mPlayer.horizontalAxis = h;
 			mPlayer.verticalAxis = v;
 
+//			if (Input.GetButtonDown("Jump")) mPlayer.Jump();
+			if( Input.GetKeyDown (jumpKey)) mPlayer.Jump();
+
 			data.axisX = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));
 			data.axisY = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
 
 			data.axisXabs = Mathf.Abs (data.axisX);
+
+			//if (Input.GetButtonDown("Jump")) mPlayer.Jump();
 
 			data.jumpTrigger = Input.GetKeyDown (jumpKey);
 			data.jumpPressed = Input.GetKey (jumpKey);

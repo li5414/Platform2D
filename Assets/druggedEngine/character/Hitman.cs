@@ -114,51 +114,22 @@ namespace druggedcode.engine
 					PlayAnimation( idleAnim );
 					GravityActive( true );
 					currentVX = WalkSpeed;
+					mCanJump = true;
 					break;
 
 				case ActionState.WALK:
 					PlayAnimation( walkAnim );
+					mCanJump = true;
 					break;
 
 				case ActionState.RUN:
 					PlayAnimation( runAnim );
 					currentVX = RunSpeed;
+					mCanJump = true;
 					break;
 
 				case ActionState.JUMP:
-					//spine
-//					if (JumpCount == 0)
-//					{
-//						controller.state.ClearPlatform();
-//						PlayAnimation(jumpAnim);
-//						SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-//						controller.vy = jumpSpeed;
-//						// controller.AddForceVertical(mJumpCount > 0 ? airJumpSpeed : jumpSpeed);
-//						if (groundJumpPrefab != null)
-//						{
-//							if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
-//							else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
-//						}
-//
-//						wasWallJump = false;
-//					}
-//					else
-//					{
-//						PlayAnimation(jumpAnim);
-//						SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-//						controller.vy = airJumpSpeed;
-//						if (airJumpPrefab != null) Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
-//					}
-//
-//					mJumpStartTime = Time.time;
-//
-//					JumpCount++;
-//					if (OnJump != null) OnJump(transform);
-
-					//-----------------------de
-					GravityActive( true );
-					PlayAnimation( jumpAnim );
-
+					//DECharacter의 jump 메소드에 위임
 					break;
 
 				case ActionState.FALL:
@@ -182,6 +153,60 @@ namespace druggedcode.engine
 			}
 		}
 
+		bool CheckFall()
+		{
+			if( controller.state.IsGrounded ) return false;
+
+			Fall();
+			return true;
+		}
+
+		//----------------------ground
+		bool CheckIdle()
+		{
+			if (input.axisX != 0f) return false;
+			SetState(ActionState.IDLE);
+			return true;
+		}
+
+		bool CheckWalk()
+		{
+			if (input.axisX == 0f) return false;
+			SetState(ActionState.WALK);
+			return true;
+		}
+
+		bool CheckRun()
+		{
+			if (input.inputRun == false) return false;
+			SetState(ActionState.RUN);
+			return true;
+		}
+
+		bool CheckRunStop()
+		{
+			if (input.inputRun) return false;
+
+			if (input.axisX != 0f) SetState(ActionState.WALK);
+			else SetState(ActionState.IDLE);
+			return true;
+		}
+
+		//-----------------------jumpfall
+		bool CheckJumpFall()
+		{
+			if (controller.vy >= 0) return false;
+			Fall( false );
+			return true;
+		}
+
+		bool CheckJumpToGround()
+		{
+			if (controller.state.IsGrounded == false) return false;
+			SetState(ActionState.IDLE);
+			return true;
+		}
+
 		override protected void StateUpdate ()
 		{
 			switch (state)
@@ -189,134 +214,67 @@ namespace druggedcode.engine
 				//모든 땅에서의 움직임은 Idle에서 시작한다.
 				case ActionState.IDLE:
 					//-------------------------------de
-//					if (CheckFall()) return;
 //					if (CheckLadderClimb()) return;
 //					if (CheckLookUp()) return;
 //					if (CheckCrouch()) return;
-//
-//					if (_character.horizontalAxis != 0f) SetState(PlayerState.WALK);
-//					else _character.Move();
-
-					//----------------------------spine
-//					if (CheckJump()) return;
 //					if (CheckSlide()) return;
-//					if (CheckGroundFall()) return;
-//					if (CheckWalk()) return;
-//					Move();
+//					if (CheckJump()) return;
 
-					if( input.axisX != 0f ) SetState( ActionState.WALK );
-					else Move();
+					if( CheckFall()) return;
+					if( CheckWalk()) return;
+						
+					Move();
 
 					break;
 
 				case ActionState.WALK:
-					//-------------------------------de
-//					if (CheckFall()) return;
 //					if (CheckLadderClimb()) return;
 //					if (CheckLookUp()) return;
 //					if (CheckCrouch()) return;
-//
-//					if (_character.horizontalAxis == 0f)
-//					{
-//						SetState(PlayerState.IDLE);
-//					}
-//					else if (_characterState.IsRun)
-//					{
-//						SetState(PlayerState.RUN);
-//					}
-//					else
-//					{
-//						_character.Move();
-//					}
-
-					//--------------------------spine
-//					if (CheckJump()) return;
 //					if (CheckSlide()) return;
-//					if (CheckGroundFall()) return;
-//					if (CheckIdle()) return;
-//					if (CheckRun()) return;
-//					Move();
 
-					if( input.axisX == 0f ) SetState( ActionState.IDLE );
-					else if( input.inputRun ) SetState( ActionState.RUN );
-					else Move();
+					if( CheckFall()) return;
+					if( CheckIdle()) return;
+					if( CheckRun()) return;
+
+					Move();
 					break;
 
 				case ActionState.RUN:
-
-					//de
-//					if (CheckFall()) return;
 //					if (CheckLadderClimb()) return;
 //					if (CheckCrouch()) return;
-//
-//					if (_characterState.IsRun == false || _character.horizontalAxis == 0f)
-//					{
-//						SetState(PlayerState.IDLE);
-//					}
-//					else
-//					{
-//						_character.Move();
-//					}
-
-					//spine
-//					if (CheckJump()) return;
 //					if (CheckSlide()) return;
-//					if (CheckGroundFall()) return;
-//					if (CheckRunStop()) return;
-//					Move();
-
-					if( horizontalAxis == 0f )
-					{
-						SetState( ActionState.IDLE );
-					}
-					else if( input.inputRun == false )
-					{
-						SetState( ActionState.WALK );
-					}
-					else Move();
+					if (CheckFall()) return;
+					if (CheckRunStop()) return;
+					Move();
 					break;
 
 				case ActionState.JUMP:
 					//de
-//					if (CheckAirToGround()) return;
 //					if (CheckLadderClimb()) return;
 //					if (CheckWallClinging()) return;
-//					if (_controllerState.IsFalling)
-//					{
-//						SetState(PlayerState.FALL);
-//					}
-//					else
-//					{
-//						_character.Move();
-//					}
-					//spine
-//					if (CheckJump()) return;
-//					if (CheckJumpFall()) return;
 //					if (CheckAirAttack()) return;
 //					if (CheckWallSlide()) return;
-//					Move();
+
+					print("jumpupdate");
+
+					if( CheckJumpFall()) return;
 
 					Move();
 
 					break;
 
 				case ActionState.FALL:
+
+					print("fallupdate");
 					//spine
-//					if (CheckJump()) return;
 //					if (CheckBounceCheck()) return;
 //					if (CheckAirAttack()) return;
 //					if (CheckWallSlide()) return;
-//					if (CheckFallToGround()) return;
-//					Move();
-
-					//de
-//					if (CheckAirToGround()) return;
 //					if (CheckLadderClimb()) return;
 //					if (CheckWallClinging()) return;
-//
-//					_character.Move();
 
-					//-----------spine
+					if (CheckJumpToGround()) return;
 
 					Move();
 

@@ -32,8 +32,6 @@ namespace druggedcode.engine
 
         void Start()
         {
-            if (Application.isPlaying == false) return;
-
             if (mPathFollow != null)
             {
                 movable = true;

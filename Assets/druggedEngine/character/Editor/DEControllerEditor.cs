@@ -30,7 +30,7 @@ namespace druggedcode.engine
 				EditorGUILayout.LabelField ("Colliding Right", _state.IsCollidingRight.ToString ());
 				EditorGUILayout.LabelField ("Colliding Above", _state.IsCollidingAbove.ToString ());
 				EditorGUILayout.LabelField ("Colliding Below", _state.IsGrounded.ToString ());
-				EditorGUILayout.LabelField ("Falling", _state.IsFalling.ToString ());
+				EditorGUILayout.LabelField ("Falling", _controller.Velocity.y < 0 ? "true" : "false" );
 				EditorGUILayout.Space ();
 				EditorGUILayout.LabelField ("Grounded", _state.IsGrounded.ToString ());
 				EditorGUILayout.ObjectField ("StandingPlatform", _state.StandingPlatfom, typeof(Platform), true);
