@@ -26,6 +26,7 @@ namespace druggedcode.engine
 
 		//입력하지 않고 계산으로 알수있지 않을까
 		public float downAttackFrameSkip;
+		public float wallSlideSpeed = -1f;
 
 		override protected void Start()
 		{
@@ -113,19 +114,19 @@ namespace druggedcode.engine
 				case ActionState.IDLE:
 					PlayAnimation( idleAnim );
 					GravityActive( true );
-					currentVX = WalkSpeed;
+					controller.CurrentSpeed = WalkSpeed;
 					mCanJump = true;
 					break;
 
 				case ActionState.WALK:
 					PlayAnimation( walkAnim );
-					currentVX = WalkSpeed;
+					controller.CurrentSpeed = WalkSpeed;
 					mCanJump = true;
 					break;
 
 				case ActionState.RUN:
 					PlayAnimation( runAnim );
-					currentVX = RunSpeed;
+					controller.CurrentSpeed = RunSpeed;
 					mCanJump = true;
 					break;
 
@@ -143,7 +144,8 @@ namespace druggedcode.engine
 //					controller.LockVY(wallSlideSpeed);
 
 					AnimFilp = true;
-					controller.GravityScale = 0.1f;
+					controller.LockVY(wallSlideSpeed);
+					BodyPosition( new Vector2( horizontalAxis < 0 ? -0.15f : 0.15f ,0f));
 					PlayAnimation( wallSlideAnim );
 					Stop();
 					ResetJump();
@@ -219,11 +221,25 @@ namespace druggedcode.engine
 
 		bool CheckWallSlide()
 		{
-			if( jumpElapsedTime < 0.2f ) return false;
+			if( jumpElapsedTime < 0.3f ) return false;
 			else if( controller.IsPressAgainstWall == false ) return false;
 
 			SetState( ActionState.WALLSLIDE );
 			return true;
+
+			//de
+//			if (_characterState.CanWallClinging == false) return false;
+//			if (_controllerState.HittedClingWall == null) return false;
+//			if (_characterState.JumpElapsedTime < 0.2f) return false;
+//
+//			if ((_controllerState.IsCollidingLeft && _character.horizontalAxis < -0.1f) ||
+//				(_controllerState.IsCollidingRight && _character.horizontalAxis > 0.1f))
+//			{
+//				SetState(PlayerState.WALL_CLING);
+//				return true;
+//			}
+//
+//			return false;
 		}
 
 		override protected void StateUpdate ()
@@ -275,6 +291,7 @@ namespace druggedcode.engine
 //					if (CheckAirAttack()) return;
 //					if (CheckWallSlide()) return;
 
+					if( CheckWallSlide()) return;
 					if( CheckJumpFall()) return;
 
 					Move();
@@ -308,9 +325,15 @@ namespace druggedcode.engine
 //					}
 					if (CheckAirToGround()) return;
 
+//					if (_controllerState.HittedClingWall == null || _character.horizontalAxis == 0f)
+//					{
+//						SetState(PlayerState.FALL);
+//						return;
+//					}
+
 					if( verticalAxis < 0f ||
-						mFacaing == Facing.LEFT && horizontalAxis > 0f ||
-						mFacaing == Facing.RIGHT && horizontalAxis < 0f || controller.IsPressAgainstWall == false )
+						mFacing == Facing.LEFT && horizontalAxis > 0f ||
+						mFacing == Facing.RIGHT && horizontalAxis < 0f || controller.IsPressAgainstWall == false )
 					{
 						Fall();
 					}
@@ -357,10 +380,9 @@ namespace druggedcode.engine
 
 				case ActionState.WALLSLIDE:
 
-					controller.GravityScale = 1f;
 					AnimFilp = false;
-
-					//controller.UnLockVY();
+					controller.UnLockVY();
+					BodyPosition( Vector2.zero );
 					break;
 
 				case ActionState.SLIDE:

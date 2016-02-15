@@ -23,8 +23,6 @@ namespace druggedcode.engine
 
 		public Transform body;
 		public AnimationType bodyType;
-		public float AccelOnGround = 10f;
-		public float AccelOnAir = 3f;
 
 		[Header("Speed")]
 		public float CrouchSpeed = 1f;
@@ -62,7 +60,6 @@ namespace druggedcode.engine
 		public Ladder currentLadder{ get;set; }
 		public DEController controller{get; private set;}
 		public int jumpCount{get;set;}
-		public float currentVX { get; set; }
 		public bool controllable{get;set;}
 		public ActionState state { get; protected set; }
 
@@ -83,13 +80,10 @@ namespace druggedcode.engine
 
 		//캐릭터의 중력을 활성화 하거나 비활성화 할때 이전 중력값을 기억하기 위한 용도
 		protected float _originalGravity;
-		protected Facing mFacaing;
+		protected Facing mFacing;
 
 		SkeletonAnimation mSkeletonAnimation;
 		protected SkeletonGhost mGhost;
-
-		bool mMoveLocked;
-
 
 		//----------------------------------------------------------------------------------------------------------
 		// behaviour
@@ -137,6 +131,11 @@ namespace druggedcode.engine
 			}
 			else
 			{
+				if( state == ActionState.WALLSLIDE && next == ActionState.FALL )
+				{
+					float a = 1f;
+				}
+
 				StateExit();
 				Debug.Log(state + " > " + next);
 				state = next;
@@ -229,40 +228,16 @@ namespace druggedcode.engine
 
 		protected void Move()
 		{
-			if( mMoveLocked ) return;
+			controller.axisX = horizontalAxis;
 
-			if ( mFacaing == Facing.LEFT && horizontalAxis > 0.1f)
+			if ( mFacing == Facing.LEFT && horizontalAxis > 0.1f)
 			{
 				SetFacing(Facing.RIGHT);
 			}
-			else if (mFacaing == Facing.RIGHT && horizontalAxis < -0.1f)
+			else if (mFacing == Facing.RIGHT && horizontalAxis < -0.1f)
 			{
 				SetFacing(Facing.LEFT);
 			}
-
-			if ( horizontalAxis == 0)
-			{
-				controller.vx = 0f;
-			}
-			else
-			{
-				float vx = horizontalAxis * currentVX;
-				var movementFactor = controller.state.IsGrounded ? AccelOnGround : AccelOnAir;
-				controller.vx = Mathf.Lerp(controller.vx, vx, Time.deltaTime * movementFactor);
-				// _controller.vx = vx;
-			}
-
-			//spine
-			//			controller.axisX = input.axisX;
-			//
-			//			if (mFacaing == Facing.LEFT && controller.axisX > 0.1f)
-			//			{
-			//				SetFacing(Facing.RIGHT);
-			//			}
-			//			else if (mFacaing == Facing.RIGHT && controller.axisX < -0.1f)
-			//			{
-			//				SetFacing(Facing.LEFT);
-			//			}
 		}
 
 		public void Stop()
@@ -360,6 +335,16 @@ namespace druggedcode.engine
 		}
 
 		//----------------------------------------------------------------------------------------------------------
+		// body controll
+		//----------------------------------------------------------------------------------------------------------
+
+		public void BodyPosition( Vector2 translate )
+		{
+			body.transform.localPosition = translate;
+		}
+
+
+		//----------------------------------------------------------------------------------------------------------
 		// ientface
 		//----------------------------------------------------------------------------------------------------------
 
@@ -430,9 +415,9 @@ namespace druggedcode.engine
 
 		void SetFacing(Facing facing)
 		{
-			mFacaing = facing;
+			mFacing = facing;
 
-			switch (mFacaing)
+			switch (mFacing)
 			{
 				case Facing.RIGHT:
 					body.localScale = new Vector3(1f, body.localScale.y, body.localScale.z);

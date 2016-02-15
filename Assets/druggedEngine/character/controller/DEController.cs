@@ -22,7 +22,12 @@ namespace druggedcode.engine
 		[Header ("Collision")]
 		public BoxCollider2D headChecker;
 
+		[Header ("Move")]
+		public float AccelOnGround = 10f;
+		public float AccelOnAir = 3f;
+
 		[Header ("Parameters")]
+
 		public float GravityScale = 1;
 		//넘을 수 있는 바닥 높이 비율 ( 충돌 BoxCollider2D 의 크기에 비례 )
 		[Range (0, 1)]
@@ -39,27 +44,45 @@ namespace druggedcode.engine
 		public float RayGroundOffset = 0.5f;
 
 		//----------------------------------------------------------------------------------------------------------
-		// 상태
+		//get;set;
 		//----------------------------------------------------------------------------------------------------------
-		//state
 		public DEControllerState state { get; private set; }
+
+		public float CurrentSpeed { get; set; }
+
+		public float axisX { get; set; }
+
+		public Vector2 Velocity { get { return mVelocity; } }
+
+		public float vx { get { return mVelocity.x; } set { mVelocity.x = value; } }
+
+		public float vy { get { return mVelocity.y; } set { mVelocity.y = value; } }
+
+		public float gravity { get { return DruggedEngine.Gravity + _physicSpaceInfo.Gravity; } }
+
+		public float PlatformFriction{ get { return state.StandingPlatfom == null ? 1f : state.StandingPlatfom.friction; } }
+
+		public Vector2 PlatformVelocity{ get { return state.StandingPlatfom == null ? Vector2.zero : state.StandingPlatfom.velocity; } }
 
 		//----------------------------------------------------------------------------------------------------------
 		// 속도, 움직임. y가 마이너스인 경우가 낙하상태이다.
 		//----------------------------------------------------------------------------------------------------------
 
 		Vector2 _addForce;
-		float _passedVX = 0f;
-		Vector2 _velocity;
-		Vector2 _moveDirection = Vector2.right;
+		Vector2 mVelocity;
+		Vector2 mMoveDirection = Vector2.right;
 
-		float mPlatformFriction = 1f;
-		Vector2 mPlatofrmVelocity = Vector2.zero;
+
 
 		//현재 velocity 에 의해 현재 프레임에서 움직일 벡터
-		Vector2 _translateVector;
+		Vector2 mTranslateVector;
 
 		PhysicInfo _physicSpaceInfo;
+
+		float mLockedVY;
+
+		bool mMoveLocked;
+		Coroutine mLockMoveRoutine;
 
 		//----------------------------------------------------------------------------------------------------------
 		// caching components
@@ -138,15 +161,6 @@ namespace druggedcode.engine
 			_addForce.y += y;
 		}
 
-		public Vector2 Velocity { get { return _velocity; } }
-
-		public float vx { get { return _velocity.x; } set { _passedVX = value; } }
-
-		public float vy { get { return _velocity.y; } set { _velocity.y = value; } }
-
-		bool mMoveLocked;
-		Coroutine mLockMoveRoutine;
-
 		public void LockMove (float duration)
 		{
 			if (mLockMoveRoutine != null) StopCoroutine (mLockMoveRoutine);
@@ -162,94 +176,116 @@ namespace druggedcode.engine
 
 		public void Stop ()
 		{
-			_passedVX = 0f;
-			_velocity = Vector2.zero;
+			axisX = 0f;
+			mVelocity = Vector2.zero;
 		}
 
 		//----------------------------------------------------------------------------------------------------------
 		// core logic. 충돌처리. Update 에서 설정한 값, 상황을  LateUpdate 에서 실제로 처리한다.
 		//----------------------------------------------------------------------------------------------------------
 
-		public float gravity {
-			get{ return DruggedEngine.Gravity + _physicSpaceInfo.Gravity; }
+		public void LockVY (float lockvy)
+		{
+			mLockedVY = lockvy;
+		}
+
+		public void UnLockVY ()
+		{
+			mLockedVY = 0f;
 		}
 
 		void LateUpdate ()
 		{
+			CalculateTranslateVector ();
+			CheckMoveDirection ();
+
+			state.SaveLastStateAndReset ();
+			CheckCollisions ();
+
+			mTr.Translate (mTranslateVector, Space.World);
+
+			UpdateBound ();
+		}
+
+		void CalculateTranslateVector ()
+		{
+			float delta = Time.deltaTime;
+			Vector2 current = mVelocity;
+
+			//x speed
 			if (mMoveLocked == false)
 			{
-				//x lock
+				float moveFactor = state.IsGrounded ? AccelOnGround : AccelOnAir;
+				float tx = axisX * CurrentSpeed;
+				if (tx != 0f) tx = Mathf.Lerp (mVelocity.x, tx, delta * moveFactor);
+
+				if (state.IsGrounded)
+				{
+					mVelocity.x += (tx - mVelocity.x) * PlatformFriction;
+				}
+				else
+				{
+					mVelocity.x = tx;
+				}
+
+				mVelocity += _addForce;
+				mVelocity.x *= _physicSpaceInfo.MoveFactor;
 			}
 
-			//속도계산
-			if (state.IsGrounded)
+			//y speed
+			if (mLockedVY != 0f)
 			{
-				_velocity.x += (_passedVX - _velocity.x) * mPlatformFriction;
+				mVelocity.y = mLockedVY;
 			}
 			else
 			{
-				_velocity.x = _passedVX;
+				mVelocity.y += gravity * GravityScale * delta;
 			}
-
-			_velocity += _addForce;
-			//            _velocity.y += _physicInfo.Gravity * GravityScale;
-			_velocity.y += gravity * GravityScale * Time.deltaTime;
-			_velocity.x *= _physicSpaceInfo.MoveFactor;
-
-			//            _speed.y += (Parameters.Gravity + _movingPlatformsCurrentGravity) * Time.deltaTime;
 
 			_addForce = Vector2.zero;
 
-			//속도기반 실제 프레임당 이동 벡터 계산
-			_translateVector = _velocity * Time.deltaTime;
-
-
-			//진행 방향 체크, 지난 프레임 상태 저장 & 리셋
-			state.SaveLastStateAndReset ();
-			CheckMoveDirection ();
-			UpdateBound ();
-
-			//충돌검사. 충돌 상황에 따라 _translateVector 가 변경 될 수 있다.
-			if (mCheckCollisions)
-			{
-				CastRaysBelow ();
-				CastRaysFront ();
-				CastRaysAbove ();
-
-				_velocity = _translateVector / Time.deltaTime; //충돌로 인해 변경된 벡터를 바탕으로 속도 재설정.
-
-				if (state.HasCollisions) PushHittedObject (); //밀수 있는 것들은 민다.
-
-				//지상에 막 닿은건지 아닌지를 판단한다.
-				if (state.WasColldingBelowLastFrame == false && state.IsGrounded) state.JustGotGrounded = true;
-			}
-
-			//캐릭터 이동
-			mTr.Translate (_translateVector, Space.World);
+			mTranslateVector = mVelocity * Time.deltaTime;
 		}
 
 		void CheckMoveDirection ()
 		{
-			if (_moveDirection.x == 1 && _velocity.x < 0)
+			if ( mMoveDirection.x == 1 && mVelocity.x < 0)
 			{
-				_moveDirection = new Vector2 (-1, 0);
+				mMoveDirection = new Vector2 (-1, 0);
 			}
-			else if (_moveDirection.x == -1 && _velocity.x > 0)
+			else if (mMoveDirection.x == -1 && mVelocity.x > 0)
 			{
-				_moveDirection = new Vector2 (1, 0);
+				mMoveDirection = new Vector2 (1, 0);
 			}
+		}
+
+		//충돌검사. 충돌 상황에 따라 _translateVector 가 변경 될 수 있다.
+		void CheckCollisions ()
+		{
+			if (mCheckCollisions == false) return;
+
+			CastRaysBelow ();
+			CastRaysFront ();
+			CastRaysAbove ();
+
+			mVelocity = mTranslateVector / Time.deltaTime; //충돌로 인해 변경된 벡터를 바탕으로 속도 재설정.
+
+			if (state.HasCollisions) PushHittedObject (); //밀수 있는 것들은 민다.
+
+			//지상에 막 닿은건지 아닌지를 판단한다.
+			if (state.WasColldingBelowLastFrame == false && state.IsGrounded) state.JustGotGrounded = true;
 		}
 
 		void CastRaysBelow ()
 		{
 			//상승중일땐 무시
-			if (_translateVector.y > 0) return;
+			if (mTranslateVector.y > 0) return;
 			//  float rayLength = _bound.hHalf + Mathf.Abs(_translateVector.y);
 			//  if( _state.IsGrounded ) rayLength += RayGroundOffset;
-			float rayLength = _bound.hHalf + RayGroundOffset + Mathf.Abs (_translateVector.y);
+			float rayLength = _bound.hHalf + RayGroundOffset + Mathf.Abs (mTranslateVector.y);
 
 			int rayIndex, increase;
-			if (_moveDirection.x == 1)
+			if (mMoveDirection.x == 1)
 			{
 				rayIndex = VERTICAL_RAY_NUM - 1;
 				increase = -1;
@@ -260,15 +296,15 @@ namespace druggedcode.engine
 				increase = 1;
 			}
 
-			Vector2 verticalRayCastFromLeft = new Vector2 (_bound.xLeft + _translateVector.x, _bound.yCenter);
-			Vector2 verticalRayCastToRight = new Vector2 (_bound.xRight + _translateVector.x, _bound.yCenter);
+			Vector2 verticalRayCastFromLeft = new Vector2 (_bound.xLeft + mTranslateVector.x, _bound.yCenter);
+			Vector2 verticalRayCastToRight = new Vector2 (_bound.xRight + mTranslateVector.x, _bound.yCenter);
 
 			mHitCount = 0;
 
 			float lowestY = -LARGE_VALUE;
 			float sumY = 0f;
 			float fowardY = 0;
-			RaycastHit2D closestHit;
+			RaycastHit2D closestHit = new RaycastHit2D();
 			float closestAngle = 0f;
 			float tolerance = _bound.yBottom + _toleranceHeight;
 
@@ -317,7 +353,7 @@ namespace druggedcode.engine
 
 			//충돌된 것이 없다.
 			if (mHitCount == 0) return;
-			if (lowestY < _bound.yBottom + _translateVector.y) return;
+			if (lowestY < _bound.yBottom + mTranslateVector.y) return;
 
 			Platform hittedPlatform = closestHit.collider.gameObject.GetComponent<Platform> ();
 
@@ -329,25 +365,22 @@ namespace druggedcode.engine
 
 			state.IsCollidingBelow = true;
 			state.SlopeAngle = closestAngle;
-			_translateVector.y = 0;
+			mTranslateVector.y = 0;
 
 			if (hittedPlatform == null)
 			{
 				state.StandingPlatfom = null;
-				mPlatofrmVelocity = Vector2.zero;
 			}
 			else
 			{
 				state.StandingPlatfom = hittedPlatform;
-				mPlatformFriction = hittedPlatform.friction;
-				mPlatofrmVelocity = hittedPlatform.velocity;
 			}
 
 			if (state.SlopeAngle > 0)
 			{
 				if (fowardY > mTr.position.y && state.SlopeAngle > MaximumSlopeAngle)
 				{
-					_translateVector.x = 0;
+					mTranslateVector.x = 0;
 				}
 				mTr.position = new Vector3 (mTr.position.x, sumY / mHitCount, mTr.position.z);
 			}
@@ -359,7 +392,7 @@ namespace druggedcode.engine
 
 		void CastRaysFront ()
 		{
-			float horizontalRayLength = _bound.wHalf + RaySafetyDis + Mathf.Abs (_translateVector.x);
+			float horizontalRayLength = _bound.wHalf + RaySafetyDis + Mathf.Abs (mTranslateVector.x);
 
 			Vector2 horizontalRayCastToTop = new Vector2 (_bound.xCenter, _bound.yTop);
 			Vector2 horizontalRayCastFromBottom = new Vector2 (_bound.xCenter, _bound.yBottom + _toleranceHeight);
@@ -373,9 +406,9 @@ namespace druggedcode.engine
 
 				//if (_state.WasColldingBelowLastFrame && i == RayHorizontalCount - 1)
 				if (false)
-					mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
+					mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
 				else
-					mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, _moveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);
+					mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);
 
 				if (mHit2D)
 				{
@@ -396,13 +429,13 @@ namespace druggedcode.engine
 			state.IsCollidingFront = true;
 			state.CollidingFront = mHit2D.collider;
 
-			if (_moveDirection.x == 1)
+			if (mMoveDirection.x == 1)
 			{
-				_translateVector.x = mHit2D.point.x - _bound.xRight - RaySafetyDis;
+				mTranslateVector.x = mHit2D.point.x - _bound.xRight - RaySafetyDis;
 			}
 			else
 			{
-				_translateVector.x = mHit2D.point.x - _bound.xLeft + RaySafetyDis;
+				mTranslateVector.x = mHit2D.point.x - _bound.xLeft + RaySafetyDis;
 			}
 
 			if (mHit2D.rigidbody != null) _sideHittedPushableObject.Add (mHit2D.rigidbody);
@@ -411,12 +444,12 @@ namespace druggedcode.engine
 		void CastRaysAbove ()
 		{
 			//낙하중일땐 무시
-			if (_translateVector.y < 0) return;
+			if (mTranslateVector.y < 0) return;
 
-			float rayLength = _bound.hHalf + RaySafetyDis + _translateVector.y;
+			float rayLength = _bound.hHalf + RaySafetyDis + mTranslateVector.y;
 
-			Vector2 verticalRayCastStart = new Vector2 (_bound.xLeft + _translateVector.x, _bound.yCenter);
-			Vector2 verticalRayCastEnd = new Vector2 (_bound.xRight + _translateVector.x, _bound.yCenter);
+			Vector2 verticalRayCastStart = new Vector2 (_bound.xLeft + mTranslateVector.x, _bound.yCenter);
+			Vector2 verticalRayCastEnd = new Vector2 (_bound.xRight + mTranslateVector.x, _bound.yCenter);
 
 			mHitCount = 0;
 
@@ -441,7 +474,7 @@ namespace druggedcode.engine
 			{
 				float ty = mHit2D.point.y - _bound.h - RaySafetyDis;
 				mTr.position = new Vector3 (mTr.position.x, ty, mTr.position.z);
-				_translateVector.y = 0;
+				mTranslateVector.y = 0;
 			}
 		}
 
@@ -574,14 +607,14 @@ namespace druggedcode.engine
 
 		public bool IsPressAgainstWall {
 			get {
-				if( state.CollidingFront == null ) return false;
-				Wall wall = state.CollidingFront.GetComponent<Wall>();
-				if( wall == null ) return false;
+				if (state.CollidingFront == null) return false;
+				Wall wall = state.CollidingFront.GetComponent<Wall> ();
+				if (wall == null) return false;
 
 				if (wall.slideWay == WallSlideWay.NOTHING) return false;
 				else if (wall.slideWay == WallSlideWay.BOTH) return true;
-				else if (wall.slideWay == WallSlideWay.LEFT && _moveDirection.x > 0) return true;
-				else if (wall.slideWay == WallSlideWay.RIGHT && _moveDirection.x < 0) return true;
+				else if (wall.slideWay == WallSlideWay.LEFT && mMoveDirection.x > 0) return true;
+				else if (wall.slideWay == WallSlideWay.RIGHT && mMoveDirection.x < 0) return true;
 				else return false;
 				return false;
 			}
@@ -644,7 +677,6 @@ namespace druggedcode.engine
 
 		public bool HasCollisions { get { return IsCollidingFront || IsCollidingAbove || IsCollidingBelow; } }
 
-		//wall 충돌여부
 		public bool IsGrounded { get { return IsCollidingBelow; } }
 
 		public bool IsGroundedForward { get { return IsGroundedInfo [0]; } }
@@ -665,6 +697,7 @@ namespace druggedcode.engine
 
 		//IsCollidingBelow 와 같이 변해야 한다.
 		public Platform StandingPlatfom { get; set; }
+
 		public Collider2D CollidingFront { get; set; }
 
 		//지난프레임상태

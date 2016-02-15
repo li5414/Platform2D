@@ -55,6 +55,5 @@ public class DruggedEngine : MonoBehaviour
 		//Ragdoll 은 안쓰는거 같은데
 
 		Gravity = -70f;
-		//Gravity = -( 9.81f * 9.81f );
 	}
 }

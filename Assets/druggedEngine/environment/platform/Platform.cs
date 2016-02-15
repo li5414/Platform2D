@@ -8,7 +8,7 @@ namespace druggedcode.engine
     public class Platform : MonoBehaviour
     {
         [Range(0f, 1f)]
-        public float friction = 1f;
+		public float friction = 1f;
 
         public bool movable { get; set; }
 		public bool oneway;
