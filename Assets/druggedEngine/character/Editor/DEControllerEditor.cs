@@ -26,14 +26,15 @@ namespace druggedcode.engine
 				if (controller.gameObject.activeSelf == false) return;
 
 				EditorGUILayout.Space ();
-				EditorGUILayout.LabelField ("Colliding Front", state.IsCollidingFront.ToString ());
+				EditorGUILayout.LabelField ("Colliding Left", state.IsCollidingLeft.ToString ());
+				EditorGUILayout.LabelField ("Colliding Right", state.IsCollidingRight.ToString ());
 				EditorGUILayout.LabelField ("Colliding Above", state.IsCollidingAbove.ToString ());
 				EditorGUILayout.Space ();
 				EditorGUILayout.LabelField ("Grounded", state.IsGrounded + "( " + state.IsGroundedForward + ", "+ state.IsGroundedCenter + ", " + state.IsGroundedBack + " )");
 				EditorGUILayout.LabelField ("Falling", controller.Velocity.y < 0 ? "true" : "false" );
 				EditorGUILayout.Space ();
 				EditorGUILayout.ObjectField ("StandingPlatform", state.StandingPlatfom, typeof(Platform), true);
-				EditorGUILayout.ObjectField ("CollidingFront", state.CollidingFront, typeof(Collider2D), true);
+				EditorGUILayout.ObjectField ("CollidingSide", state.CollidingSide, typeof(Collider2D), true);
 				EditorGUILayout.Space ();
 				EditorGUILayout.LabelField ("Slope Angle", state.SlopeAngle.ToString ());
 				EditorGUILayout.LabelField ("GravityScale", controller.GravityScale.ToString ());

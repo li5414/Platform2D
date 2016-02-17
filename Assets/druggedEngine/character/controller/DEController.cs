@@ -265,7 +265,7 @@ namespace druggedcode.engine
 			if (mCheckCollisions == false) return;
 
 			CastRaysBelow ();
-			CastRaysFront ();
+			CastRaysSide ();
 			CastRaysAbove ();
 
 			mVelocity = mTranslateVector / Time.deltaTime; //충돌로 인해 변경된 벡터를 바탕으로 속도 재설정.
@@ -390,7 +390,7 @@ namespace druggedcode.engine
 			}
 		}
 
-		void CastRaysFront ()
+		void CastRaysSide ()
 		{
 			float horizontalRayLength = _bound.wHalf + RaySafetyDis + Mathf.Abs (mTranslateVector.x);
 
@@ -426,17 +426,19 @@ namespace druggedcode.engine
 
 			if (mHitCount == 0) return;
 
-			state.IsCollidingFront = true;
-			state.CollidingFront = mHit2D.collider;
 
 			if (mMoveDirection.x == 1)
 			{
+				state.IsCollidingRight = true;
 				mTranslateVector.x = mHit2D.point.x - _bound.xRight - RaySafetyDis;
 			}
 			else
 			{
+				state.IsCollidingLeft = true;
 				mTranslateVector.x = mHit2D.point.x - _bound.xLeft + RaySafetyDis;
 			}
+
+			state.CollidingSide = mHit2D.collider;
 
 			if (mHit2D.rigidbody != null) _sideHittedPushableObject.Add (mHit2D.rigidbody);
 		}
@@ -605,21 +607,6 @@ namespace druggedcode.engine
 			_physicSpaceInfo = new PhysicInfo (0, 1);
 		}
 
-		public bool IsPressAgainstWall {
-			get {
-				if (state.CollidingFront == null) return false;
-				Wall wall = state.CollidingFront.GetComponent<Wall> ();
-				if (wall == null) return false;
-
-				if (wall.slideWay == WallSlideWay.NOTHING) return false;
-				else if (wall.slideWay == WallSlideWay.BOTH) return true;
-				else if (wall.slideWay == WallSlideWay.LEFT && mMoveDirection.x > 0) return true;
-				else if (wall.slideWay == WallSlideWay.RIGHT && mMoveDirection.x < 0) return true;
-				else return false;
-				return false;
-			}
-		}
-
 		public bool IsCollidingHead {
 			get {
 				if (mHeadCheckerExtents != Vector3.zero)
@@ -670,22 +657,26 @@ namespace druggedcode.engine
 	{
 		// 상하좌우 충돌여부
 		public bool IsCollidingAbove { get; set; }
-
 		public bool IsCollidingBelow { get; set; }
+		public bool IsCollidingLeft { get; set; }
+		public bool IsCollidingRight { get; set; }
+		public bool HasCollisions { get { return IsCollidingLeft || IsCollidingRight || IsCollidingAbove || IsCollidingBelow; } }
 
-		public bool IsCollidingFront { get; set; }
-
-		public bool HasCollisions { get { return IsCollidingFront || IsCollidingAbove || IsCollidingBelow; } }
+		public bool WasColldingBelowLastFrame { get; set; }
+		public bool WasColldingAdoveLastFrame { get; set; }
+		public bool JustGotGrounded { get; set; }
 
 		public bool IsGrounded { get { return IsCollidingBelow; } }
-
 		public bool IsGroundedForward { get { return IsGroundedInfo [0]; } }
-
 		public bool IsGroundedCenter { get { return IsGroundedInfo [1]; } }
-
 		public bool IsGroundedBack { get { return IsGroundedInfo [2]; } }
-
 		public List<bool> IsGroundedInfo{ get; private set; }
+
+		public float SlopeAngle { get; set; }
+
+		//IsCollidingBelow 와 같이 변해야 한다.
+		public Platform StandingPlatfom { get; set; }
+		public Collider2D CollidingSide { get; set; }
 
 		public bool IsOnOneway {
 			get {
@@ -694,22 +685,6 @@ namespace druggedcode.engine
 				else return StandingPlatfom.oneway;
 			}
 		}
-
-		//IsCollidingBelow 와 같이 변해야 한다.
-		public Platform StandingPlatfom { get; set; }
-
-		public Collider2D CollidingFront { get; set; }
-
-		//지난프레임상태
-		public bool WasColldingBelowLastFrame { get; set; }
-
-		public bool WasColldingAdoveLastFrame { get; set; }
-
-		//막 지상에 닿은 프레임에서 true
-		public bool JustGotGrounded { get; set; }
-
-		// 움직이고 있는 경사면의 각도
-		public float SlopeAngle { get; set; }
 
 		public DEControllerState ()
 		{
@@ -726,12 +701,12 @@ namespace druggedcode.engine
 
 		public void Reset ()
 		{
-			IsCollidingAbove = IsCollidingBelow = IsCollidingFront = false;
+			IsCollidingAbove = IsCollidingBelow = IsCollidingLeft = IsCollidingRight = false;
 
 			JustGotGrounded = false;
 			SlopeAngle = 0;
 			StandingPlatfom = null;
-			CollidingFront = null;
+			CollidingSide = null;
 		}
 
 		public void SaveLastStateAndReset ()

@@ -34,7 +34,7 @@ namespace druggedcode.engine
             _controller.vx = _direction.x * Speed;
 
             // 무엇인가에 충돌한다면 방향을 전환.
-			if ( _controller.state.IsCollidingFront)
+			if ( _controller.state.IsCollidingLeft || _controller.state.IsCollidingRight )
             {
                 _direction = -_direction;
                 transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);

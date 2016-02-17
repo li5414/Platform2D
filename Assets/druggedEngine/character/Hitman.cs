@@ -116,26 +116,32 @@ namespace druggedcode.engine
 					GravityActive( true );
 					controller.CurrentSpeed = WalkSpeed;
 					mCanJump = true;
+					mCanMove = true;
+					mCanFacingUpdate = true;
 					break;
 
 				case ActionState.WALK:
 					PlayAnimation( walkAnim );
 					controller.CurrentSpeed = WalkSpeed;
 					mCanJump = true;
+					mCanMove = true;
+					mCanFacingUpdate = true;
 					break;
 
 				case ActionState.RUN:
 					PlayAnimation( runAnim );
 					controller.CurrentSpeed = RunSpeed;
 					mCanJump = true;
+					mCanMove = true;
+					mCanFacingUpdate = true;
 					break;
 
 				case ActionState.JUMP:
-					//DECharacter의 jump 메소드에 위임
+					//DECharacter의 jump 메소드에서 처리
 					break;
 
 				case ActionState.FALL:
-					//PlayAnimation (fallAnim);
+					//DECharacter의 Fall 메소드에서 처리
 					break;
 
 				case ActionState.WALLSLIDE:
@@ -144,6 +150,10 @@ namespace druggedcode.engine
 //					controller.LockVY(wallSlideSpeed);
 
 					AnimFilp = true;
+					mCanJump = true;
+					mCanMove = true;
+					mCanFacingUpdate = true;
+
 					controller.LockVY(wallSlideSpeed);
 					BodyPosition( new Vector2( horizontalAxis < 0 ? -0.15f : 0.15f ,0f));
 					PlayAnimation( wallSlideAnim );
@@ -222,24 +232,19 @@ namespace druggedcode.engine
 		bool CheckWallSlide()
 		{
 			if( jumpElapsedTime < 0.3f ) return false;
-			else if( controller.IsPressAgainstWall == false ) return false;
+			else if( IsPressAgainstWall == false ) return false;
 
 			SetState( ActionState.WALLSLIDE );
 			return true;
+		}
 
-			//de
-//			if (_characterState.CanWallClinging == false) return false;
-//			if (_controllerState.HittedClingWall == null) return false;
-//			if (_characterState.JumpElapsedTime < 0.2f) return false;
-//
-//			if ((_controllerState.IsCollidingLeft && _character.horizontalAxis < -0.1f) ||
-//				(_controllerState.IsCollidingRight && _character.horizontalAxis > 0.1f))
-//			{
-//				SetState(PlayerState.WALL_CLING);
-//				return true;
-//			}
-//
-//			return false;
+		//-----------------------wallslide
+		bool CheckWallSlideToFall()
+		{
+			if( IsPressAgainstWall ) return false;
+
+			Fall();
+			return true;
 		}
 
 		override protected void StateUpdate ()
@@ -257,8 +262,6 @@ namespace druggedcode.engine
 
 					if( CheckFall()) return;
 					if( CheckWalk()) return;
-						
-					Move();
 
 					break;
 
@@ -271,8 +274,6 @@ namespace druggedcode.engine
 					if( CheckFall()) return;
 					if( CheckIdle()) return;
 					if( CheckRun()) return;
-
-					Move();
 					break;
 
 				case ActionState.RUN:
@@ -281,7 +282,7 @@ namespace druggedcode.engine
 //					if (CheckSlide()) return;
 					if (CheckFall()) return;
 					if (CheckRunStop()) return;
-					Move();
+
 					break;
 
 				case ActionState.JUMP:
@@ -293,9 +294,6 @@ namespace druggedcode.engine
 
 					if( CheckWallSlide()) return;
 					if( CheckJumpFall()) return;
-
-					Move();
-
 					break;
 
 				case ActionState.FALL:
@@ -308,39 +306,15 @@ namespace druggedcode.engine
 					if( CheckWallSlide()) return;
 					if (CheckAirToGround()) return;
 
-					Move();
-
 					break;
 
 				case ActionState.WALLSLIDE:
 					//spine
 //					if (CheckWallJump()) return;
 //					if (CheckBounceCheck()) return;
-//					if (CheckWallSlideToFall()) return;
-//
-//					if (_controllerState.HittedClingWall == null || _character.horizontalAxis == 0f)
-//					{
-//						SetState(PlayerState.FALL);
-//						return;
-//					}
-					if (CheckAirToGround()) return;
 
-//					if (_controllerState.HittedClingWall == null || _character.horizontalAxis == 0f)
-//					{
-//						SetState(PlayerState.FALL);
-//						return;
-//					}
-
-					if( verticalAxis < 0f ||
-						mFacing == Facing.LEFT && horizontalAxis > 0f ||
-						mFacing == Facing.RIGHT && horizontalAxis < 0f || controller.IsPressAgainstWall == false )
-					{
-						Fall();
-					}
-					else
-					{
-						Move();
-					}
+					if(CheckAirToGround()) return;
+					if(CheckWallSlideToFall()) return;
 
 					break;
 

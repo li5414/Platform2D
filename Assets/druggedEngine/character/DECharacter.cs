@@ -89,6 +89,8 @@ namespace druggedcode.engine
 		// behaviour
 		//----------------------------------------------------------------------------------------------------------
 		protected bool mCanJump;
+		protected bool mCanMove;
+		protected bool mCanFacingUpdate;
 
 		virtual protected void Awake()
 		{
@@ -149,6 +151,29 @@ namespace druggedcode.engine
 			if( controllable && OnUpdateInput != null ) OnUpdateInput();
 
 			StateUpdate();
+
+			FacingUpdate();
+			Move();
+		}
+
+		void Move()
+		{
+			if( mCanMove == false ) controller.axisX = 0f;
+			else controller.axisX = horizontalAxis;
+		}
+
+		void FacingUpdate()
+		{
+			if( mCanFacingUpdate == false ) return;
+
+			if ( mFacing == Facing.LEFT && horizontalAxis > 0.1f)
+			{
+				SetFacing(Facing.RIGHT);
+			}
+			else if (mFacing == Facing.RIGHT && horizontalAxis < -0.1f)
+			{
+				SetFacing(Facing.LEFT);
+			}
 		}
 
 		virtual protected void StateExit()
@@ -226,20 +251,6 @@ namespace druggedcode.engine
 			gameObject.SetActive(true);
 		}
 
-		protected void Move()
-		{
-			controller.axisX = horizontalAxis;
-
-			if ( mFacing == Facing.LEFT && horizontalAxis > 0.1f)
-			{
-				SetFacing(Facing.RIGHT);
-			}
-			else if (mFacing == Facing.RIGHT && horizontalAxis < -0.1f)
-			{
-				SetFacing(Facing.LEFT);
-			}
-		}
-
 		public void Stop()
 		{
 			controller.Stop();
@@ -255,6 +266,38 @@ namespace druggedcode.engine
 			jumpCount = 0;
 		}
 
+		//추후 wall 이 아니라 특정 오브젝트를 밀고 있는지를 알 수 있는 메소드로 변경하자
+		public bool IsPressAgainstWall
+		{
+			get
+			{
+				if( controller.state.CollidingSide == null ) return false;
+
+				Wall wall = controller.state.CollidingSide.GetComponent<Wall>();
+
+				if( wall == null ) return false;
+				else if( wall.slideWay == WallSlideWay.NOTHING ) return false;
+				else if(( wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == Facing.RIGHT && horizontalAxis >= 0f ) return true;
+				else if(( wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == Facing.LEFT && horizontalAxis <= 0f ) return true;
+				return false;
+			}
+
+//			if( state.Coll
+//
+//			get {
+//				if (state.CollidingSide == null) return false;
+//				Wall wall = state.CollidingSide.GetComponent<Wall> ();
+//				if (wall == null) return false;
+//
+//				if (wall.slideWay == WallSlideWay.NOTHING) return false;
+//				else if (wall.slideWay == WallSlideWay.BOTH) return true;
+//				else if (wall.slideWay == WallSlideWay.LEFT && mMoveDirection.x > 0) return true;
+//				else if (wall.slideWay == WallSlideWay.RIGHT && mMoveDirection.x < 0) return true;
+//				else return false;
+//				return false;
+//			}
+		}
+
 		bool IsAblePassOneWay()
 		{
 			if ( verticalAxis >= 0f ) return false;
@@ -268,6 +311,11 @@ namespace druggedcode.engine
 			if( mCanJump == false ) return;
 			if( jumpCount == jumpMax ) return;
 
+			mCanMove = true;
+			mCanFacingUpdate = true;
+
+			var wasWall = false;
+
 			//아래 점프 체크도 한다
 			if( IsAblePassOneWay())
 			{
@@ -275,28 +323,35 @@ namespace druggedcode.engine
 				//Fall();
 				return;
 			}
-			//사다리에서 떨어지기
+			//사다리타는 상황이고 아래를 눌렀다면
 			else if( false )
 			{
-
+				Fall();
+			}
+			else if( state == ActionState.WALLSLIDE )
+			{
+				wasWall = true;
+				controller.vx = mFacing == Facing.LEFT ? 4 : -4;
+				controller.LockMove( 0.1f );
 			}
 
-			//float jumpPower = Mathf.Clamp( Mathf.Sqrt( 2f * JumpHeight * Mathf.Abs( _controller.gravity )),3,100000);
 			float jumpPower;
-
 			if( jumpCount == 0 )
 			{
 				controller.state.ClearPlatform();
 				GravityActive( true );
 				PlayAnimation( jumpAnim );
 
-				jumpPower = Mathf.Sqrt( 2f * JumpHeight * Mathf.Abs( controller.gravity ));
+				jumpPower = Mathf.Sqrt( 2f * JumpHeight * Mathf.Abs( controller.gravity ));//min 3 , max 100000
 
 				//			if (groundJumpPrefab != null)
 				//			{
 				//				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
 				//				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
 				//			}
+
+//				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
+//				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
 			}
 			else
 			{

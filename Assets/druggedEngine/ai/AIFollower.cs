@@ -97,7 +97,7 @@ namespace druggedcode.engine
 			_character.horizontalAxis = _speed * _direction;
 			
 			//앞뒤로 무엇인가 충돌 되는 것이 있다면 점프를 하게 한다.
-			if ( _controller.state.IsCollidingFront  )
+			if ( _controller.state.IsCollidingLeft || _controller.state.IsCollidingRight )
 			{
 				//_character.Jump();
 			}
