@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 using System.Collections;
+using System.Collections.Generic;
 using Spine;
 
 #if UNITY_EDITOR
@@ -11,11 +12,7 @@ namespace druggedcode.engine
 {
 	public class DECharacter : MonoBehaviour, IDamageable
 	{
-		public enum Facing
-		{
-			RIGHT,
-			LEFT
-		}
+		static List<DECharacter> All = new List<DECharacter>();
 
 		//----------------------------------------------------------------------------------------------------------
 		// Inspector
@@ -61,7 +58,7 @@ namespace druggedcode.engine
 		public DEController controller{get; private set;}
 		public int jumpCount{get;set;}
 		public bool controllable{get;set;}
-		public ActionState state { get; protected set; }
+		public CharacterState state { get; protected set; }
 
 		//----------------------------------------------------------------------------------------------------------
 		// input
@@ -100,11 +97,34 @@ namespace druggedcode.engine
 
 		}
 
+		virtual protected void OnEnable()
+		{
+			Register();
+		}
+
+		virtual protected void OnDisable()
+		{
+			Unregister();
+		}
+
+		void Register()
+		{
+			if (All.Contains(this) == false) All.Add(this);
+		}
+
+		void Unregister()
+		{
+			if (All.Contains(this)) All.Remove(this);
+		}
+
 		virtual protected void Start()
 		{
 			switch (bodyType)
 			{
 				case AnimationType.SPINE:
+
+					mGhost = GetComponentInChildren<SkeletonGhost>();
+
 					mSkeletonAnimation = GetComponentInChildren<SkeletonAnimation>();
 					mSkeletonAnimation.state.Event += HandleEvent;
 					mSkeletonAnimation.state.Complete += HandleComplete;
@@ -124,16 +144,36 @@ namespace druggedcode.engine
 
 		}
 
-		public void SetState(ActionState next)
+		protected void GhostMode( bool use )
+		{
+			if( mGhost == null ) return;
+			mGhost.ghostingEnabled = use;
+		}
+
+		protected void IgnoreCharacterCollisions(bool ignore)
+		{
+//			foreach (GameCharacter gc in All)
+//			{
+//				if (gc == this) continue;
+//				gc.IgnoreCollision(controller.primaryCollider, ignore);
+//			}
+		}
+
+		void IgnoreCollision(Collider2D tgCollider, bool ignore)
+		{
+//			Physics2D.IgnoreCollision(controller.primaryCollider, tgCollider, ignore);
+		}
+
+		public void SetState(CharacterState next)
 		{
 			if (state == next)
 			{
 				Debug.Log("---------same state!!!!! " + state + " > " + next);
-				//return;
+				return;
 			}
 			else
 			{
-				if( state == ActionState.WALLSLIDE && next == ActionState.FALL )
+				if( state == CharacterState.WALLSLIDE && next == CharacterState.FALL )
 				{
 					float a = 1f;
 				}
@@ -158,8 +198,8 @@ namespace druggedcode.engine
 
 		void Move()
 		{
-			if( mCanMove == false ) controller.axisX = 0f;
-			else controller.axisX = horizontalAxis;
+			if( mCanMove == false ) return;
+			controller.axisX = horizontalAxis;
 		}
 
 		void FacingUpdate()
@@ -277,8 +317,8 @@ namespace druggedcode.engine
 
 				if( wall == null ) return false;
 				else if( wall.slideWay == WallSlideWay.NOTHING ) return false;
-				else if(( wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == Facing.RIGHT && horizontalAxis >= 0f ) return true;
-				else if(( wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == Facing.LEFT && horizontalAxis <= 0f ) return true;
+				else if(( wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == Facing.RIGHT && horizontalAxis > 0f ) return true;
+				else if(( wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == Facing.LEFT && horizontalAxis < 0f ) return true;
 				return false;
 			}
 
@@ -328,11 +368,11 @@ namespace druggedcode.engine
 			{
 				Fall();
 			}
-			else if( state == ActionState.WALLSLIDE )
+			else if( state == CharacterState.WALLSLIDE )
 			{
 				wasWall = true;
 				controller.vx = mFacing == Facing.LEFT ? 4 : -4;
-				controller.LockMove( 0.1f );
+				controller.LockMove( 0.5f );
 			}
 
 			float jumpPower;
@@ -370,7 +410,7 @@ namespace druggedcode.engine
 
 			jumpCount++;
 
-			SetState( ActionState.JUMP );
+			SetState( CharacterState.JUMP );
 		}
 
 		protected void DoJumpBelow()
@@ -386,7 +426,7 @@ namespace druggedcode.engine
 		{
 			if (useJump) jumpCount++;
 			PlayAnimation(fallAnim);
-			SetState(ActionState.FALL);
+			SetState(CharacterState.FALL);
 		}
 
 		//----------------------------------------------------------------------------------------------------------

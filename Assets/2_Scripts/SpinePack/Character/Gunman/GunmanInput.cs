@@ -104,7 +104,7 @@ public class GunmanInput : MonoBehaviour {
 #else
 			//movement
 			bool runPressed = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-			if (controller.state != ActionState.JETPACK)
+			if (controller.state != CharacterState.JETPACK)
 				moveStick.x = ((Input.GetKey(leftKey) ? -1 : 0) + (Input.GetKey(rightKey) ? 1 : 0)) * (runPressed ? 1 : 0.5f);
 			else
 				moveStick.x = ((Input.GetKey(leftKey) ? -1 : 0) + (Input.GetKey(rightKey) ? 1 : 0));
@@ -138,7 +138,7 @@ public class GunmanInput : MonoBehaviour {
 
 
 			//aiming
-			if (!runPressed || controller.state == ActionState.JETPACK) {
+			if (!runPressed || controller.state == CharacterState.JETPACK) {
 				float dist = 0;
 				var aimRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 

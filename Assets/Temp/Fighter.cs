@@ -108,7 +108,7 @@ public class Fighter : GameCharacter
     {
         base.Start();
 
-        SetState(ActionState.IDLE);
+        SetState(CharacterState.IDLE);
     }
 
     override protected void HandleComplete(Spine.AnimationState state, int trackIndex, int loopCount)
@@ -116,7 +116,7 @@ public class Fighter : GameCharacter
         var entry = state.GetCurrent(trackIndex);
         if (entry.Animation.Name == attackAnim || entry.Animation.Name == upAttackAnim)
         {
-            SetState(ActionState.IDLE);
+            SetState(CharacterState.IDLE);
         }
     }
 
@@ -210,7 +210,7 @@ public class Fighter : GameCharacter
         switch (state)
         {
             //모든 땅에서의 움직임은 Idle에서 시작한다.
-            case ActionState.IDLE:
+            case CharacterState.IDLE:
                 if (controller.state.IsGroundCenter) PlayAnimation(idleAnim);
                 else if (controller.state.IsOnSlope) PlayAnimation(idleAnim);
                 else if (controller.state.IsGroundBack) PlayAnimation(balanceForward);
@@ -224,18 +224,18 @@ public class Fighter : GameCharacter
                 JumpCount = 0;
                 break;
 
-            case ActionState.WALK:
+            case CharacterState.WALK:
                 PlayAnimation(walkAnim);
                 controller.SetFriction(movingFriction);
                 break;
 
-            case ActionState.RUN:
+            case CharacterState.RUN:
                 PlayAnimation(runAnim);
                 controller.SetFriction(movingFriction);
                 controller.targetSpeed = runSpeed;
                 break;
 
-            case ActionState.JUMP:
+            case CharacterState.JUMP:
                 if (JumpCount == 0)
                 {
                     controller.state.ClearPlatform();
@@ -265,11 +265,11 @@ public class Fighter : GameCharacter
                 if (OnJump != null) OnJump(transform);
                 break;
 
-            case ActionState.FALL:
+            case CharacterState.FALL:
                 PlayAnimation(fallAnim);
                 break;
 
-            case ActionState.WALLSLIDE:
+            case CharacterState.WALLSLIDE:
                 PlayAnimation(wallSlideAnim);
                 wallSlideStartTime = Time.time;
                 JumpCount = 0;
@@ -277,7 +277,7 @@ public class Fighter : GameCharacter
                 AnimFlip = true;
                 break;
 
-            case ActionState.SLIDE:
+            case CharacterState.ESCAPE:
                 PlayAnimation(slideAnim);
 
                 controller.SetFriction(movingFriction);
@@ -293,14 +293,14 @@ public class Fighter : GameCharacter
                 if (mGhost != null) mGhost.ghostingEnabled = true;
                 break;
 
-            case ActionState.ATTACK:
+            case CharacterState.ATTACK:
                 break;
 
-            case ActionState.DOWNATTACK:
+            case CharacterState.DOWNATTACK:
                 PlayAnimation(downAttackAnim);
                 break;
 
-            case ActionState.UPATTACK:
+            case CharacterState.UPATTACK:
                 PlayAnimation(upAttackAnim);
                 break;
         }
@@ -310,7 +310,7 @@ public class Fighter : GameCharacter
     {
         switch (state)
         {
-            case ActionState.IDLE:
+            case CharacterState.IDLE:
                 if (CheckJump()) return;
                 if (CheckSlide()) return;
                 if (CheckGroundFall()) return;
@@ -321,7 +321,7 @@ public class Fighter : GameCharacter
 
                 break;
 
-            case ActionState.WALK:
+            case CharacterState.WALK:
                 if (CheckJump()) return;
                 if (CheckSlide()) return;
                 if (CheckGroundFall()) return;
@@ -332,7 +332,7 @@ public class Fighter : GameCharacter
                 Move();
                 break;
 
-            case ActionState.RUN:
+            case CharacterState.RUN:
                 if (CheckJump()) return;
                 if (CheckSlide()) return;
                 if (CheckGroundFall()) return;
@@ -342,7 +342,7 @@ public class Fighter : GameCharacter
                 Move();
                 break;
 
-            case ActionState.JUMP:
+            case CharacterState.JUMP:
                 if (CheckJump()) return;
                 if (CheckJumpFall()) return;
                 if (CheckAirAttack()) return;
@@ -357,7 +357,7 @@ public class Fighter : GameCharacter
                 }
                 break;
 
-            case ActionState.FALL:
+            case CharacterState.FALL:
                 if (CheckJump()) return;
                 if (CheckBounceCheck()) return;
                 if (CheckAirAttack()) return;
@@ -367,7 +367,7 @@ public class Fighter : GameCharacter
                 Move();
                 break;
 
-            case ActionState.WALLSLIDE:
+            case CharacterState.WALLSLIDE:
                 if (CheckWallJump()) return;
                 if (CheckBounceCheck()) return;
                 if (CheckWallSlideToFall()) return;
@@ -376,14 +376,14 @@ public class Fighter : GameCharacter
 
                 break;
 
-            case ActionState.SLIDE:
+            case CharacterState.ESCAPE:
                 if (CheckSlideToIdle()) return;
                 if (CheckGroundFall()) return;
 
                 Move(true);
                 break;
 
-            case ActionState.ATTACK:
+            case CharacterState.ATTACK:
                 if (waitingForAttackInput)
                 {
                     waitingForAttackInput = false;
@@ -395,14 +395,14 @@ public class Fighter : GameCharacter
                 {
                     controller.SetFriction(idleFriction);
                     attackWatchdog -= Time.deltaTime;
-                    if (attackWatchdog < 0) SetState(ActionState.IDLE);
+                    if (attackWatchdog < 0) SetState(CharacterState.IDLE);
                     return;
                 }
 
                 controller.SetFriction(movingFriction);
                 break;
 
-            case ActionState.DOWNATTACK:
+            case CharacterState.DOWNATTACK:
                 //아래로 떨어지고 있는 중이다. 아직 땅에 닿지 않은 상태
                 if (downAttackRecovery == false)
                 {
@@ -436,14 +436,14 @@ public class Fighter : GameCharacter
                     else
                     {
                         //기존 소스는 점프 하면서 점프스피드를 적용하는데 현재 이상태로 되면 airjumpspped로 적용됨.
-                        SetState(ActionState.JUMP);
+                        SetState(CharacterState.JUMP);
                     }
                 }
 
                 if (velocityLock) controller.targetSpeed = 0f;
                 break;
 
-            case ActionState.UPATTACK:
+            case CharacterState.UPATTACK:
                 break;
         }
     }
@@ -452,39 +452,39 @@ public class Fighter : GameCharacter
     {
         switch (state)
         {
-            case ActionState.IDLE:
+            case CharacterState.IDLE:
                 break;
 
-            case ActionState.WALK:
+            case CharacterState.WALK:
                 break;
 
-            case ActionState.RUN:
+            case CharacterState.RUN:
                 break;
 
-            case ActionState.JUMP:
+            case CharacterState.JUMP:
                 break;
 
-            case ActionState.FALL:
+            case CharacterState.FALL:
                 break;
 
-            case ActionState.WALLSLIDE:
+            case CharacterState.WALLSLIDE:
                 controller.UnLockVY();
                 AnimFlip = false;
                 break;
 
-            case ActionState.SLIDE:
+            case CharacterState.ESCAPE:
                 controller.ResetColliderSize();
                 IgnoreCharacterCollisions(false);
                 if (mGhost != null) mGhost.ghostingEnabled = false;
                 break;
 
-            case ActionState.ATTACK:
+            case CharacterState.ATTACK:
                 break;
 
-            case ActionState.DOWNATTACK:
+            case CharacterState.DOWNATTACK:
                 break;
 
-            case ActionState.UPATTACK:
+            case CharacterState.UPATTACK:
                 break;
         }
     }
@@ -494,7 +494,7 @@ public class Fighter : GameCharacter
         float slideTime = Time.time - slideStartTime;
         if (slideTime < slideDuration) return false;
 
-        SetState(ActionState.IDLE);
+        SetState(CharacterState.IDLE);
         return true;
     }
 
@@ -512,7 +512,7 @@ public class Fighter : GameCharacter
         if (Time.time < wallSlideStartTime + 0.2f) return false;
         if (controller.state.IsGround == false) return false;
 
-        SetState(ActionState.IDLE);
+        SetState(CharacterState.IDLE);
         return true;
     }
     //--------------------------------------------------------------------------------------------
@@ -523,7 +523,7 @@ public class Fighter : GameCharacter
     {
         if (input.specailATrigger == false) return false;
 
-        SetState(ActionState.SLIDE);
+        SetState(CharacterState.ESCAPE);
         return true;
     }
 
@@ -535,7 +535,7 @@ public class Fighter : GameCharacter
         controller.LockMove( 0.1f );
         wasWallJump = true;
         
-        SetState( ActionState.JUMP );
+        SetState( CharacterState.JUMP );
 
         return true;
     }
@@ -545,7 +545,7 @@ public class Fighter : GameCharacter
         if (Time.time < mJumpStartTime + 0.2f) return false;
         if (controller.IsPressAgainstWall == false) return false;
 
-        SetState(ActionState.WALLSLIDE);
+        SetState(CharacterState.WALLSLIDE);
         return true;
     }
 
@@ -563,7 +563,7 @@ public class Fighter : GameCharacter
         }
         else
         {
-            SetState(ActionState.JUMP);
+            SetState(CharacterState.JUMP);
         }
 
         return true;
@@ -583,11 +583,11 @@ public class Fighter : GameCharacter
         if (input.attackTrigger == false) return false;
         if (input.axisY < -0.5f)
         {
-            SetState(ActionState.DOWNATTACK);
+            SetState(CharacterState.DOWNATTACK);
         }
         else if (input.axisY > 0.5f)
         {
-            SetState(ActionState.UPATTACK);
+            SetState(CharacterState.UPATTACK);
 
         }
 
@@ -597,21 +597,21 @@ public class Fighter : GameCharacter
     bool CheckWalk()
     {
         if (input.axisX == 0f) return false;
-        SetState(ActionState.WALK);
+        SetState(CharacterState.WALK);
         return true;
     }
 
     bool CheckIdle()
     {
         if (input.axisX != 0f) return false;
-        SetState(ActionState.IDLE);
+        SetState(CharacterState.IDLE);
         return true;
     }
 
     bool CheckRun()
     {
         if (input.inputRun == false) return false;
-        SetState(ActionState.RUN);
+        SetState(CharacterState.RUN);
         return true;
     }
 
@@ -619,8 +619,8 @@ public class Fighter : GameCharacter
     {
         if (input.inputRun) return false;
 
-        if (input.axisX != 0f) SetState(ActionState.WALK);
-        else SetState(ActionState.IDLE);
+        if (input.axisX != 0f) SetState(CharacterState.WALK);
+        else SetState(CharacterState.IDLE);
         return true;
     }
 
@@ -646,7 +646,7 @@ public class Fighter : GameCharacter
 
         SoundPalette.PlaySound(landSound, 1, 1, transform.position);
 
-        SetState(ActionState.IDLE);
+        SetState(CharacterState.IDLE);
         return true;
     }
 
@@ -659,7 +659,7 @@ public class Fighter : GameCharacter
         controller.AddForceVertical(headBounceSpeed);
 
         //todo 이후 JumpEnter 에서 위 헤더 점프 바운스가 무시되다. 수정하자.
-        SetState(ActionState.JUMP);
+        SetState(CharacterState.JUMP);
         return true;
     }
 }

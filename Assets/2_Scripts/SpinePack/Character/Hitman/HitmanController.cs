@@ -150,7 +150,7 @@ public class HitmanController : TempGameCharacter
         {
             //attack complete
             skeletonAnimation.AnimationName = idleAnim;
-            SetState( ActionState.IDLE );
+            SetState( CharacterState.IDLE );
         }
     }
 
@@ -232,8 +232,8 @@ public class HitmanController : TempGameCharacter
     {
         //지상이고, IDLE WALK RUN 이거나.
         //낙하중이고 아직 점프 횟수가남아있다면
-        if (((OnGround || movingPlatform) && state < ActionState.JUMP) ||
-            (state == ActionState.FALL && mJumpCount < maxJumps))
+        if (((OnGround || movingPlatform) && state < CharacterState.JUMP) ||
+            (state == CharacterState.FALL && mJumpCount < maxJumps))
         {
             //아래로 점프하거나 위로 점프한다.
             if ( mJumpPressed == false )
@@ -264,14 +264,14 @@ public class HitmanController : TempGameCharacter
             //IDLE WALK RUN 이고 슬라이드가 아니며 슬라이드 눌렀다면 슬라이드
             if ( mDoJump == false && doSlide == false )
             {
-                if (state < ActionState.JUMP)
+                if (state < CharacterState.JUMP)
                 {
                     doSlide = inputSlidePressed;
                 }
             }
         }
         //지상이고 슬라이딩 중이라면 고스팅을 끄고 점프입력
-        else if (OnGround && state == ActionState.SLIDE)
+        else if (OnGround && state == CharacterState.ESCAPE)
         {
             mDoJump = inputJumpWasPressed;
             if (mDoJump)
@@ -281,7 +281,7 @@ public class HitmanController : TempGameCharacter
             }
         }
         //벽타는 중인 경우 점프 트리거
-        else if (state == ActionState.WALLSLIDE)
+        else if (state == CharacterState.WALLSLIDE)
         {
             mDoJump = inputJumpWasPressed;
             if (mDoJump)
@@ -300,7 +300,7 @@ public class HitmanController : TempGameCharacter
         // skeletonAnimation.state.SetAnimation( 0, runAnim, true );
         switch (state)
         {
-            case ActionState.IDLE:
+            case CharacterState.IDLE:
                 if (CenterOnGround)
                 {
                     skeletonAnimation.AnimationName = idleAnim;
@@ -313,22 +313,22 @@ public class HitmanController : TempGameCharacter
                 }
                 break;
                 
-            case ActionState.WALK:
+            case CharacterState.WALK:
                 skeletonAnimation.AnimationName = walkAnim;
                 break;
-            case ActionState.RUN:
+            case CharacterState.RUN:
                 skeletonAnimation.AnimationName = runAnim;
                 break;
-            case ActionState.JUMP:
+            case CharacterState.JUMP:
                 skeletonAnimation.AnimationName = jumpAnim;
                 break;
-            case ActionState.FALL:
+            case CharacterState.FALL:
                 skeletonAnimation.AnimationName = fallAnim;
                 break;
-            case ActionState.WALLSLIDE:
+            case CharacterState.WALLSLIDE:
                 skeletonAnimation.AnimationName = wallSlideAnim;
                 break;
-            case ActionState.SLIDE:
+            case CharacterState.ESCAPE:
                 skeletonAnimation.AnimationName = slideAnim;
                 break;
         }
@@ -360,12 +360,12 @@ public class HitmanController : TempGameCharacter
         //------------------------------------------------------------------------------
         // do jump
         //------------------------------------------------------------------------------
-        if (mDoJump && state != ActionState.JUMP)
+        if (mDoJump && state != CharacterState.JUMP)
         {
             SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
             
             //벽점프라면 x속도를 설정한다.
-            if (state == ActionState.WALLSLIDE)
+            if (state == CharacterState.WALLSLIDE)
             {
                 if ( IsPressingAgainstWall == false )
                 {
@@ -381,7 +381,7 @@ public class HitmanController : TempGameCharacter
             else
             {
                 wasWallJump = false;
-                if (state == ActionState.SLIDE)
+                if (state == CharacterState.ESCAPE)
                 {
                     primaryCollider.transform.localScale = Vector3.one;
                 }
@@ -412,7 +412,7 @@ public class HitmanController : TempGameCharacter
             }
             mJumpCount++;
 
-            SetState( ActionState.JUMP );
+            SetState( CharacterState.JUMP );
             
             if (OnJump != null) OnJump(transform);
 
@@ -424,7 +424,7 @@ public class HitmanController : TempGameCharacter
         {
             SoundPalette.PlaySound(slideSound, 1, 1, transform.position);
             slideStartTime = Time.time;
-            SetState( ActionState.SLIDE );
+            SetState( CharacterState.ESCAPE );
             SetFriction(movingFriction);
             doSlide = false;
             velocity.x = mFlipped ? -slideVelocity : slideVelocity;
@@ -440,7 +440,7 @@ public class HitmanController : TempGameCharacter
         // x move
         //------------------------------------------------------------------------------
         //IDLE WALK RUN. 즉 점프나 슬라이딩을 하지 않았다면.
-        if (state < ActionState.JUMP)
+        if (state < CharacterState.JUMP)
         {
             if (OnGround || movingPlatform)
             {
@@ -453,7 +453,7 @@ public class HitmanController : TempGameCharacter
                     xVelocity = runSpeed * Mathf.Sign(axisX);
                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 15);
                     if (movingPlatform) velocity.y = platformYVelocity;
-                    SetState( ActionState.RUN );
+                    SetState( CharacterState.RUN );
                     SetFriction(movingFriction);
                 }
                 // > walk
@@ -462,7 +462,7 @@ public class HitmanController : TempGameCharacter
                     xVelocity = walkSpeed * Mathf.Sign(axisX);
                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 25);
                     if (movingPlatform) velocity.y = platformYVelocity;
-                    SetState( ActionState.WALK );
+                    SetState( CharacterState.WALK );
                     SetFriction(movingFriction);
                 }
                 // > idle
@@ -470,7 +470,7 @@ public class HitmanController : TempGameCharacter
                 {
                     velocity.x = movingPlatform ? platformXVelocity : Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 10);
                     if (movingPlatform) velocity.y = platformYVelocity;
-                    SetState( ActionState.IDLE );
+                    SetState( CharacterState.IDLE );
                     SetFriction(movingPlatform ? movingFriction : idleFriction);
                 }
 
@@ -478,12 +478,12 @@ public class HitmanController : TempGameCharacter
                 {
                     if (mAxis.y < 0.5f)
                     {
-                        SetState( ActionState.ATTACK );
+                        SetState( CharacterState.ATTACK );
                         skeletonAnimation.AnimationName = attackAnim;
                     }
                     else
                     {
-                        SetState( ActionState.UPATTACK );
+                        SetState( CharacterState.UPATTACK );
                         skeletonAnimation.AnimationName = upAttackAnim;
                         upAttackUsed = true;
                     }
@@ -496,7 +496,7 @@ public class HitmanController : TempGameCharacter
             }
         }
         //JUMP loop
-        else if (state == ActionState.JUMP)
+        else if (state == CharacterState.JUMP)
         {
             float jumpTime = Time.time - mJumpStartTime;
             savedXVelocity = velocity.x;
@@ -522,7 +522,7 @@ public class HitmanController : TempGameCharacter
             }
         }
         //fall loop
-        else if (state == ActionState.FALL)
+        else if (state == CharacterState.FALL)
         {
             if (OnGround)
             {
@@ -530,17 +530,17 @@ public class HitmanController : TempGameCharacter
                 if (absX > runThreshold)
                 {
                     velocity.x = savedXVelocity;
-                    SetState( ActionState.RUN );
+                    SetState( CharacterState.RUN );
                 }
                 else if (absX > deadZone)
                 {
                     velocity.x = savedXVelocity;
-                    SetState( ActionState.WALK );
+                    SetState( CharacterState.WALK );
                 }
                 else
                 {
                     velocity.x = savedXVelocity;
-                    SetState( ActionState.IDLE );
+                    SetState( CharacterState.IDLE );
                 }
             }
             else
@@ -550,13 +550,13 @@ public class HitmanController : TempGameCharacter
             }
         }
         //wall slide loop
-        else if (state == ActionState.WALLSLIDE)
+        else if (state == CharacterState.WALLSLIDE)
         {
             mJumpCount = 0;
             if (OnGround && Mathf.Abs(velocity.x) < 0.1f && Time.time > (wallSlideStartTime + 0.2f))
             {
                 SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-                SetState( ActionState.IDLE );
+                SetState( CharacterState.IDLE );
             }
 			else if ( IsPressingAgainstWall == false )
             {
@@ -588,7 +588,7 @@ public class HitmanController : TempGameCharacter
         // x move
         //------------------------------------------------------------------------------
         //air control
-        if (state == ActionState.JUMP || state == ActionState.FALL)
+        if (state == CharacterState.JUMP || state == CharacterState.FALL)
         {
             if (Time.time > airControlLockoutTime)
             {
@@ -619,7 +619,7 @@ public class HitmanController : TempGameCharacter
             {
                 velocity.x = 0;
                 velocity.y = 0;
-                SetState( ActionState.DOWNATTACK );
+                SetState( CharacterState.DOWNATTACK );
                 upAttackUsed = true;
                 skeletonAnimation.AnimationName = downAttackAnim;
             }
@@ -628,7 +628,7 @@ public class HitmanController : TempGameCharacter
             {
 				if ( upAttackUsed== false )
                 {
-                    SetState( ActionState.UPATTACK );
+                    SetState( CharacterState.UPATTACK );
                     skeletonAnimation.AnimationName = upAttackAnim;
                     upAttackUsed = true;
                     velocity.y = 1;
@@ -636,21 +636,21 @@ public class HitmanController : TempGameCharacter
             }
             
             //공중 어택을 하지 않아 여전히 jump 이거나 fall 인 경우.
-            if (state == ActionState.JUMP || state == ActionState.FALL)
+            if (state == CharacterState.JUMP || state == CharacterState.FALL)
             {
                 if (Time.time != mJumpStartTime && IsPressingAgainstWall)
                 {
                     //Mathf.Abs(mRb.velocity.x) > 0.1f 를 absX 검사 외에 따로 검사하는 이유는? 
-                    if (Mathf.Abs(mRb.velocity.x) > 0.1f || (state == ActionState.FALL && absX > deadZone))
+                    if (Mathf.Abs(mRb.velocity.x) > 0.1f || (state == CharacterState.FALL && absX > deadZone))
                     {
-                        if ( wasWallJump ==false && state == ActionState.JUMP)
+                        if ( wasWallJump ==false && state == CharacterState.JUMP)
                         {
                             //dont do anything if still going up
                         }
                         else
                         {
                             //벽타자
-                            SetState( ActionState.WALLSLIDE );
+                            SetState( CharacterState.WALLSLIDE );
                             mJumpCount = 0;
                             wallSlideWatchdog = wallSlideWatchdogDuration;
                             wallSlideStartTime = Time.time;
@@ -670,17 +670,17 @@ public class HitmanController : TempGameCharacter
         }
 
         //떨어지자
-        if (state == ActionState.FALL)
+        if (state == CharacterState.FALL)
 		{
 			velocity.y += fallGravity * Time.deltaTime;
 		}
-        else if (state == ActionState.WALLSLIDE)
+        else if (state == CharacterState.WALLSLIDE)
         {
             velocity.y = Mathf.Clamp(velocity.y, wallSlideSpeed, 0);
         }
 
         //슬라이딩 loop
-        if (state == ActionState.SLIDE)
+        if (state == CharacterState.ESCAPE)
         {
             float slideTime = Time.time - slideStartTime;
 
@@ -690,7 +690,7 @@ public class HitmanController : TempGameCharacter
                 primaryCollider.transform.localScale = Vector3.one;
                 IgnoreCharacterCollisions(false);
                 if (skeletonGhost != null) skeletonGhost.ghostingEnabled = false;
-                SetState( ActionState.IDLE );
+                SetState( CharacterState.IDLE );
             }
             else
             {
@@ -710,7 +710,7 @@ public class HitmanController : TempGameCharacter
         }
 
         //공격
-        if (state == ActionState.ATTACK)
+        if (state == CharacterState.ATTACK)
         {
             if (attackWasPressed)
             {
@@ -734,7 +734,7 @@ public class HitmanController : TempGameCharacter
                 SetFriction(idleFriction);
                 attackWatchdog -= Time.deltaTime;
                 //cancel combo
-                if (attackWatchdog < 0) SetState( ActionState.IDLE );
+                if (attackWatchdog < 0) SetState( CharacterState.IDLE );
             }
             else
             {
@@ -743,7 +743,7 @@ public class HitmanController : TempGameCharacter
         }
 
 		//ActionState.IDLE,WALK,RUN,JUMP,FALL,WALLSLIDE,SLIDE 에서 WALLSLIDE 제외.
-        if (state < ActionState.ATTACK && state != ActionState.WALLSLIDE)
+        if (state < CharacterState.ATTACK && state != CharacterState.WALLSLIDE)
         {
             if (Time.time > airControlLockoutTime)
             {
@@ -759,7 +759,7 @@ public class HitmanController : TempGameCharacter
         }
 
         //down attack loop.
-        if (state == ActionState.DOWNATTACK)
+        if (state == CharacterState.DOWNATTACK)
         {
 			//아래로 떨어지고 있는 중이다. 아직 땅에 닿지 않은 상태
 			if (downAttackRecovery == false )
@@ -798,7 +798,7 @@ public class HitmanController : TempGameCharacter
 					SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
 					velocity.y = jumpSpeed + (platformYVelocity >= 0 ? platformYVelocity : 0);
 					mJumpStartTime = Time.time;
-					SetState( ActionState.JUMP );
+					SetState( CharacterState.JUMP );
 					mDoJump = false;
 					mJumpPressed = false;
 				}
@@ -823,7 +823,7 @@ public class HitmanController : TempGameCharacter
 		character.SendMessage("Hit", 1, SendMessageOptions.DontRequireReceiver);
 		velocity.y = headBounceSpeed;
 		mJumpStartTime = Time.time;
-		SetState( ActionState.JUMP );
+		SetState( CharacterState.JUMP );
 		mDoJump = false;
 		return true;
     }

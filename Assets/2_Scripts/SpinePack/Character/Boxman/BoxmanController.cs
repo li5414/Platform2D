@@ -98,7 +98,7 @@ public class BoxmanController : TempGameCharacter
 
         if (hp <= 0)
         {
-            SetState( ActionState.DEAD );
+            SetState( CharacterState.DEAD );
             var ragdoll = GetComponentInChildren<SkeletonRagdoll2D>();
             ragdoll.Apply();
             ragdoll.RootRigidbody.velocity = velocity * 10;

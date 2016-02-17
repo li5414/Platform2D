@@ -7,34 +7,34 @@ using UnityEditor;
 
 using druggedcode.engine;
 
-public enum ActionState
+public enum CharacterState
 {
     NULL,
     IDLE,
     WALK,
     RUN,
+	DASH,
+	ESCAPE,
+	CROUCH,
+	LADDER,
+	LOOKUP,
     JUMP,
     FALL,
     WALLSLIDE,
     JETPACK,
-    SLIDE,
     ATTACK,
     DOWNATTACK,
     UPATTACK,
     DANCE,
     DEAD
 }
-//추가해야 할 스테이트.
-// CROUCH, CROUCH_MOVE
-// LADDER_CLIMB,LADDER_CLIMB_MOVE,
-// LOOKUP,
 
 [RequireComponent(typeof(FailCharacterController))]
 public class GameCharacter : MonoBehaviour
 {
     static List<GameCharacter> All = new List<GameCharacter>();
 
-    public ActionState state { get; protected set; }
+    public CharacterState state { get; protected set; }
 
     public AnimationType bodyType;
 
@@ -188,7 +188,7 @@ public class GameCharacter : MonoBehaviour
     }
 
 
-    public void SetState(ActionState next)
+    public void SetState(CharacterState next)
     {
         if (state == next)
         {
@@ -245,7 +245,7 @@ public class GameCharacter : MonoBehaviour
     protected void SetFallState(bool useJump)
     {
         if (useJump) JumpCount++;
-        SetState(ActionState.FALL);
+        SetState(CharacterState.FALL);
     }
     //Special effects helper function
     protected void SpawnAtFoot(GameObject prefab, Quaternion rotation )

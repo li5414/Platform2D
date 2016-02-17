@@ -210,7 +210,6 @@ namespace druggedcode.engine
 		void CalculateTranslateVector ()
 		{
 			float delta = Time.deltaTime;
-			Vector2 current = mVelocity;
 
 			//x speed
 			if (mMoveLocked == false)
@@ -227,10 +226,10 @@ namespace druggedcode.engine
 				{
 					mVelocity.x = tx;
 				}
-
-				mVelocity += _addForce;
-				mVelocity.x *= _physicSpaceInfo.MoveFactor;
 			}
+
+			mVelocity += _addForce;
+			mVelocity.x *= _physicSpaceInfo.MoveFactor;
 
 			//y speed
 			if (mLockedVY != 0f)

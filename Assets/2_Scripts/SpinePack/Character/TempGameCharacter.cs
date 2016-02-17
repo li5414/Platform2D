@@ -37,14 +37,14 @@ public class TempGameCharacter : MonoBehaviour
         NONE
     }
 
-    protected ActionState mState;
+    protected CharacterState mState;
 
-    public ActionState state
+    public CharacterState state
     {
         get{ return mState; }
     }
     
-    public void SetState( ActionState next )
+    public void SetState( CharacterState next )
     {
         if( mState == next ) return;
 
@@ -373,7 +373,7 @@ public class TempGameCharacter : MonoBehaviour
     protected void SetFallState(bool useJump)
     {
         if (useJump) mJumpCount++;
-        SetState( ActionState.FALL );
+        SetState( CharacterState.FALL );
     }
 
     //work-around for Box2D not updating friction values at runtime...

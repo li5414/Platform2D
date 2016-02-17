@@ -39,6 +39,7 @@ namespace druggedcode.engine
 				EditorGUILayout.LabelField ("Slope Angle", state.SlopeAngle.ToString ());
 				EditorGUILayout.LabelField ("GravityScale", controller.GravityScale.ToString ());
 				EditorGUILayout.Vector2Field ("velocity", controller.Velocity);
+				EditorGUILayout.LabelField ("axisX", controller.axisX.ToString());
 
 				DrawDefaultInspector ();
 

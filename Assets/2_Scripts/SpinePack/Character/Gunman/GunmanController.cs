@@ -112,7 +112,7 @@ public class GunmanController : TempGameCharacter
             {
                 case "Fire":
                     currentWeapon.Fire();
-                    if (this.state == ActionState.JETPACK)
+                    if (this.state == CharacterState.JETPACK)
                     {
                         doRecoil = true;
                     }
@@ -151,7 +151,7 @@ public class GunmanController : TempGameCharacter
     {
         bool useKeyboard = false;
 
-        if (((OnGround || movingPlatform) && state < ActionState.JUMP) || (state == ActionState.FALL/* Jetpack fuel here*/))
+        if (((OnGround || movingPlatform) && state < CharacterState.JUMP) || (state == CharacterState.FALL/* Jetpack fuel here*/))
         {
             if (mJumpPressed == false )
             {
@@ -179,7 +179,7 @@ public class GunmanController : TempGameCharacter
         }
         else
         {
-            if (state == ActionState.JUMP || state == ActionState.JETPACK)
+            if (state == CharacterState.JUMP || state == CharacterState.JETPACK)
             {
                 if (mJumpCount >= maxJumps)
                 {
@@ -316,10 +316,10 @@ public class GunmanController : TempGameCharacter
 
         if (mDoJump && mJumpCount >= maxJumps)
         {
-            if (state == ActionState.JETPACK)
+            if (state == CharacterState.JETPACK)
             {
                 //stop jetpacking
-                SetState( velocity.y > 0 ? ActionState.JUMP : ActionState.FALL );
+                SetState( velocity.y > 0 ? CharacterState.JUMP : CharacterState.FALL );
                 mDoJump = false;
                 thruster.goalThrust = 0;
             }
@@ -328,7 +328,7 @@ public class GunmanController : TempGameCharacter
                 if (jetpackFuel > 0)
                 {
                     //start jetpacking
-                    SetState( ActionState.JETPACK );
+                    SetState( CharacterState.JETPACK );
                     mJumpStartTime = Time.time;
                     mDoJump = false;
                     velocity.y = jetpackStartSpeed;
@@ -344,13 +344,13 @@ public class GunmanController : TempGameCharacter
             }
 
         }
-        else if (mDoJump && state != ActionState.JUMP)
+        else if (mDoJump && state != CharacterState.JUMP)
         {
             SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
 
             velocity.y = (mJumpCount > 0 ? airJumpSpeed : jumpSpeed) + (platformYVelocity >= 0 ? platformYVelocity : 0);
             mJumpStartTime = Time.time;
-            SetState( ActionState.JUMP );
+            SetState( CharacterState.JUMP );
             mDoJump = false;
             if (airJumpPrefab != null && mJumpCount > 0)
                 Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
@@ -366,7 +366,7 @@ public class GunmanController : TempGameCharacter
         }
 
         //ground logic
-        if (state < ActionState.JUMP)
+        if (state < CharacterState.JUMP)
         {
             if (OnGround || movingPlatform)
             {
@@ -377,7 +377,7 @@ public class GunmanController : TempGameCharacter
                     xVelocity = runSpeed * Mathf.Sign(x);
                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 15);
                     if (movingPlatform) velocity.y = platformYVelocity;
-                    SetState( ActionState.RUN );
+                    SetState( CharacterState.RUN );
                     SetFriction(movingFriction);
                 }
                 else if (absX > deadZone)
@@ -385,14 +385,14 @@ public class GunmanController : TempGameCharacter
                     xVelocity = walkSpeed * Mathf.Sign(x);
                     velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 25);
                     if (movingPlatform) velocity.y = platformYVelocity;
-                    SetState( ActionState.WALK );
+                    SetState( CharacterState.WALK );
                     SetFriction(movingFriction);
                 }
                 else
                 {
                     velocity.x = movingPlatform ? platformXVelocity : Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 10);
                     if (movingPlatform) velocity.y = platformYVelocity;
-                    SetState( ActionState.IDLE );
+                    SetState( CharacterState.IDLE );
                     SetFriction(movingPlatform ? movingFriction : idleFriction);
                 }
             }
@@ -402,7 +402,7 @@ public class GunmanController : TempGameCharacter
             }
             //air logic
         }
-        else if (state == ActionState.JUMP)
+        else if (state == CharacterState.JUMP)
         {
             float jumpTime = Time.time - mJumpStartTime;
             savedXVelocity = velocity.x;
@@ -421,7 +421,7 @@ public class GunmanController : TempGameCharacter
 
             //fall logic
         }
-        else if (state == ActionState.FALL)
+        else if (state == CharacterState.FALL)
         {
 
             if (OnGround)
@@ -430,17 +430,17 @@ public class GunmanController : TempGameCharacter
                 if (absX > runThreshold)
                 {
                     velocity.x = savedXVelocity;
-                    SetState( ActionState.RUN );
+                    SetState( CharacterState.RUN );
                 }
                 else if (absX > deadZone)
                 {
                     velocity.x = savedXVelocity;
-                    SetState( ActionState.WALK );
+                    SetState( CharacterState.WALK );
                 }
                 else
                 {
                     velocity.x = savedXVelocity;
-                    SetState( ActionState.IDLE );
+                    SetState( CharacterState.IDLE );
                 }
             }
             else
@@ -453,7 +453,7 @@ public class GunmanController : TempGameCharacter
         }
 
         //air control
-        if (state == ActionState.JUMP || state == ActionState.FALL)
+        if (state == CharacterState.JUMP || state == CharacterState.FALL)
         {
             if (absX > runThreshold)
             {
@@ -468,12 +468,12 @@ public class GunmanController : TempGameCharacter
                 velocity.x = Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 8);
             }
 
-            if (state == ActionState.JUMP || state == ActionState.FALL)
+            if (state == CharacterState.JUMP || state == CharacterState.FALL)
             {
 
             }
         }
-        else if (state == ActionState.JETPACK)
+        else if (state == CharacterState.JETPACK)
         {
             float jetpackMultiplier = jetpackFuel > 0 ? 1 : 0.2f;
             velocity.x = Mathf.MoveTowards(velocity.x, mAxis.x * jetpackThrust * jetpackMultiplier, Time.deltaTime * 10);
@@ -537,14 +537,14 @@ public class GunmanController : TempGameCharacter
             {
                 if (velocity.y < 2f)
                 {
-                    SetState( ActionState.IDLE );
+                    SetState( CharacterState.IDLE );
                     thruster.goalThrust = 0;
                 }
             }
         }
 
         //falling and wallslide
-        if (state == ActionState.FALL)
+        if (state == CharacterState.FALL)
             velocity.y += fallGravity * Time.deltaTime;
 
         //generic motion flipping control
@@ -563,7 +563,7 @@ public class GunmanController : TempGameCharacter
             character.SendMessage("Hit", 1, SendMessageOptions.DontRequireReceiver);
             velocity.y = headBounceSpeed;
             mJumpStartTime = Time.time;
-            SetState( ActionState.JUMP );
+            SetState( CharacterState.JUMP );
             mDoJump = false;
             SetFriction(movingFriction);
             return true;
@@ -575,7 +575,7 @@ public class GunmanController : TempGameCharacter
     {
         switch (state)
         {
-            case ActionState.IDLE:
+            case CharacterState.IDLE:
                 if (CenterOnGround)
                 {
                     skeletonAnimation.AnimationName = idleAnim;
@@ -595,7 +595,7 @@ public class GunmanController : TempGameCharacter
                     }
                 }
                 break;
-            case ActionState.WALK:
+            case CharacterState.WALK:
                 if (aiming)
                 {
                     if (Mathf.Sign(aimStick.x) != Mathf.Sign(mAxis.x))
@@ -609,16 +609,16 @@ public class GunmanController : TempGameCharacter
                 }
 
                 break;
-            case ActionState.RUN:
+            case CharacterState.RUN:
                 skeletonAnimation.AnimationName = runAnim;
                 break;
-            case ActionState.JUMP:
+            case CharacterState.JUMP:
                 skeletonAnimation.AnimationName = jumpAnim;
                 break;
-            case ActionState.FALL:
+            case CharacterState.FALL:
                 skeletonAnimation.AnimationName = fallAnim;
                 break;
-            case ActionState.JETPACK:
+            case CharacterState.JETPACK:
                 if (mAxis.x > deadZone)
                     skeletonAnimation.AnimationName = mFlipped ? jetpackBackwardAnim : jetpackForwardAnim;
                 else if (mAxis.x < -deadZone)

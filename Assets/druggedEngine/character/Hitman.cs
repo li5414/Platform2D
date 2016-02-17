@@ -14,7 +14,13 @@ namespace druggedcode.engine
 		[SpineAnimation]
 		public string wallSlideAnim;
 		[SpineAnimation]
-		public string slideAnim;
+		public string dashAnim;
+		[SpineAnimation]
+		public string ladderAnim;
+		[SpineAnimation]
+		public string crouchAnim;
+		[SpineAnimation]
+		public string escapeAnim;
 		[SpineAnimation]
 		public string downAttackAnim;
 		[SpineAnimation]
@@ -27,13 +33,16 @@ namespace druggedcode.engine
 		//입력하지 않고 계산으로 알수있지 않을까
 		public float downAttackFrameSkip;
 		public float wallSlideSpeed = -1f;
+		public float slideDuration = 1f;
+
+		float mSlideStartTime;
 
 		override protected void Start()
 		{
 			base.Start();
 
 			controllable = true;
-			SetState(ActionState.IDLE );
+			SetState(CharacterState.IDLE );
 		}
 
 		override protected void HandleComplete (Spine.AnimationState state, int trackIndex, int loopCount)
@@ -111,40 +120,47 @@ namespace druggedcode.engine
 			switch (state)
 			{
 				//모든 땅에서의 움직임은 Idle에서 시작한다.
-				case ActionState.IDLE:
+				case CharacterState.IDLE:
 					PlayAnimation( idleAnim );
 					GravityActive( true );
 					controller.CurrentSpeed = WalkSpeed;
+
+					mCanSlide = true;
+					mCanDash = true;
 					mCanJump = true;
 					mCanMove = true;
 					mCanFacingUpdate = true;
 					break;
 
-				case ActionState.WALK:
+				case CharacterState.WALK:
 					PlayAnimation( walkAnim );
 					controller.CurrentSpeed = WalkSpeed;
-					mCanJump = true;
-					mCanMove = true;
-					mCanFacingUpdate = true;
+
 					break;
 
-				case ActionState.RUN:
+				case CharacterState.RUN:
 					PlayAnimation( runAnim );
 					controller.CurrentSpeed = RunSpeed;
-					mCanJump = true;
-					mCanMove = true;
-					mCanFacingUpdate = true;
 					break;
 
-				case ActionState.JUMP:
+				case CharacterState.DASH:
+					mCanDash = false;
+					PlayAnimation( dashAnim );
+					break;
+
+				case CharacterState.LADDER:
+					PlayAnimation( ladderAnim );
+					break;
+
+				case CharacterState.JUMP:
 					//DECharacter의 jump 메소드에서 처리
 					break;
 
-				case ActionState.FALL:
+				case CharacterState.FALL:
 					//DECharacter의 Fall 메소드에서 처리
 					break;
 
-				case ActionState.WALLSLIDE:
+				case CharacterState.WALLSLIDE:
 					//spine
 //					wallSlideStartTime = Time.time;
 //					controller.LockVY(wallSlideSpeed);
@@ -155,26 +171,42 @@ namespace druggedcode.engine
 					mCanFacingUpdate = true;
 
 					controller.LockVY(wallSlideSpeed);
-					BodyPosition( new Vector2( horizontalAxis < 0 ? -0.15f : 0.15f ,0f));
+					BodyPosition( new Vector2( mFacing == Facing.LEFT ? -0.15f : 0.15f ,0f));
 					PlayAnimation( wallSlideAnim );
 					Stop();
 					ResetJump();
 					break;
 
-				case ActionState.SLIDE:
+				case CharacterState.ESCAPE:
+					PlayAnimation( escapeAnim );
+
+					controller.CurrentSpeed = RunSpeed;
+					controller.axisX = mFacing == Facing.LEFT ? -1f : 1f;
+//					controller.vx = RunSpeed;
+					controller.UpdateColliderSize(1,0.5f);
+
+					mCanSlide = false;
+					mCanMove = false;
+					mCanFacingUpdate = false;
+
+					mSlideStartTime = Time.time;
+					GhostMode( true );
+					//SoundPalette.PlaySound(slideSound, 1, 1, transform.position);
 					break;
 
-				case ActionState.ATTACK:
+				case CharacterState.ATTACK:
 					break;
 
-				case ActionState.DOWNATTACK:
+				case CharacterState.DOWNATTACK:
 					break;
 
-				case ActionState.UPATTACK:
+				case CharacterState.UPATTACK:
 					break;
 			}
 		}
 
+
+		//----------------------ground
 		bool CheckFall()
 		{
 			if( controller.state.IsGrounded ) return false;
@@ -183,25 +215,24 @@ namespace druggedcode.engine
 			return true;
 		}
 
-		//----------------------ground
 		bool CheckIdle()
 		{
 			if (horizontalAxis != 0f) return false;
-			SetState(ActionState.IDLE);
+			SetState(CharacterState.IDLE);
 			return true;
 		}
 
 		bool CheckWalk()
 		{
 			if (horizontalAxis == 0f) return false;
-			SetState(ActionState.WALK);
+			SetState(CharacterState.WALK);
 			return true;
 		}
 
 		bool CheckRun()
 		{
 			if ( isRun == false) return false;
-			SetState(ActionState.RUN);
+			SetState(CharacterState.RUN);
 			return true;
 		}
 
@@ -209,8 +240,8 @@ namespace druggedcode.engine
 		{
 			if (isRun) return false;
 
-			if ( horizontalAxis != 0f) SetState(ActionState.WALK);
-			else SetState(ActionState.IDLE);
+			if ( horizontalAxis != 0f) SetState(CharacterState.WALK);
+			else SetState(CharacterState.IDLE);
 			return true;
 		}
 
@@ -225,7 +256,7 @@ namespace druggedcode.engine
 		bool CheckAirToGround()
 		{
 			if (controller.state.IsGrounded == false) return false;
-			SetState(ActionState.IDLE);
+			SetState(CharacterState.IDLE);
 			return true;
 		}
 
@@ -234,7 +265,7 @@ namespace druggedcode.engine
 			if( jumpElapsedTime < 0.3f ) return false;
 			else if( IsPressAgainstWall == false ) return false;
 
-			SetState( ActionState.WALLSLIDE );
+			SetState( CharacterState.WALLSLIDE );
 			return true;
 		}
 
@@ -247,12 +278,23 @@ namespace druggedcode.engine
 			return true;
 		}
 
+		//-----------------------Slide
+		bool CheckSlideStop()
+		{
+			float slideElapsedTime = Time.time - mSlideStartTime;
+			if( slideElapsedTime < slideDuration ) return false;
+
+			SetState( CharacterState.IDLE );
+			return true;
+
+		}
+
 		override protected void StateUpdate ()
 		{
 			switch (state)
 			{
 				//모든 땅에서의 움직임은 Idle에서 시작한다.
-				case ActionState.IDLE:
+				case CharacterState.IDLE:
 					//-------------------------------de
 //					if (CheckLadderClimb()) return;
 //					if (CheckLookUp()) return;
@@ -265,7 +307,7 @@ namespace druggedcode.engine
 
 					break;
 
-				case ActionState.WALK:
+				case CharacterState.WALK:
 //					if (CheckLadderClimb()) return;
 //					if (CheckLookUp()) return;
 //					if (CheckCrouch()) return;
@@ -276,7 +318,7 @@ namespace druggedcode.engine
 					if( CheckRun()) return;
 					break;
 
-				case ActionState.RUN:
+				case CharacterState.RUN:
 //					if (CheckLadderClimb()) return;
 //					if (CheckCrouch()) return;
 //					if (CheckSlide()) return;
@@ -285,7 +327,18 @@ namespace druggedcode.engine
 
 					break;
 
-				case ActionState.JUMP:
+				case CharacterState.DASH:
+
+					float dashElapsedTime = Time.time - mDashStartTime;
+					if( dashElapsedTime < 0.1f ) return;
+
+					SetState( CharacterState.IDLE );
+//					return true;
+//					mDashStartTime = Time.time;
+					//controller.AddForce( new Vector2(4f,0f) );controller.AddForce( new Vector2(4f,0f) );
+					break;
+
+				case CharacterState.JUMP:
 					//de
 //					if (CheckLadderClimb()) return;
 //					if (CheckWallClinging()) return;
@@ -296,7 +349,7 @@ namespace druggedcode.engine
 					if( CheckJumpFall()) return;
 					break;
 
-				case ActionState.FALL:
+				case CharacterState.FALL:
 
 					//spine
 //					if (CheckBounceCheck()) return;
@@ -308,7 +361,7 @@ namespace druggedcode.engine
 
 					break;
 
-				case ActionState.WALLSLIDE:
+				case CharacterState.WALLSLIDE:
 					//spine
 //					if (CheckWallJump()) return;
 //					if (CheckBounceCheck()) return;
@@ -318,16 +371,19 @@ namespace druggedcode.engine
 
 					break;
 
-				case ActionState.SLIDE:
+				case CharacterState.ESCAPE:
+					if (CheckFall()) return;
+					if (CheckSlideStop()) return;
+
 					break;
 
-				case ActionState.ATTACK:
+				case CharacterState.ATTACK:
 					break;
 
-				case ActionState.DOWNATTACK:
+				case CharacterState.DOWNATTACK:
 					break;
 
-				case ActionState.UPATTACK:
+				case CharacterState.UPATTACK:
 					break;
 			}
 		}
@@ -337,38 +393,41 @@ namespace druggedcode.engine
 			switch (state)
 			{
 				//모든 땅에서의 움직임은 Idle에서 시작한다.
-				case ActionState.IDLE:
+				case CharacterState.IDLE:
 					break;
 
-				case ActionState.WALK:
+				case CharacterState.WALK:
 					break;
 
-				case ActionState.RUN:
+				case CharacterState.RUN:
 					break;
 
-				case ActionState.JUMP:
+				case CharacterState.JUMP:
 					break;
 
-				case ActionState.FALL:
+				case CharacterState.FALL:
 					break;
 
-				case ActionState.WALLSLIDE:
+				case CharacterState.WALLSLIDE:
 
 					AnimFilp = false;
 					controller.UnLockVY();
 					BodyPosition( Vector2.zero );
 					break;
 
-				case ActionState.SLIDE:
+				case CharacterState.ESCAPE:
+					controller.ResetColliderSize();
+					//IgnoreCharacterCollisions(false);
+					GhostMode( false );
 					break;
 
-				case ActionState.ATTACK:
+				case CharacterState.ATTACK:
 					break;
 
-				case ActionState.DOWNATTACK:
+				case CharacterState.DOWNATTACK:
 					break;
 
-				case ActionState.UPATTACK:
+				case CharacterState.UPATTACK:
 					break;
 			}
 		}
