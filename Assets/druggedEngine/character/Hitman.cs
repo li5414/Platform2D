@@ -35,6 +35,8 @@ namespace druggedcode.engine
 		public float wallSlideSpeed = -1f;
 		public float slideDuration = 1f;
 
+		public float dashDuration = 0.1f;
+		public float dashSpeed = 1f;
 		float mSlideStartTime;
 
 		override protected void Start()
@@ -143,9 +145,16 @@ namespace druggedcode.engine
 					controller.CurrentSpeed = RunSpeed;
 					break;
 
+				case CharacterState.CROUCH:
+					PlayAnimation( crouchAnim );
+					controller.CurrentSpeed = CrouchSpeed;
+					controller.UpdateColliderSize(1f,0.5f);
+					break;
+
 				case CharacterState.DASH:
 					mCanDash = false;
 					PlayAnimation( dashAnim );
+					GravityActive( false );
 					break;
 
 				case CharacterState.LADDER:
@@ -183,7 +192,7 @@ namespace druggedcode.engine
 					controller.CurrentSpeed = RunSpeed;
 					controller.axisX = mFacing == Facing.LEFT ? -1f : 1f;
 //					controller.vx = RunSpeed;
-					controller.UpdateColliderSize(1,0.5f);
+					controller.UpdateColliderSize(1f,0.5f);
 
 					mCanSlide = false;
 					mCanMove = false;
@@ -245,6 +254,39 @@ namespace druggedcode.engine
 			return true;
 		}
 
+
+		bool CheckCrouch()
+		{
+			if ( verticalAxis < -0.1f)
+			{
+				SetState(CharacterState.CROUCH);
+				return true;
+			}
+
+			return false;
+		}
+
+		//-----------------------dash
+		bool CheckDashToIdle()
+		{
+			float dashElapsedTime = Time.time - mDashStartTime;
+			if( dashElapsedTime < dashDuration ) return false;
+
+			SetState( CharacterState.IDLE );
+			return true;
+		}
+
+		//-----------------------crouch
+		bool CheckCrouchToIdle()
+		{
+			if ( verticalAxis >= -0.1f && controller.IsCollidingHead == false)
+			{
+				SetState(CharacterState.IDLE);
+				return true;
+			}
+			return false;
+		}
+
 		//-----------------------jumpfall
 		bool CheckJumpFall()
 		{
@@ -297,73 +339,63 @@ namespace druggedcode.engine
 				case CharacterState.IDLE:
 					//-------------------------------de
 //					if (CheckLadderClimb()) return;
-//					if (CheckLookUp()) return;
-//					if (CheckCrouch()) return;
-//					if (CheckSlide()) return;
-//					if (CheckJump()) return;
-
 					if( CheckFall()) return;
+					if( CheckCrouch() ) return;
 					if( CheckWalk()) return;
 
 					break;
 
 				case CharacterState.WALK:
 //					if (CheckLadderClimb()) return;
-//					if (CheckLookUp()) return;
-//					if (CheckCrouch()) return;
-//					if (CheckSlide()) return;
 
 					if( CheckFall()) return;
+					if( CheckCrouch() ) return;
 					if( CheckIdle()) return;
 					if( CheckRun()) return;
 					break;
 
 				case CharacterState.RUN:
-//					if (CheckLadderClimb()) return;
-//					if (CheckCrouch()) return;
-//					if (CheckSlide()) return;
-					if (CheckFall()) return;
-					if (CheckRunStop()) return;
+					if( CheckFall()) return;
+					if( CheckCrouch() ) return;
+					if( CheckRunStop()) return;
+
+					break;
+
+				case CharacterState.CROUCH:
+					if( CheckFall()) return;
+					if( CheckCrouchToIdle()) return;
+
+					if( horizontalAxis == 0f ) currentAnimationTimeScale( 0f );
+					else currentAnimationTimeScale( 1f );
 
 					break;
 
 				case CharacterState.DASH:
 
-					float dashElapsedTime = Time.time - mDashStartTime;
-					if( dashElapsedTime < 0.1f ) return;
-
-					SetState( CharacterState.IDLE );
-//					return true;
-//					mDashStartTime = Time.time;
-					//controller.AddForce( new Vector2(4f,0f) );controller.AddForce( new Vector2(4f,0f) );
+					if( CheckDashToIdle()) return;
+					controller.AddForce( new Vector2( mFacing == Facing.RIGHT ? dashSpeed : -dashSpeed,0f) );
 					break;
 
 				case CharacterState.JUMP:
 					//de
 //					if (CheckLadderClimb()) return;
-//					if (CheckWallClinging()) return;
 //					if (CheckAirAttack()) return;
-//					if (CheckWallSlide()) return;
-
 					if( CheckWallSlide()) return;
 					if( CheckJumpFall()) return;
 					break;
 
 				case CharacterState.FALL:
-
 					//spine
 //					if (CheckBounceCheck()) return;
 //					if (CheckAirAttack()) return;
 //					if (CheckLadderClimb()) return;
 
-					if( CheckWallSlide()) return;
-					if (CheckAirToGround()) return;
+					if(CheckWallSlide()) return;
+					if(CheckAirToGround()) return;
 
 					break;
 
 				case CharacterState.WALLSLIDE:
-					//spine
-//					if (CheckWallJump()) return;
 //					if (CheckBounceCheck()) return;
 
 					if(CheckAirToGround()) return;
@@ -419,6 +451,9 @@ namespace druggedcode.engine
 					controller.ResetColliderSize();
 					//IgnoreCharacterCollisions(false);
 					GhostMode( false );
+					break;
+				case CharacterState.DASH:
+					GravityActive( false );
 					break;
 
 				case CharacterState.ATTACK:

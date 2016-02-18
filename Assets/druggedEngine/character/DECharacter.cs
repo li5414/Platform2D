@@ -524,7 +524,7 @@ namespace druggedcode.engine
 			}
 		}
 
-		public bool AnimFilp
+		protected bool AnimFilp
 		{
 			set
 			{
@@ -538,7 +538,7 @@ namespace druggedcode.engine
 		}
 
 
-		public float currentAnimationDuration
+		protected float currentAnimationDuration
 		{
 			get
 			{
@@ -553,6 +553,26 @@ namespace druggedcode.engine
 			}
 		}
 
+		protected void currentAnimationTimeScale( float timeScale )
+		{
+			switch (bodyType)
+			{
+				case AnimationType.SPINE:
+					mSkeletonAnimation.state.GetCurrent(0).TimeScale = timeScale;
+					break;
+			}
+		}
+
+		protected void NextAttack()
+		{
+			switch (bodyType)
+			{
+				case AnimationType.SPINE:
+					mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
+					break;
+			}
+
+		}
 
 		protected void PlayAnimation(string animName, bool loop = true, int trackIndex = 0 )
 		{
@@ -574,11 +594,6 @@ namespace druggedcode.engine
 			}
 
 			return false;
-		}
-
-		protected void NextAttack()
-		{
-			mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
 		}
 
 
