@@ -29,7 +29,6 @@ namespace druggedcode.engine
 		[SpineAnimation]
 		public string clearAttackAnim;
 
-
 		//입력하지 않고 계산으로 알수있지 않을까
 		public float downAttackFrameSkip;
 		public float wallSlideSpeed = -1f;
@@ -39,7 +38,11 @@ namespace druggedcode.engine
 
 		public float dashDuration = 0.1f;
 		public float dashSpeed = 1f;
+
+		public float waitAttackDuration = 0.5f;
+
 		float mSlideStartTime;
+
 
 		override protected void Start()
 		{
@@ -49,74 +52,46 @@ namespace druggedcode.engine
 			SetState(CharacterState.IDLE );
 		}
 
-		override protected void HandleComplete (Spine.AnimationState state, int trackIndex, int loopCount)
+		override protected void GroundAttack()
 		{
-//			var entry = state.GetCurrent(trackIndex);
-//			if (entry.Animation.Name == attackAnim || entry.Animation.Name == upAttackAnim)
-//			{
-//				SetState(ActionState.IDLE);
-//			}
+			if( mWaitNextAttack == false )
+			{
+				if( verticalAxis > 0.1f )
+				{
+					PlayAnimation( upAttackAnim );
+				}
+				else
+				{
+					PlayAnimation( attackAnim );
+					controller.AddForce( new Vector2(2f,0f));
+				}
+
+			}
+			else
+			{
+				NextAttack();
+			}
 		}
 
-		override protected void HandleEvent (Spine.AnimationState state, int trackIndex, Spine.Event e)
+		override protected void AirAttack()
 		{
-//			var entry = state.GetCurrent(trackIndex);
-//			if (entry != null)
-//			{
-//				if (entry.Animation.Name == attackAnim || entry.Animation.Name == upAttackAnim)
-//				{
-//					switch (e.Data.Name)
-//					{
-//						case "XVelocity":
-//							//mVelocity.x = mFlipped ? -punchVelocity * e.Float : punchVelocity * e.Float;
-//							//공격하면서 앞으로 전진하자 .
-//							break;
-//						case "YVelocity":
-//							//업어택하면서 위로 올라갖.
-//							//mVelocity.y = uppercutVelocity * e.Float;
-//							break;
-//						case "Pause":
-//							attackWatchdog = attackWatchdogDuration;
-//							waitingForAttackInput = true;
-//							entry.TimeScale = 0;
-//							break;
-//					}
-//				}
-//				else if (entry.Animation.Name == downAttackAnim)
-//				{
-//					switch (e.Data.Name)
-//					{
-//						case "YVelocity":
-//							//down attack 하면서 아래로ㅅ슈욱 가자
-//							//mVelocity.y = downAttackVelocity * e.Float;
-//							break;
-//						case "Pause":
-//							velocityLock = e.Int == 1 ? true : false;
-//							break;
-//					}
-//				}
-//
-//				switch (e.Data.Name)
-//				{
-//					case "Footstep":
-//						if (OnFootstep != null) OnFootstep(transform);
-//						break;
-//					case "Sound":
-//						SoundPalette.PlaySound(e.String, 1f, 1, transform.position);
-//						break;
-//					case "Effect":
-//						switch (e.String)
-//						{
-//							case "GroundJump":
-//								if (groundJumpPrefab && controller.state.IsGround)
-//								{
-//									SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
-//								}
-//								break;
-//						}
-//						break;
-//				}
-//			}
+			//airattack
+			//
+			//			//----
+			//			if (attackWasPressed && moveStick.y < -0.5f) {
+			//				velocity.x = 0;
+			//				velocity.y = 0;
+			//				state = ActionState.DOWNATTACK;
+			//				upAttackUsed = true;
+			//				skeletonAnimation.AnimationName = downAttackAnim;
+			//			} else if (attackWasPressed && moveStick.y > 0.5f) {
+			//				if (!upAttackUsed) {
+			//					state = ActionState.UPATTACK;
+			//					skeletonAnimation.AnimationName = upAttackAnim;
+			//					upAttackUsed = true;
+			//					velocity.y = 1;
+			//				}
+			//			}
 		}
 
 		override protected void StateEnter ()
@@ -133,6 +108,7 @@ namespace druggedcode.engine
 					mCanDash = true;
 					mCanJump = true;
 					mCanMove = true;
+					mCanAttack = true;
 					mCanFacingUpdate = true;
 
 					controller.ResetColliderSize();
@@ -414,8 +390,6 @@ namespace druggedcode.engine
 						return;
 					}
 
-
-
 					// 캐릭터가 사다리의 정상 바닥보다 y 위치가 올라간 경우 등반을 멈춘다.
 					if ( mTr.position.y > currentLadder.PlatformY )
 					{
@@ -467,6 +441,11 @@ namespace druggedcode.engine
 					break;
 
 				case CharacterState.ATTACK:
+					if( mWaitNextAttack )
+					{
+						float waitElapsedTime = Time.time - mWaitNextAttackStartTime;
+						if( waitElapsedTime > waitAttackDuration ) SetState( CharacterState.IDLE );
+					}
 					break;
 
 				case CharacterState.DOWNATTACK:

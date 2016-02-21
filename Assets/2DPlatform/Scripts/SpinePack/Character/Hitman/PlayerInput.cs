@@ -34,7 +34,6 @@ namespace druggedcode.engine
 			if( Input.GetKeyDown (jumpKey)) mPlayer.Jump();
 			if( Input.GetKeyDown (slideKey)) mPlayer.Slide();
 			if( Input.GetKeyDown (dashKey)) mPlayer.Dash();
-
 			if (Input.GetButtonDown("Fire1")) mPlayer.Attack();
 		}
 
