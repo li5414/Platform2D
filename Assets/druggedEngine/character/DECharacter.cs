@@ -71,7 +71,7 @@ namespace druggedcode.engine
 		// private,protected
 		//----------------------------------------------------------------------------------------------------------
 
-		Transform mTr;
+		protected Transform mTr;
 		protected float jumpStartTime;
 		protected float jumpElapsedTime{ get{ return Time.time - jumpStartTime; }} 
 
@@ -356,17 +356,25 @@ namespace druggedcode.engine
 
 			var wasWall = false;
 
+//			else if( _characterState.IsLadderClimb == true )
+//			{
+//				_character.DoJumpBelow();
+//				SetState(PlayerState.FALL);
+//			}
+
 			//아래 점프 체크도 한다
 			if( IsAblePassOneWay())
 			{
+				mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
+				controller.state.ClearPlatform();
 				controller.PassThroughOneway();
-				//Fall();
 				return;
 			}
 			//사다리타는 상황이고 아래를 눌렀다면
-			else if( false )
+			else if( state == CharacterState.LADDER &&  verticalAxis < -0.1f )
 			{
 				Fall();
+				return;
 			}
 			else if( state == CharacterState.WALLSLIDE )
 			{
@@ -425,6 +433,8 @@ namespace druggedcode.engine
 		protected void Fall(bool useJump = true )
 		{
 			if (useJump) jumpCount++;
+
+			GravityActive( true );
 			PlayAnimation(fallAnim);
 			SetState(CharacterState.FALL);
 		}

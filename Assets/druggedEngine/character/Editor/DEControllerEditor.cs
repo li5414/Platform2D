@@ -33,7 +33,7 @@ namespace druggedcode.engine
 				EditorGUILayout.LabelField ("Grounded", state.IsGrounded + "( " + state.IsGroundedForward + ", "+ state.IsGroundedCenter + ", " + state.IsGroundedBack + " )");
 				EditorGUILayout.LabelField ("Falling", controller.Velocity.y < 0 ? "true" : "false" );
 				EditorGUILayout.Space ();
-				EditorGUILayout.ObjectField ("StandingPlatform", state.StandingPlatfom, typeof(Platform), true);
+				EditorGUILayout.ObjectField ("StandingPlatform", state.StandingOn, typeof(GameObject), true);
 				EditorGUILayout.ObjectField ("CollidingSide", state.CollidingSide, typeof(Collider2D), true);
 				EditorGUILayout.Space ();
 				EditorGUILayout.LabelField ("Slope Angle", state.SlopeAngle.ToString ());

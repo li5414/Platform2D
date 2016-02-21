@@ -35,6 +35,8 @@ namespace druggedcode.engine
 		public float wallSlideSpeed = -1f;
 		public float slideDuration = 1f;
 
+		public float ladderClimbSpeed = 1f;
+
 		public float dashDuration = 0.1f;
 		public float dashSpeed = 1f;
 		float mSlideStartTime;
@@ -132,6 +134,8 @@ namespace druggedcode.engine
 					mCanJump = true;
 					mCanMove = true;
 					mCanFacingUpdate = true;
+
+					controller.ResetColliderSize();
 					break;
 
 				case CharacterState.WALK:
@@ -158,7 +162,16 @@ namespace druggedcode.engine
 					break;
 
 				case CharacterState.LADDER:
+					mCanMove = false;
+					mCanSlide = false;
+					mCanDash = false;
+					mCanFacingUpdate = false;
+
+					controller.state.ClearPlatform();
 					PlayAnimation( ladderAnim );
+					GravityActive(false);
+					Stop();
+					ResetJump();
 					break;
 
 				case CharacterState.JUMP:
@@ -266,6 +279,28 @@ namespace druggedcode.engine
 			return false;
 		}
 
+		bool CheckLadderClimb()
+		{
+			if ( currentLadder == null) return false;
+
+			if ( verticalAxis > 0.1f && currentLadder.PlatformY > mTr.position.y)
+			{
+				//사다리를 등반하며 점프하자마자 다시 붙는현상을 피하기위해 약간의 버퍼타임을 둔다. 
+				if ( controller.state.IsGrounded == false && jumpElapsedTime < 0.2f) return false;
+				mTr.position = new Vector2( currentLadder.transform.position.x, mTr.position.y + 0.1f);
+				SetState( CharacterState.LADDER );
+				return true;
+			}
+			else if ( verticalAxis < -0.1f && currentLadder.PlatformY <= mTr.position.y)
+			{
+				mTr.position = new Vector2( currentLadder.transform.position.x, currentLadder.PlatformY - 0.1f );
+				SetState( CharacterState.LADDER );
+				return true;
+			}
+
+			return false;
+		}
+
 		//-----------------------dash
 		bool CheckDashToIdle()
 		{
@@ -326,6 +361,8 @@ namespace druggedcode.engine
 			float slideElapsedTime = Time.time - mSlideStartTime;
 			if( slideElapsedTime < slideDuration ) return false;
 
+			if(controller.IsCollidingHead ) return false;
+
 			SetState( CharacterState.IDLE );
 			return true;
 
@@ -338,17 +375,16 @@ namespace druggedcode.engine
 				//모든 땅에서의 움직임은 Idle에서 시작한다.
 				case CharacterState.IDLE:
 					//-------------------------------de
-//					if (CheckLadderClimb()) return;
 					if( CheckFall()) return;
+					if (CheckLadderClimb()) return;
 					if( CheckCrouch() ) return;
 					if( CheckWalk()) return;
 
 					break;
 
 				case CharacterState.WALK:
-//					if (CheckLadderClimb()) return;
-
 					if( CheckFall()) return;
+					if (CheckLadderClimb()) return;
 					if( CheckCrouch() ) return;
 					if( CheckIdle()) return;
 					if( CheckRun()) return;
@@ -356,6 +392,7 @@ namespace druggedcode.engine
 
 				case CharacterState.RUN:
 					if( CheckFall()) return;
+					if (CheckLadderClimb()) return;
 					if( CheckCrouch() ) return;
 					if( CheckRunStop()) return;
 
@@ -370,6 +407,27 @@ namespace druggedcode.engine
 
 					break;
 
+				case CharacterState.LADDER:
+					if ( controller.state.IsGrounded || currentLadder == null )
+					{
+						SetState(CharacterState.IDLE);
+						return;
+					}
+
+
+
+					// 캐릭터가 사다리의 정상 바닥보다 y 위치가 올라간 경우 등반을 멈춘다.
+					if ( mTr.position.y > currentLadder.PlatformY )
+					{
+						SetState(CharacterState.IDLE);
+						return;
+					}
+					if( verticalAxis == 0f ) currentAnimationTimeScale( 0f );
+					else currentAnimationTimeScale( 1f );
+
+					controller.vy = verticalAxis * ladderClimbSpeed;
+					break;
+
 				case CharacterState.DASH:
 
 					if( CheckDashToIdle()) return;
@@ -378,20 +436,19 @@ namespace druggedcode.engine
 
 				case CharacterState.JUMP:
 					//de
-//					if (CheckLadderClimb()) return;
 //					if (CheckAirAttack()) return;
 					if( CheckWallSlide()) return;
 					if( CheckJumpFall()) return;
+					if (CheckLadderClimb()) return;
 					break;
 
 				case CharacterState.FALL:
 					//spine
 //					if (CheckBounceCheck()) return;
 //					if (CheckAirAttack()) return;
-//					if (CheckLadderClimb()) return;
-
 					if(CheckWallSlide()) return;
 					if(CheckAirToGround()) return;
+					if (CheckLadderClimb()) return;
 
 					break;
 
@@ -448,12 +505,9 @@ namespace druggedcode.engine
 					break;
 
 				case CharacterState.ESCAPE:
-					controller.ResetColliderSize();
-					//IgnoreCharacterCollisions(false);
 					GhostMode( false );
 					break;
 				case CharacterState.DASH:
-					GravityActive( false );
 					break;
 
 				case CharacterState.ATTACK:

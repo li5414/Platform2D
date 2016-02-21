@@ -13,6 +13,7 @@ namespace druggedcode.engine
 		const float LARGE_VALUE = 500000f;
 		const float SMALL_VALUE = 0.0001f;
 		public const int VERTICAL_RAY_NUM = 3;
+		const float GROUND_RAY_LENGTH = 0.4f;
 
 		//----------------------------------------------------------------------------------------------------------
 		// Inspector
@@ -40,8 +41,7 @@ namespace druggedcode.engine
 		[Header ("RayCasting")]
 		[Range (2, 10)]
 		public int RayHorizontalCount = 3;
-		public float RaySafetyDis = 0.1f;
-		public float RayGroundOffset = 0.5f;
+		public Vector2 RaySafetyDis = new Vector2(0.1f,0.01f);
 
 		//----------------------------------------------------------------------------------------------------------
 		//get;set;
@@ -60,21 +60,24 @@ namespace druggedcode.engine
 
 		public float gravity { get { return DruggedEngine.Gravity + _physicSpaceInfo.Gravity; } }
 
-		public float PlatformFriction{ get { return state.StandingPlatfom == null ? 1f : state.StandingPlatfom.friction; } }
+//		public float PlatformFriction{ get { return state.StandingOn == null ? 1f : state.StandingOn.friction; } }
+//		public Vector2 PlatformVelocity{ get { return state.StandingOn == null ? Vector2.zero : state.StandingOn.velocity; } }
 
-		public Vector2 PlatformVelocity{ get { return state.StandingPlatfom == null ? Vector2.zero : state.StandingPlatfom.velocity; } }
+		public float PlatformFriction{ get { return 1f;} }
+		public Vector2 PlatformVelocity{ get { return Vector2.zero; }}
 
 		//----------------------------------------------------------------------------------------------------------
 		// 속도, 움직임. y가 마이너스인 경우가 낙하상태이다.
 		//----------------------------------------------------------------------------------------------------------
 
 		Vector2 _addForce;
+		Vector2 _externalForce;
+
 		Vector2 mVelocity;
 		Vector2 mMoveDirection = Vector2.right;
 
 
-
-		//현재 velocity 에 의해 현재 프레임에서 움직일 벡터
+		LayerMask mDefaultPlatformMask;
 		Vector2 mTranslateVector;
 
 		PhysicInfo _physicSpaceInfo;
@@ -98,16 +101,11 @@ namespace druggedcode.engine
 		Vector2 _colliderDefaultSize;
 		float _toleranceHeight;
 
-		//넘어갈수있는 장애물 높이
-
-		// 충돌 체크 여부
 		int mHitCount;
 		//충돌 횟수
-		ColliderInfo _bound;
+		ColliderInfo mColliderBound;
 		RaycastHit2D mHit2D;
-		Vector2 _rayOriginPoint;
 		List<Rigidbody2D> _sideHittedPushableObject;
-		//좌우로 충돌된 플랫폼
 
 
 		void Awake ()
@@ -120,7 +118,6 @@ namespace druggedcode.engine
 				mHeadCheckerExtents = headChecker.bounds.extents;
 				headChecker.enabled = false;
 			}
-
 
 			mCollider = GetComponent<BoxCollider2D> ();
 
@@ -139,6 +136,7 @@ namespace druggedcode.engine
 
 		void Start ()
 		{
+			mDefaultPlatformMask = DruggedEngine.MASK_ALL_GROUND;
 			UpdateBound ();
 		}
 
@@ -149,16 +147,19 @@ namespace druggedcode.engine
 		public void AddForce (Vector2 force)
 		{
 			_addForce += force;
+			_externalForce += force;
 		}
 
 		public void AddHorizontalForce (float x)
 		{
 			_addForce.x += x;
+			_externalForce.x += x;
 		}
 
 		public void AddVerticalForce (float y)
 		{
 			_addForce.y += y;
+			_externalForce.y += y;
 		}
 
 		public void LockMove (float duration)
@@ -194,17 +195,22 @@ namespace druggedcode.engine
 			mLockedVY = 0f;
 		}
 
+		//void FixedUpdate ()
 		void LateUpdate ()
 		{
+			_sideHittedPushableObject.Clear ();
+
 			CalculateTranslateVector ();
-			CheckMoveDirection ();
 
 			state.SaveLastStateAndReset ();
+			UpdateBound ();
+
+
+			CheckMoveDirection ();
+
 			CheckCollisions ();
 
 			mTr.Translate (mTranslateVector, Space.World);
-
-			UpdateBound ();
 		}
 
 		void CalculateTranslateVector ()
@@ -277,66 +283,75 @@ namespace druggedcode.engine
 
 		void CastRaysBelow ()
 		{
-			//상승중일땐 무시
-			if (mTranslateVector.y > 0) return;
-			//  float rayLength = _bound.hHalf + Mathf.Abs(_translateVector.y);
-			//  if( _state.IsGrounded ) rayLength += RayGroundOffset;
-			float rayLength = _bound.hHalf + RayGroundOffset + Mathf.Abs (mTranslateVector.y);
+			if ( mTranslateVector.y > 0) return;
 
-			int rayIndex, increase;
+			float rayLength = mColliderBound.hHalf + GROUND_RAY_LENGTH;
+			if( mTranslateVector.y < 0f ) rayLength += Mathf.Abs (mTranslateVector.y);
+
+			int rayIndex, rayIndexIncrease;
 			if (mMoveDirection.x == 1)
 			{
 				rayIndex = VERTICAL_RAY_NUM - 1;
-				increase = -1;
+				rayIndexIncrease = -1;
 			}
 			else
 			{
 				rayIndex = 0;
-				increase = 1;
+				rayIndexIncrease = 1;
 			}
 
-			Vector2 verticalRayCastFromLeft = new Vector2 (_bound.xLeft + mTranslateVector.x, _bound.yCenter);
-			Vector2 verticalRayCastToRight = new Vector2 (_bound.xRight + mTranslateVector.x, _bound.yCenter);
+			Vector2 verticalRayCastFromLeft = new Vector2 (mColliderBound.xLeft + mTranslateVector.x, mColliderBound.yCenter);
+			Vector2 verticalRayCastToRight = new Vector2 (mColliderBound.xRight + mTranslateVector.x, mColliderBound.yCenter);
 
 			mHitCount = 0;
 
-			float lowestY = -LARGE_VALUE;
 			float sumY = 0f;
 			float fowardY = 0;
-			RaycastHit2D closestHit = new RaycastHit2D();
-			float closestAngle = 0f;
-			float tolerance = _bound.yBottom + _toleranceHeight;
 
-			float hitY, angle;
+			//float tolerance = mColliderBound.yBottom + _toleranceHeight;
+
+			RaycastHit2D closestHit = new RaycastHit2D();
+			float closestY = -LARGE_VALUE;
 
 			for (int i = 0; i < VERTICAL_RAY_NUM; i++)
 			{
-				_rayOriginPoint = Vector2.Lerp (verticalRayCastFromLeft, verticalRayCastToRight, (float)rayIndex / (float)(VERTICAL_RAY_NUM - 1));
+				float hitY;
+				Color rayColor = Color.red;
 
-				if (i == 0) mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
-				else if (i == 1) mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_GROUND, Color.green);
-				else if (i == 2) mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_ALL_GROUND, Color.blue);
+				#if UNITY_EDITOR
+				if( i == 1 ) rayColor = Color.grey;
+				else if( i == 2 ) rayColor = Color.blue;
+				#endif
+
+				Vector2 rayOriginPoint = Vector2.Lerp (verticalRayCastFromLeft, verticalRayCastToRight, (float)rayIndex / (float)(VERTICAL_RAY_NUM - 1));
+
+				if ( mTranslateVector.y > 0f && state.WasColldingBelowLastFrame == false )
+					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, rayColor );
+				else
+					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, -Vector2.up, rayLength, mDefaultPlatformMask, rayColor );
+
 
 				if (mHit2D)
 				{
 					hitY = mHit2D.point.y;
 					if (i == 0) fowardY = hitY;
-					angle = Vector2.Angle (mHit2D.normal, Vector2.up);
 
-					//바닥이 아니라고 무시해야하는 경우. oneway를 스으윽 발 아래로 내려볼때 발생하는 버그 해결해야함
-					if (false)
+					if ( hitY > mColliderBound.yBottom &&
+						state.WasColldingBelowLastFrame == false &&
+						mHit2D.collider.gameObject.layer == DruggedEngine.LAYER_ONEWAY )
 					{
+						//print( "hitY: " +hitY + ", yBottom: " + mColliderBound.yBottom );
 						state.IsGroundedInfo [i] = false;
 					}
 					else
 					{
 						++mHitCount;
 						sumY += hitY;
-						if (hitY > lowestY)
+						//print( "i : " + i + ", hitY : " + hitY + ", lowestY :" + closestY );
+						if (hitY > closestY)
 						{
 							closestHit = mHit2D;
-							closestAngle = angle;
-							lowestY = hitY;
+							closestY = hitY;
 						}
 
 						state.IsGroundedInfo [i] = true;
@@ -347,33 +362,17 @@ namespace druggedcode.engine
 					state.IsGroundedInfo [i] = false;
 				}
 
-				rayIndex += increase;
+				rayIndex += rayIndexIncrease;
 			}
 
-			//충돌된 것이 없다.
 			if (mHitCount == 0) return;
-			if (lowestY < _bound.yBottom + mTranslateVector.y) return;
+			if (closestY < mColliderBound.yBottom - RaySafetyDis.y + mTranslateVector.y) return;
 
-			Platform hittedPlatform = closestHit.collider.gameObject.GetComponent<Platform> ();
-
-			//아래 조건이 어떤상황인지 모르겠다.
-//			if (state.WasColldingBelowLastFrame == false && lowestY > _bound.yBottom && hittedPlatform.oneway )
-//			{
-//				return;
-//			}
-
+			//지면에 닿았다
 			state.IsCollidingBelow = true;
-			state.SlopeAngle = closestAngle;
 			mTranslateVector.y = 0;
-
-			if (hittedPlatform == null)
-			{
-				state.StandingPlatfom = null;
-			}
-			else
-			{
-				state.StandingPlatfom = hittedPlatform;
-			}
+			state.StandingOn = closestHit.collider.gameObject;
+			state.SlopeAngle = Vector2.Angle (closestHit.normal, Vector2.up);
 
 			if (state.SlopeAngle > 0)
 			{
@@ -385,30 +384,34 @@ namespace druggedcode.engine
 			}
 			else
 			{
-				mTr.position = new Vector3 (mTr.position.x, lowestY, mTr.position.z);
+				mTr.position = new Vector3 (mTr.position.x, closestY + RaySafetyDis.y, mTr.position.z);
 			}
 		}
 
 		void CastRaysSide ()
 		{
-			float horizontalRayLength = _bound.wHalf + RaySafetyDis + Mathf.Abs (mTranslateVector.x);
+			float horizontalRayLength = mColliderBound.wHalf + RaySafetyDis.x + Mathf.Abs (mTranslateVector.x);
 
-			Vector2 horizontalRayCastToTop = new Vector2 (_bound.xCenter, _bound.yTop);
-			Vector2 horizontalRayCastFromBottom = new Vector2 (_bound.xCenter, _bound.yBottom + _toleranceHeight);
+			Vector2 horizontalRayCastToTop = new Vector2 (mColliderBound.xCenter, mColliderBound.yTop);
+			Vector2 horizontalRayCastFromBottom = new Vector2 (mColliderBound.xCenter, mColliderBound.yBottom + _toleranceHeight);
 
 			mHitCount = 0;
 
 			//위에서 아래로 내려가면서 지정한 분할 수 만큼 검사
 			for (int i = 0; i < RayHorizontalCount; i++)
 			{
-				_rayOriginPoint = Vector2.Lerp (horizontalRayCastToTop, horizontalRayCastFromBottom, (float)i / (float)(RayHorizontalCount - 1));
+				Vector2 rayOriginPoint = Vector2.Lerp (horizontalRayCastToTop, horizontalRayCastFromBottom, (float)i / (float)(RayHorizontalCount - 1));
 
-				//if (_state.WasColldingBelowLastFrame && i == RayHorizontalCount - 1)
+//				if ( state.WasColldingBelowLastFrame && i == RayHorizontalCount - 1)
+//					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, mDefaultPlatformMask, Color.red);
+//				else
+//					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);
+
 				if (false)
-					mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
+					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
 				else
-					mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);
-
+					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);
+				
 				if (mHit2D)
 				{
 					if (i == RayHorizontalCount - 1 && Vector2.Angle (mHit2D.normal, Vector2.up) < MaximumSlopeAngle)
@@ -429,12 +432,12 @@ namespace druggedcode.engine
 			if (mMoveDirection.x == 1)
 			{
 				state.IsCollidingRight = true;
-				mTranslateVector.x = mHit2D.point.x - _bound.xRight - RaySafetyDis;
+				mTranslateVector.x = mHit2D.point.x - mColliderBound.xRight - RaySafetyDis.x;
 			}
 			else
 			{
 				state.IsCollidingLeft = true;
-				mTranslateVector.x = mHit2D.point.x - _bound.xLeft + RaySafetyDis;
+				mTranslateVector.x = mHit2D.point.x - mColliderBound.xLeft + RaySafetyDis.x;
 			}
 
 			state.CollidingSide = mHit2D.collider;
@@ -447,17 +450,17 @@ namespace druggedcode.engine
 			//낙하중일땐 무시
 			if (mTranslateVector.y < 0) return;
 
-			float rayLength = _bound.hHalf + RaySafetyDis + mTranslateVector.y;
+			float rayLength = mColliderBound.hHalf + RaySafetyDis.y + mTranslateVector.y;
 
-			Vector2 verticalRayCastStart = new Vector2 (_bound.xLeft + mTranslateVector.x, _bound.yCenter);
-			Vector2 verticalRayCastEnd = new Vector2 (_bound.xRight + mTranslateVector.x, _bound.yCenter);
+			Vector2 verticalRayCastStart = new Vector2 (mColliderBound.xLeft + mTranslateVector.x, mColliderBound.yCenter);
+			Vector2 verticalRayCastEnd = new Vector2 (mColliderBound.xRight + mTranslateVector.x, mColliderBound.yCenter);
 
 			mHitCount = 0;
 
 			for (int i = 0; i < VERTICAL_RAY_NUM; i++)
 			{
-				_rayOriginPoint = Vector2.Lerp (verticalRayCastStart, verticalRayCastEnd, (float)i / (float)(VERTICAL_RAY_NUM - 1));
-				mHit2D = PhysicsUtil.DrawRayCast (_rayOriginPoint, Vector2.up, rayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.blue);
+				Vector2 rayOriginPoint = Vector2.Lerp (verticalRayCastStart, verticalRayCastEnd, (float)i / (float)(VERTICAL_RAY_NUM - 1));
+				mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, Vector2.up, rayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.blue);
 
 				if (mHit2D)
 				{
@@ -473,7 +476,7 @@ namespace druggedcode.engine
 
 			if (state.IsCollidingBelow == false)
 			{
-				float ty = mHit2D.point.y - _bound.h - RaySafetyDis;
+				float ty = mHit2D.point.y - mColliderBound.h - RaySafetyDis.y;
 				mTr.position = new Vector3 (mTr.position.x, ty, mTr.position.z);
 				mTranslateVector.y = 0;
 			}
@@ -503,7 +506,7 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 		// 현재 BoxCollider의 위치, 사이즈에 대한 정보를 충돌 검사 계산 시 사용하기 용이한 형태의 자료구조로 생성한다.
 		//----------------------------------------------------------------------------------------------------------
-		public void UpdateBound ()
+		void UpdateBound ()
 		{
 			Bounds bounds = mCollider.bounds;
 			Vector3 min = bounds.min;
@@ -511,7 +514,7 @@ namespace druggedcode.engine
 			Vector3 center = bounds.center;
 			Vector3 size = bounds.size;
 
-			_bound = new ColliderInfo (
+			mColliderBound = new ColliderInfo (
 				min.x, center.x, max.x, size.x,
 				min.y, center.y, max.y, size.y
 			);
@@ -521,13 +524,13 @@ namespace druggedcode.engine
 			{
 				Color drawColor = Color.green;
 
-				Debug.DrawLine (new Vector2 (_bound.xLeft, _bound.yBottom), new Vector2 (_bound.xRight, _bound.yBottom), drawColor);
-				Debug.DrawLine (new Vector2 (_bound.xLeft, _bound.yCenter), new Vector2 (_bound.xRight, _bound.yCenter), drawColor);
-				Debug.DrawLine (new Vector2 (_bound.xLeft, _bound.yTop), new Vector2 (_bound.xRight, _bound.yTop), drawColor);
+				Debug.DrawLine (new Vector2 (mColliderBound.xLeft, mColliderBound.yBottom), new Vector2 (mColliderBound.xRight, mColliderBound.yBottom), drawColor);
+				Debug.DrawLine (new Vector2 (mColliderBound.xLeft, mColliderBound.yCenter), new Vector2 (mColliderBound.xRight, mColliderBound.yCenter), drawColor);
+				Debug.DrawLine (new Vector2 (mColliderBound.xLeft, mColliderBound.yTop), new Vector2 (mColliderBound.xRight, mColliderBound.yTop), drawColor);
 
-				Debug.DrawLine (new Vector2 (_bound.xLeft, _bound.yBottom), new Vector2 (_bound.xLeft, _bound.yTop), drawColor);
-				Debug.DrawLine (new Vector2 (_bound.xCenter, _bound.yBottom), new Vector2 (_bound.xCenter, _bound.yTop), drawColor);
-				Debug.DrawLine (new Vector2 (_bound.xRight, _bound.yBottom), new Vector2 (_bound.xRight, _bound.yTop), drawColor);
+				Debug.DrawLine (new Vector2 (mColliderBound.xLeft, mColliderBound.yBottom), new Vector2 (mColliderBound.xLeft, mColliderBound.yTop), drawColor);
+				Debug.DrawLine (new Vector2 (mColliderBound.xCenter, mColliderBound.yBottom), new Vector2 (mColliderBound.xCenter, mColliderBound.yTop), drawColor);
+				Debug.DrawLine (new Vector2 (mColliderBound.xRight, mColliderBound.yBottom), new Vector2 (mColliderBound.xRight, mColliderBound.yTop), drawColor);
 			}
 		}
 
@@ -537,28 +540,14 @@ namespace druggedcode.engine
 
 		public void PassThroughOneway ()
 		{
-			mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
-			state.ClearPlatform ();
-			CollisionsOff (0.1f);
-//			StartCoroutine (PassThroughOnewayRoutine());
+			StartCoroutine (DisableCollisionsWithOneWayPlatforms( 0.1f ));
 		}
 
-		IEnumerator PassThroughOnewayRoutine ()
+		public virtual IEnumerator DisableCollisionsWithOneWayPlatforms (float duration)
 		{
-			Platform throughOneway = state.StandingPlatfom;
-			Transform throughTr = throughOneway.transform;
-
-			mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
-			state.ClearPlatform ();
-
-			CollisionsOff ();
-
-			while (throughTr.position.y < _bound.yCenter)
-			{
-				yield return null;
-			}
-
-			CollisionsOn ();
+			mDefaultPlatformMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
+			yield return new WaitForSeconds (duration);
+			mDefaultPlatformMask = DruggedEngine.MASK_ALL_GROUND;
 		}
 
 		public void CollisionsOn ()
@@ -593,7 +582,6 @@ namespace druggedcode.engine
 				body.velocity = new Vector3(_velocity.x, 0, 0) * 2;
 			}
 			*/
-			_sideHittedPushableObject.Clear ();
 		}
 
 		public void SetPhysicsSpace (PhysicInfo physicInfo)
@@ -674,14 +662,17 @@ namespace druggedcode.engine
 		public float SlopeAngle { get; set; }
 
 		//IsCollidingBelow 와 같이 변해야 한다.
-		public Platform StandingPlatfom { get; set; }
+		public GameObject StandingOn { get; set;}
 		public Collider2D CollidingSide { get; set; }
 
 		public bool IsOnOneway {
 			get {
 				if (IsGrounded == false) return false;
-				else if (StandingPlatfom == null) return false;
-				else return StandingPlatfom.oneway;
+				else if (StandingOn == null) return false;
+
+				Platform platform = StandingOn.GetComponent<Platform>();
+				if( platform == null ) return false;
+				else return platform.oneway;
 			}
 		}
 
@@ -695,7 +686,7 @@ namespace druggedcode.engine
 		public void ClearPlatform ()
 		{
 			IsCollidingBelow = false;
-			StandingPlatfom = null;
+			StandingOn = null;
 		}
 
 		public void Reset ()
@@ -704,7 +695,7 @@ namespace druggedcode.engine
 
 			JustGotGrounded = false;
 			SlopeAngle = 0;
-			StandingPlatfom = null;
+			StandingOn = null;
 			CollidingSide = null;
 		}
 

@@ -17,11 +17,14 @@ public class DruggedEngine : MonoBehaviour
 	public static LayerMask MASK_PLAYER;
 	public static LayerMask MASK_ENEMY;
 	public static LayerMask MASK_TRIGGER_AT_PLAYER;
+    public static LayerMask MASK_LADDER;
 	public static LayerMask MASK_ENVIRONMENT;
 	public static LayerMask MASK_PLATFORM;
 	public static LayerMask MASK_ONEWAY;
 	public static LayerMask MASK_ALL_GROUND;
 	public static LayerMask MASK_EXCEPT_ONEWAY_GROUND;
+
+	public static int LAYER_ONEWAY;
 
 	public static float Gravity;
     
@@ -30,10 +33,9 @@ public class DruggedEngine : MonoBehaviour
 	//----------------------------------------------------------------------------------------------
 
 	public LayerMask player;
-
 	public LayerMask enemy;
-    
 	public LayerMask triggerAtPlayer;
+    public LayerMask ladder;
 
 	public LayerMask environment;
 	public LayerMask platform;
@@ -44,6 +46,7 @@ public class DruggedEngine : MonoBehaviour
 		MASK_PLAYER = player;
 		MASK_ENEMY = enemy;
 		MASK_TRIGGER_AT_PLAYER = triggerAtPlayer;
+        MASK_LADDER = ladder;
 
 		MASK_ENVIRONMENT = environment;
 		MASK_PLATFORM = platform;
@@ -52,8 +55,8 @@ public class DruggedEngine : MonoBehaviour
 		MASK_ALL_GROUND = MASK_ENVIRONMENT + MASK_PLATFORM + MASK_ONEWAY;
 		MASK_EXCEPT_ONEWAY_GROUND = MASK_ENVIRONMENT + MASK_PLATFORM;
 
-		//Ragdoll 은 안쓰는거 같은데
+		LAYER_ONEWAY = LayerUtil.GetLayerIdFromLayerMask( MASK_ONEWAY );
 
-		Gravity = -70f;
+		Gravity = -30f;///70
 	}
 }

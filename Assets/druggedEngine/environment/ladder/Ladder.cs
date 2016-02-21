@@ -4,50 +4,41 @@ using System.Collections;
 namespace druggedcode.engine
 {
     [RequireComponent(typeof(BoxCollider2D))]
+	[ExecuteInEditMode]
     public class Ladder : MonoBehaviour
     {
         /// 사다리의 정상에 있는 플랫폼
-        [SerializeField]
-		Platform _ladderPlatform;
-
-        BoxCollider2D _col;
+		public Platform ladderPlatform;
+        BoxCollider2D mCollider;
         
         public float PlatformY{ get; private set;}
         
         void Awake()
         {
-            _col = GetComponent<BoxCollider2D>();
-            _col.isTrigger = true;
+            mCollider = GetComponent<BoxCollider2D>();
+            mCollider.isTrigger = true;
         }
         
         void Start()
         {
-            if( _ladderPlatform == null )
-            {
-                _col.enabled = false;
-                throw new System.NullReferenceException( "사다리는 반드시 이어지는 OnewayPlatform을 가져야만 한다.");
-            } 
-            
-            PlatformY = _ladderPlatform.transform.position.y;
+            LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_LADDER,false);
+            PlatformY = ladderPlatform.transform.position.y;
         }
 
         public void OnTriggerEnter2D(Collider2D collider)
         {
-            DEPlayer player = collider.GetComponent<DEPlayer>();
+            DECharacter character = collider.GetComponent<DECharacter>();
+            if (character == null) return;
 
-            if (player == null)
-                return;
-
-            player.currentLadder = this;
+            character.currentLadder = this;
         }
 
         public void OnTriggerExit2D(Collider2D collider)
         {
-            DEPlayer player = collider.GetComponent<DEPlayer>();
-            if (player == null)
-                return;
-
-            player.currentLadder = null;
+            DECharacter character = collider.GetComponent<DECharacter>();
+            if (character == null) return;
+            
+            character.currentLadder = null;
         }
     }
 }
