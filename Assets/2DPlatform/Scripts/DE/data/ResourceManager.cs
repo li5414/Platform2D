@@ -21,13 +21,13 @@ public class ResourceManager : Singleton<ResourceManager>
 	//data
     public IEnumerator Load()
     {
-        mDTSDataCharacter = LoadDTSData<DTSCharacter>( "data/character" );
-        mDTSDataLocation = LoadDTSData<DTSLocation>( "data/location",true );
+        mDTSDataCharacter = LoadDTSData<DTSCharacter>( "data/character",true);
+        mDTSDataLocation = LoadDTSData<DTSLocation>( "data/location",true);
 
 		yield return new WaitForSeconds(0.1f);
     }
 
-    DTSData<T> LoadDTSData<T>( string path, bool usePrint = false ) where T: struct
+    DTSData<T> LoadDTSData<T>( string path, bool usePrint = false ) where T: DTS
     {
         TextAsset asset = Resources.Load<TextAsset>(path);
 
@@ -50,7 +50,7 @@ public class ResourceManager : Singleton<ResourceManager>
 
 	public DTSLocation GetDTSLocationByAssetName( string assetName )
 	{
-		foreach( DTSLocation loc in mDTSDataLocation )
+		foreach( DTSLocation loc in mDTSDataLocation.list )
 		{
 			if( loc.assetName == assetName ) return loc;
 		}
@@ -66,8 +66,8 @@ public class ResourceManager : Singleton<ResourceManager>
 	//asset
     public DEPlayer CreatePlayer( string id )
     {
-        DTSCharacter dts = ResourceManager.mDTSDataCharacter.Get( id );
-        DEPlayer prefab = Resources.Load<DEPlayer>("characters/player/" + dts.prefabName );
+		DTSCharacter dts = ResourceManager.Instance.GetDTSCharacter( id );
+        DEPlayer prefab = Resources.Load<DEPlayer>("characters/player/" + dts.assetName );
         return GameObject.Instantiate<DEPlayer>( prefab );
     }
 

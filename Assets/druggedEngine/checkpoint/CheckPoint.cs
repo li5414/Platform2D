@@ -44,20 +44,15 @@ namespace druggedcode.engine
         }
 
         /// <summary>
-        /// 플레이어를 체크포인트에 스폰. 옵저버들에게 통지.
+        /// 플레이어를가 체크포인트에서 스폰되었다. 옵저버들에게 통지.
         /// </summary>
-        public DECharacter SpawnPlayer(DECharacter player)
+		public void Spawn()
         {
-            Debug.Log("[CheckPoint] spawned '" + player.name + "' at '" + name + "'");
-
-            player.Spawn( this );
-
+			Debug.Log("[CheckPoint] " + name + " spawned");
             foreach (var listener in mListeners)
             {
-                listener.onPlayerRespawnInThisCheckpoint(this, player);
+                listener.onPlayerRespawnInThisCheckpoint(this );
             }
-
-            return player;
         }
 
         /// <summary>

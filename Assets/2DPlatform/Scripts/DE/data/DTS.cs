@@ -35,14 +35,14 @@ public class DTSData<T> where T: DTS
 	T GetFromList( string id )
 	{
 		int len = list.Count;
-		DTS dts;
+		T dts;
 		for( int i = 0; i < len; ++i )
 		{
 			dts = list[i];
 			if( dts.id == id ) return dts;
 		}
 
-		return dts;
+		return null;
 	}
 
 	public override string ToString()

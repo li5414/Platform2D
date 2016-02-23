@@ -335,9 +335,9 @@ namespace druggedcode.engine
 			//todo. respawn after dead motion.
 		}
 
-		public void Spawn (CheckPoint cp)
+		public void Spawn ( Vector3 pos )
 		{
-			mTr.position = cp.transform.position;
+			mTr.position = pos;
 
 			controller.CollisionsOn ();
 			SetFacing (Facing.RIGHT);

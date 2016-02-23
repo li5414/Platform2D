@@ -11,7 +11,7 @@
     },
     {
       "id": "1001",
-      "assetName": "TestEngine",
+      "assetName": "TestPhysic",
 	  "name": "물리 공간 Test"   
     },
     {

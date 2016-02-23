@@ -61,7 +61,7 @@ namespace druggedcode.engine
             EngineUtils.UpdateAnimatorBool(_animator, "shake", _characterOn);
         }
 
-        public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint, DECharacter player)
+        public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint )
         {
             gameObject.SetActive(true);
             _collider.enabled = true;

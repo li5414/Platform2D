@@ -14,13 +14,14 @@ public class GameManager : MonoBehaviour
 	public UISystem UI;
 
     /// 현재 일시정지 상태인지 여부
-    public bool Paused { get; private set; }
+    public bool paused { get; private set; }
 
     public DEPlayer player { get; private set; }
 
-	public ALocation Location{ get; private set;}
+	public ALocation location{ get; private set;}
     
     float mSavedTimeScale;
+	Scene mCurrentScene;
 
 	[RuntimeInitializeOnLoadMethodAttribute]
 	public static void InitializeManager()
@@ -52,16 +53,17 @@ public class GameManager : MonoBehaviour
 		UI.Init();
 		Config.Init();
 
-		string firstSceneName = SceneManager.GetActiveScene().name;
-		print("[GM] Start At: " + firstSceneName );
+		mCurrentScene = SceneManager.GetActiveScene();
+
+		print("[GM] Start At: " + mCurrentScene.name );
      
-		if( firstSceneName == Config.SC_TITLE )
+		if( mCurrentScene.name == Config.SC_TITLE )
 		{
 			StartCoroutine( StartedAtTitle());
 		}
 		else
 		{
-			StartCoroutine( StartedAtLevel());
+			StartCoroutine( StartedAtLocation());
 		}
 
 		yield break;
@@ -75,30 +77,39 @@ public class GameManager : MonoBehaviour
 		UI.MainMode();
 	}
 
-	IEnumerator StartedAtLevel()
+	IEnumerator StartedAtLocation()
 	{
 		print("[GM] DevRoute");
 
 		yield return UI.FadeOut(0f);
 		yield return StartCoroutine(ServerCommunicator.Instance.LoadDTS());
 
-		yield return StartCoroutine(ServerCommunicator.Instance.Login());
-		User.Instance.SetData("loaded data");
+		yield return StartCoroutine( LoginRoutine() );
 
-		yield break;
-		Location = GameObject.FindWithTag(Config.TAG_LEVEL).GetComponent<ALocation>();
+		GameObject levelObj = GameObject.FindWithTag(Config.TAG_LOCATION);
 
-		//현재 로케이션의 ID 를 알아야 한다.
-		UI.WorldMode();
+		if( levelObj == null )
+		{
+			Debug.LogError("[GM] Level Object was null");
+			UI.FadeIn();
+			yield break;
+		}
 
-		print("[GM] StartWorld");
+		ALocation loc = levelObj.GetComponent<ALocation>();
+		DTSLocation dts = ResourceManager.Instance.GetDTSLocationByAssetName( mCurrentScene.name );
 
-		Location = GameObject.FindWithTag(Config.TAG_LEVEL).GetComponent<ALocation>();
-		UI.WorldMode();
+		if( dts == null )
+		{
+			Debug.LogError( mCurrentScene.name + " Level's DTSLocation not found");
+			UI.FadeIn();
+			yield break;
+		}
 
-		MoveLocation(User.Instance.locationID, User.Instance.checkPointID);
+		print( string.Format("[GM] Level id: {0}, name: {1}, assetName: {2}", dts.id, dts.name, dts.assetName ));
 
-//		AssetBundleLoadOperation request = AssetBundleManager.LoadLevelAsync(sceneAssetBundle, levelName, isAdditive);
+		loc.dts = dts;
+
+		StartLocation( loc );
 	}
 
 	//called by Title
@@ -116,8 +127,42 @@ public class GameManager : MonoBehaviour
     //------------------------------------------------------------------------------------------
     //-- Starat
     //------------------------------------------------------------------------------------------
+	void StartLocation( ALocation loc )
+	{
+		location = loc;
+		if( location == null )
+		{
+			print( "[GM] Location null");
+		}
 
+		print("[GM] StartWorld");
+
+		UI.LocationMode();
+
+		player = User.Instance.GetCharacter();
+
+		location.Run( player, User.Instance.checkPointID );
+
+		UI.FadeIn();
+		PlayBGM();
+//		MoveLocation(User.Instance.locationID, User.Instance.checkPointID);
+	}
     
+	void PlayBGM()
+	{
+		// if (bgm != null)
+		// {
+		//     AudioSource levelBgm = gameObject.AddComponent<AudioSource>();
+		//     levelBgm.playOnAwake = false;
+		//     levelBgm.spatialBlend = 0;
+		//     levelBgm.rolloffMode = AudioRolloffMode.Logarithmic;
+		//     levelBgm.loop = true;
+		//     levelBgm.clip = bgm;
+
+		//     SoundManager.Instance.PlayBackgroundMusic(levelBgm);
+		// }
+	}
+
 
     //------------------------------------------------------------------------------------------
     //-- World
@@ -202,13 +247,13 @@ public class GameManager : MonoBehaviour
         if (Time.timeScale > 0.0f)
         {
             Instance.SetTimeScale(0.0f);
-            Instance.Paused = true;
+            Instance.paused = true;
 			UI.SetPause(true);
         }
         else
         {
             Instance.ResetTimeScale();
-            Instance.Paused = false;
+            Instance.paused = false;
 			UI.SetPause(false);
         }
     }

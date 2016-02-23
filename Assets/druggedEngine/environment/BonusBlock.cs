@@ -74,7 +74,7 @@ namespace druggedcode.engine
 
         }
 
-        public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint, DECharacter player)
+        public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint )
         {
 
         }

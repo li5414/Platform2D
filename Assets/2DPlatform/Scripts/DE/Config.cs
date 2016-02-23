@@ -8,7 +8,7 @@ public class Config
     public const string SC_TITLE = "Title";
 
     //-- Tag
-	public const string TAG_LEVEL = "Level";
+	public const string TAG_LOCATION = "Location";
     public const string TAG_CHECKPOINT = "CheckPoint";
     public const string TAG_PLAYER = "Player";
 

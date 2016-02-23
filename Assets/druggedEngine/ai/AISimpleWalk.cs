@@ -41,7 +41,7 @@ namespace druggedcode.engine
             }
         }
 
-        public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint, DECharacter player)
+        public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint )
         {
             _direction = _initialDirection;
             transform.localScale = new Vector3(1, 1, 1);

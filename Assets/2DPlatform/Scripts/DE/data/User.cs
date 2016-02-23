@@ -25,6 +25,8 @@ public class User : Singleton<User>
 
         mOwnCharacters = new string[] { "100", "101" };
         mSelectedCharcterID = mOwnCharacters[0];
+
+		print(string.Format("[User] Gold: {0}, LocationID: {1}, selectedCharacterID: {2}",gold,locationID, mSelectedCharcterID ));
     }
 
     public YieldInstruction Move( string locID, string chID )

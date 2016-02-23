@@ -35,7 +35,7 @@ public class World : MonoBehaviour
     {
         if( mCurrentLocation != null ) mCurrentLocation.Dispose();
 
-        DTSLocation dts = ResourceManager.DTSLocationDatas.Get(locationID);
+		DTSLocation dts = ResourceManager.Instance.GetDTSLocation(locationID);
         ResourceRequest req = ResourceManager.Instance.LoadLocation( dts );
         
         yield return req;

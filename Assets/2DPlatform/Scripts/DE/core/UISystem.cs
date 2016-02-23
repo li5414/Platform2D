@@ -52,7 +52,7 @@ namespace druggedcode.engine
         //--------------------------------------------------------------------------------------------------
         // main
         //--------------------------------------------------------------------------------------------------
-        public void WorldMode()
+        public void LocationMode()
         {
             Main.SetActive(false);
             HUD.SetActive(true);

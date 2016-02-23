@@ -6,7 +6,7 @@
   "dictionary": {
     "100": {
       "id": "100",
-      "assetName": "Player1",
+      "assetName": "Hitman",
       "hp": 3,
       "str": 3,
       "agi": 3,
@@ -20,7 +20,7 @@
     },
     "101": {
       "id": "101",
-      "assetName": "Player2",
+      "assetName": "Gunman",
       "hp": 4,
       "str": 4,
       "agi": 4,

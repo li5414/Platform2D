@@ -24,9 +24,9 @@ namespace druggedcode.engine
             Reset();
         }
         
-        public void AddTarget(Transform targetTransform, float offsetX = 0F, float offsetY = 0F )
+        public void AddPlayer( DEPlayer player )
         {
-            mPro.AddCameraTarget( targetTransform ).TargetOffset = new Vector2( offsetX, offsetY );
+			mPro.AddCameraTarget( player.transform ).TargetOffset = new Vector2( 0f, 2f );
         }
 
 		public void RemoveAllTarget()

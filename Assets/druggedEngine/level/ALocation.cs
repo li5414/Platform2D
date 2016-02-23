@@ -28,8 +28,9 @@ public class ALocation : MonoBehaviour
     DECamera mCam;
     Mission mMission;
 
-    virtual protected void Awake()
+    void Awake()
     {
+		tag = Config.TAG_LOCATION;
         //mCam = DECamera.Instance;
 
         mCharacterList = new List<DECharacter>();
@@ -43,7 +44,7 @@ public class ALocation : MonoBehaviour
 		GetComponentsInChildren<EnemySpawner>( mSpawners );
     }
     
-    virtual protected void Start()
+    void Start()
     {
         //IPlayerRespawnListener 를 구현하거나 상속한 모든 오브젝트를 찾는다.
         //각 오브젝트에서 왼쪽으로 가장 가가운 CheckPoint 객체를 찾아 해당 객체에 자신을 등록한다.(add)
@@ -67,14 +68,14 @@ public class ALocation : MonoBehaviour
     {
         if (mIsRun == false)
         {
-            Debug.Log("[Location] Start! id: " + dts.id + " asset: " + dts.assetName +  " name: " + dts.name + " Run! (" + mStarted +")");
+			mCam = GameManager.Instance.gameCamera;
+			mCam.AddPlayer( player );
+			mCam.SetSkybox( skybox );
+			mCam.Run();
+
             mStarted = DateTime.UtcNow;
-
-            mCam.AddTarget( player.transform, 0f, 2f );
-			mCam.SetSkybox(skybox);
-            AddCharacter(player);
-
             mIsRun = true;
+			Debug.Log("[Location]" + dts.name + "Run! (" + mStarted +")");
         }
 
         SpawnPlayer( player, cpID );
@@ -89,34 +90,26 @@ public class ALocation : MonoBehaviour
 			currentCheckPoint.active = false;
         }
 
-		currentCheckPoint = cp;
-		currentCheckPoint.active = true;
-		currentCheckPoint.SpawnPlayer(player);
+		if( cp == null )
+		{
+			player.Spawn( Vector3.zero );
+		}
+		else
+		{
+			currentCheckPoint = cp;
+			currentCheckPoint.active = true;
+			currentCheckPoint.Spawn();
+			player.Spawn( currentCheckPoint.transform.position );
+		}
 
-		BoundariesInfo bound = currentCheckPoint.GetComponent<BoundariesInfo>();
-       if( bound == null ) bound = defaultBoundary;
+		BoundariesInfo bound = GetBoundariesInfo();
 
         mCam.SetBound(bound);
         mCam.CenterOnTargets();
 
-        PlayBGM();
-
         CheckEvent();
-    }
 
-    protected void PlayBGM()
-    {
-        // if (bgm != null)
-        // {
-        //     AudioSource levelBgm = gameObject.AddComponent<AudioSource>();
-        //     levelBgm.playOnAwake = false;
-        //     levelBgm.spatialBlend = 0;
-        //     levelBgm.rolloffMode = AudioRolloffMode.Logarithmic;
-        //     levelBgm.loop = true;
-        //     levelBgm.clip = bgm;
-
-        //     SoundManager.Instance.PlayBackgroundMusic(levelBgm);
-        // }
+//		player.Active();
     }
 
     void CheckEvent()
@@ -125,11 +118,12 @@ public class ALocation : MonoBehaviour
         mMission.Check();
     }
 
-
-    void AddCharacter( DECharacter ch )
-    {
-        if( mCharacterList.Contains( ch ) == false ) mCharacterList.Add(ch);
-    }
+	BoundariesInfo GetBoundariesInfo()
+	{
+		BoundariesInfo bound = currentCheckPoint == null ? null : currentCheckPoint.GetComponent<BoundariesInfo>();
+		if( bound == null ) bound = defaultBoundary;
+		return bound;
+	}
 
     CheckPoint GetCheckPoint(string id)
     {
