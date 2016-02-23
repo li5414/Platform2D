@@ -3,38 +3,70 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using druggedcode.engine;
+using Newtonsoft.Json;
+
+public class DTSData<T> where T: DTS
+{
+	public MetaData meta;
+	public Dictionary<string, T> dictionary;
+	public List<T> list;
+
+	public T Get(string id )
+	{
+		if( dictionary != null )
+		{
+			return GetFromDictionary( id );
+		}
+		else
+		{
+			return GetFromList( id );
+		}
+	}
+
+	T GetFromDictionary( string id )
+	{
+		if (false == dictionary.ContainsKey(id))
+		{
+			return null;
+		}
+		return dictionary[id];
+	}
+
+	T GetFromList( string id )
+	{
+		int len = list.Count;
+		DTS dts;
+		for( int i = 0; i < len; ++i )
+		{
+			dts = list[i];
+			if( dts.id == id ) return dts;
+		}
+
+		return dts;
+	}
+
+	public override string ToString()
+	{
+		return JsonConvert.SerializeObject( this, Formatting.Indented );
+	}
+}
 
 public struct MetaData
 {
-    public string name;
-    public string date;
+	public string name;
+	public string date;
 }
 
-public class DTSData<T> where T: struct
+public class DTS
 {
-    public Dictionary<string, T> data;
-    public MetaData meta;
-
-    public T Get(string key)
-    {
-        if (false == data.ContainsKey(key))
-        {
-            return default(T);
-        }
-        return data[key];
-    }
-
-    public override string ToString()
-    {
-		return JsonUtility.ToJson( this );
-        //return JsonConvert.SerializeObject( this, Formatting.Indented );
-    }
+	public string id;
+	public string name;
+	public string assetName;
 }
 
-public struct DTSCharacter
+public class DTSCharacter: DTS
 {
-    public string id;
-    public string prefabName;
+	
     public int hp;
     public int str;
     public int agi;
@@ -43,11 +75,14 @@ public struct DTSCharacter
     public List<string> skills;
 }
 
-public struct DTSLocation
+public class DTSLocation: DTS
 {
-    public string id;
-    public string name;
-    public string assetName;
+	public DTSLocation( string id, string name, string assetName )
+	{
+		this.id = id;
+		this.name = name;
+		this.assetName = assetName;
+	}
 
     public override string ToString()
     {

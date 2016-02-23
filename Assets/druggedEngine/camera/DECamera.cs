@@ -4,7 +4,7 @@ using Com.LuisPedroFonseca.ProCamera2D;
 
 namespace druggedcode.engine
 {
-    public class DECamera : Singleton<DECamera>
+	public class DECamera : MonoBehaviour
     {
         Transform mTr;
 
@@ -14,10 +14,8 @@ namespace druggedcode.engine
         ProCamera2D mPro;
         ProCamera2DNumericBoundaries mBoundaries;
 
-        override protected void Awake()
+        void Awake()
         {
-            base.Awake();
-
             mTr = transform;
 
             mPro = GetComponent< ProCamera2D >();

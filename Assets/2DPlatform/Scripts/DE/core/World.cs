@@ -46,9 +46,9 @@ public class World : MonoBehaviour
             yield break;
         }
         
-        mCurrentLocation = GameObject.Instantiate(req.asset, Vector3.zero, Quaternion.identity) as BattleField;
-        mCurrentLocation.transform.SetParent(transform);
-        mCurrentLocation.dts = dts;
+//        mCurrentLocation = GameObject.Instantiate(req.asset, Vector3.zero, Quaternion.identity) as BattleField;
+//        mCurrentLocation.transform.SetParent(transform);
+//        mCurrentLocation.dts = dts;
         
 		yield return null;//wait start
 

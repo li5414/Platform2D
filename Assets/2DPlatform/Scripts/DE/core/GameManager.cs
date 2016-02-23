@@ -4,97 +4,121 @@ using Com.LuisPedroFonseca.ProCamera2D;
 using druggedcode;
 using druggedcode.engine;
 using UnityEngine.Assertions;
+using UnityEngine.SceneManagement;
 
-public class GameManager : Singleton<GameManager>
+public class GameManager : MonoBehaviour
 {
+	public static GameManager Instance;
 
-    UISystem mUI;
-    SceneUtil mScene;
+	public DECamera gameCamera;
+	public UISystem UI;
 
     /// 현재 일시정지 상태인지 여부
     public bool Paused { get; private set; }
 
     public DEPlayer player { get; private set; }
 
-    public World world{ get; private set;}
-    
-    public User user{ get; private set; }
-    public DECamera cam{ get; private set; }
+	public ALocation Location{ get; private set;}
     
     float mSavedTimeScale;
 
 	[RuntimeInitializeOnLoadMethodAttribute]
 	public static void InitializeManager()
 	{
-		//Debug.Log("GM StartUp once!");
+		if( Instance == null )
+		{
+			GameManager prefab = Resources.Load<GameManager>("GameManager");
+			GameManager manager = GameObject.Instantiate<GameManager>( prefab );
+		}
 	}
 
-    override protected void Awake()
+    void Awake()
     {
-        base.Awake();
-        mScene = new SceneUtil();
-        
-        cam = DECamera.Instance;
-        
-        SoundManager.SetParent(sInstance.transform);
-        ResourceManager.SetParent(sInstance.transform);
-        ServerCommunicator.SetParent(sInstance.transform);
-		user = User.SetParent(sInstance.transform);
-		mUI = UISystem.SetParent( sInstance.transform );
+		Instance = this;
+		name = typeof( GameManager ).Name;
+		DontDestroyOnLoad( this );
 
-        Config.Init();
+		var cam = GameObject.Find("Main Camera");
+		DestroyObject( cam );
 
-		mUI.Init();
+		ServerCommunicator.SetParent( transform );
+		User.SetParent( transform );
+//        SoundManager.SetParent(sInstance.transform);
+//        ResourceManager.SetParent(sInstance.transform);
     }
 
     IEnumerator Start()
     {
-        print("[GM] Start");
+		UI.Init();
+		Config.Init();
+
+		string firstSceneName = SceneManager.GetActiveScene().name;
+		print("[GM] Start At: " + firstSceneName );
      
-        yield return mUI.FadeOut(0f);
+		if( firstSceneName == Config.SC_TITLE )
+		{
+			StartCoroutine( StartedAtTitle());
+		}
+		else
+		{
+			StartCoroutine( StartedAtLevel());
+		}
 
-        yield return StartCoroutine(ResourceManager.Instance.Load());
-
-        yield return StartCoroutine(ServerCommunicator.Instance.Login());
-
-        User.Instance.SetData("loaded data");
-
-        switch (mScene.CurrentSceneName)
-        {
-            case Config.SC_MAIN:
-                StartMain();
-                break;
-
-            case Config.SC_WORLD:
-                StartWorld();
-                break;
-
-            case Config.SC_WORLDMAP:
-                break;
-        }
+		yield break;
     }
+
+	IEnumerator StartedAtTitle()
+	{
+		//뺑글뱅글 로딩 화면띄우자
+		yield return StartCoroutine(ServerCommunicator.Instance.LoadDTS());
+
+		UI.MainMode();
+	}
+
+	IEnumerator StartedAtLevel()
+	{
+		print("[GM] DevRoute");
+
+		yield return UI.FadeOut(0f);
+		yield return StartCoroutine(ServerCommunicator.Instance.LoadDTS());
+
+		yield return StartCoroutine(ServerCommunicator.Instance.Login());
+		User.Instance.SetData("loaded data");
+
+		yield break;
+		Location = GameObject.FindWithTag(Config.TAG_LEVEL).GetComponent<ALocation>();
+
+		//현재 로케이션의 ID 를 알아야 한다.
+		UI.WorldMode();
+
+		print("[GM] StartWorld");
+
+		Location = GameObject.FindWithTag(Config.TAG_LEVEL).GetComponent<ALocation>();
+		UI.WorldMode();
+
+		MoveLocation(User.Instance.locationID, User.Instance.checkPointID);
+
+//		AssetBundleLoadOperation request = AssetBundleManager.LoadLevelAsync(sceneAssetBundle, levelName, isAdditive);
+	}
+
+	//called by Title
+	public Coroutine Login()
+	{
+		return StartCoroutine( LoginRoutine());
+	}
+
+	IEnumerator LoginRoutine()
+	{
+		yield return StartCoroutine(ServerCommunicator.Instance.Login());
+		User.Instance.SetData("loaded data");
+	}
 
     //------------------------------------------------------------------------------------------
     //-- Starat
     //------------------------------------------------------------------------------------------
 
-    void StartMain()
-    {
-        print("[GM] StartMain");
-        mUI.MainMode();
-        mUI.FadeIn();
-    }
-
-    void StartWorld()
-    {
-        print("[GM] StartWorld");
-        
-		world = GameObject.FindWithTag(Config.TAG_BATTLE_WORLD).GetComponent<World>();
-		mUI.WorldMode();
-
-        MoveLocation(user.locationID, user.checkPointID);
-    }
     
+
     //------------------------------------------------------------------------------------------
     //-- World
     //------------------------------------------------------------------------------------------
@@ -111,43 +135,43 @@ public class GameManager : Singleton<GameManager>
         //플레이어의 움직임을 멈추고 화면을 페이드 아웃
 		if( player != null ) player.DeActive();
         
-		yield return mUI.FadeOut();
+		yield return UI.FadeOut();
          
 		//이동하고자 하는 위치를 저장해야한다.( 추후 서버 작업 필요 )
 		yield return User.Instance.Move( locationID, cpID );
 
         //카메라를 리셋하자.
-        cam.Reset();
+        gameCamera.Reset();
         
-        //만약 월드 씬이 아니라면 월드 씬으로 이동한다.
-        if (mScene.CurrentSceneName != Config.SC_WORLD)
-        {
-            yield return StartCoroutine(mScene.LoadLevelAsync( Config.SC_WORLD ));
-
-			world = GameObject.FindWithTag(Config.TAG_BATTLE_WORLD).GetComponent<World>();
-			mUI.WorldMode();
-        }
+//        //만약 월드 씬이 아니라면 월드 씬으로 이동한다.
+//        if (mScene.CurrentSceneName != Config.SC_WORLD)
+//        {
+//            yield return StartCoroutine(mScene.LoadLevelAsync( Config.SC_WORLD ));
+//
+//			world = GameObject.FindWithTag(Config.TAG_BATTLE_WORLD).GetComponent<World>();
+//			mUI.WorldMode();
+//        }
 
         //현재 location이 목표 location이 아니라면 해당 로케이션을 로드한다.
-        if ( world.checkLocation( locationID ) == false )
-        {
-            yield return StartCoroutine(world.Load(locationID));
-        }
-
-        if (world.currentLocation == null)
-        {
-            throw new UnityException("location is null!!!!");
-        }
-
-        yield return null;
-        
-        //시작
-        player = User.Instance.GetCharacter();
-		world.Run( player, cpID );
-        cam.Run();
-		player.Active();
-
-		 mUI.FadeIn();
+//        if ( world.checkLocation( locationID ) == false )
+//        {
+//            yield return StartCoroutine(world.Load(locationID));
+//        }
+//
+//        if (world.currentLocation == null)
+//        {
+//            throw new UnityException("location is null!!!!");
+//        }
+//
+//        yield return null;
+//        
+//        //시작
+//        player = User.Instance.GetCharacter();
+//		world.Run( player, cpID );
+//        gameCamera.Run();
+//		player.Active();
+//
+//		UI.FadeIn();
 
     }
 
@@ -179,13 +203,13 @@ public class GameManager : Singleton<GameManager>
         {
             Instance.SetTimeScale(0.0f);
             Instance.Paused = true;
-            UISystem.Instance.SetPause(true);
+			UI.SetPause(true);
         }
         else
         {
             Instance.ResetTimeScale();
             Instance.Paused = false;
-            UISystem.Instance.SetPause(false);
+			UI.SetPause(false);
         }
     }
 

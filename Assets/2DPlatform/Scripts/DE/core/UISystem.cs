@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 namespace druggedcode.engine
 {
-    public class UISystem : Singleton<UISystem>
+	public class UISystem : MonoBehaviour
     {
         public GameObject HUD;
         /// 특수화면
@@ -18,23 +18,20 @@ namespace druggedcode.engine
         public Text LevelText;
         public Text GoldText;
 
-		User mUser;
+		Coroutine mFadeRoutine;
 
-        override protected void Awake()
+       	void Awake()
         {
-            base.Awake();
             HUD.SetActive(false);
             Main.SetActive(false);
 
             MotionUI.SetAlpha(Fader, 0f);
             Fader.gameObject.SetActive(false);
-
-			mUser = User.Instance;
         }
 
 		public void Init()
 		{
-			mUser.OnGold += OnGold;
+			User.Instance.OnGold += OnGold;
 		}
 
         //--------------------------------------------------------------------------------------------------
@@ -49,8 +46,7 @@ namespace druggedcode.engine
 
         public void OnClickStart()
         {
-            User user = User.Instance;
-            GameManager.Instance.MoveLocation(user.locationID, user.checkPointID);
+			GameManager.Instance.Login();
         }
 
         //--------------------------------------------------------------------------------------------------
@@ -66,7 +62,7 @@ namespace druggedcode.engine
             //            // 현재 씬의 이름을 UI에 표시
             //            UISystem.Instance.SetLevelName (Application.loadedLevelName);
 
-			GameManager.Instance.world.OnUpdateLocation += OnUpdateLocation;
+			//GameManager.Instance.world.OnUpdateLocation += OnUpdateLocation;
         }
 
         void OnUpdateLocation ( ALocation loc )
@@ -112,14 +108,18 @@ namespace druggedcode.engine
 
         public Coroutine FadeOut(float duration = 0.3f )
         {
-            return StartCoroutine(MotionUI.FadeAlpha(Fader, duration, 1f ));
+			if( mFadeRoutine != null ) StopCoroutine( mFadeRoutine );
+			mFadeRoutine = StartCoroutine(MotionUI.FadeAlpha(Fader, duration, 1f ));
+			return mFadeRoutine;
         }
 
         public Coroutine FadeIn(float duration = 0.3f )
         {
-            return StartCoroutine(MotionUI.FadeAlpha(Fader, duration, 0f ));
+			if( mFadeRoutine != null ) StopCoroutine( mFadeRoutine );
+			mFadeRoutine = StartCoroutine(MotionUI.FadeAlpha(Fader, duration, 0f ));
+			return mFadeRoutine;
         }
-        
+
         void Log(object message)
         {
             Debug.Log("[GUIManager] " + message);

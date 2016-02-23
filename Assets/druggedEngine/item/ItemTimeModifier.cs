@@ -36,12 +36,12 @@ namespace druggedcode.engine
             _col.enabled = false;
 
             GameManager.Instance.SetTimeScale(TimeSpeed);
-            UISystem.Instance.SetTimeSplash(true);
+            //UISystem.Instance.SetTimeSplash(true);
 
             yield return new WaitForSeconds(Duration * TimeSpeed);
 
             GameManager.Instance.ResetTimeScale();
-            UISystem.Instance.SetTimeSplash(false);
+            //UISystem.Instance.SetTimeSplash(false);
 
             _img.enabled = true;
             _col.enabled = true;

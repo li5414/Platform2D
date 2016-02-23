@@ -5,14 +5,11 @@ public class Config
 {
     //#define IN_CONTROL
     //-- Scene
-    public const string SC_MAIN = "Title";
-    public const string SC_WORLD = "World";
-    public const string SC_WORLDMAP = "WorldMap";
+    public const string SC_TITLE = "Title";
 
     //-- Tag
-    public const string TAG_BATTLE_WORLD = "BattleWorld";
+	public const string TAG_LEVEL = "Level";
     public const string TAG_CHECKPOINT = "CheckPoint";
-    public const string TAG_UICAMERA = "UICamera";
     public const string TAG_PLAYER = "Player";
 
     static public bool IsMobile = false;

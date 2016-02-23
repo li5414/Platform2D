@@ -4,11 +4,12 @@ using druggedcode.engine;
 using System.Collections.Generic;
 using System.Collections;
 using System.Text;
+using Newtonsoft.Json;
 
 public class ResourceManager : Singleton<ResourceManager>
 {
-    public static DTSData<DTSCharacter> DTSCharacterDatas;
-    public static DTSData<DTSLocation> DTSLocationDatas;
+	DTSData<DTSCharacter> mDTSDataCharacter;
+	DTSData<DTSLocation> mDTSDataLocation;
 
     Dictionary<string,DECharacter> prefabList;
 
@@ -20,8 +21,8 @@ public class ResourceManager : Singleton<ResourceManager>
 	//data
     public IEnumerator Load()
     {
-        DTSCharacterDatas = LoadDTSData<DTSCharacter>( "data/character" );
-        DTSLocationDatas = LoadDTSData<DTSLocation>( "data/location" );
+        mDTSDataCharacter = LoadDTSData<DTSCharacter>( "data/character" );
+        mDTSDataLocation = LoadDTSData<DTSLocation>( "data/location",true );
 
 		yield return new WaitForSeconds(0.1f);
     }
@@ -36,17 +37,36 @@ public class ResourceManager : Singleton<ResourceManager>
             return null;
         }
 
-		DTSData<T> data = JsonUtility.FromJson<DTSData<T>>(asset.text);
-//        DTSData<T> data = JsonConvert.DeserializeObject<DTSData<T>>(asset.text);
+		DTSData<T> data = JsonConvert.DeserializeObject<DTSData<T>>(asset.text);
 
         if( usePrint ) Log( "DTSData '" + path + "' loaded.\n" + data.ToString() );
         return data;
     }
 
+	public DTSLocation GetDTSLocation( string id )
+	{
+		return mDTSDataLocation.Get( id );
+	}
+
+	public DTSLocation GetDTSLocationByAssetName( string assetName )
+	{
+		foreach( DTSLocation loc in mDTSDataLocation )
+		{
+			if( loc.assetName == assetName ) return loc;
+		}
+
+		return null;
+	}
+
+	public DTSCharacter GetDTSCharacter( string id )
+	{
+		return mDTSDataCharacter.Get( id );
+	}
+
 	//asset
     public DEPlayer CreatePlayer( string id )
     {
-        DTSCharacter dts = ResourceManager.DTSCharacterDatas.Get( id );
+        DTSCharacter dts = ResourceManager.mDTSDataCharacter.Get( id );
         DEPlayer prefab = Resources.Load<DEPlayer>("characters/player/" + dts.prefabName );
         return GameObject.Instantiate<DEPlayer>( prefab );
     }

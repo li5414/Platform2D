@@ -3,16 +3,21 @@
     "name": "test",
     "date": "2015.6.09 19:40:50"
   },
-  "data": {
-    "1000": {
+  "list": [
+    {
       "id": "1000",
-      "assetName": "Field1",
-	  "name": "필드1"
+      "assetName": "TestEngine",
+	  "name": "기본 플랫폼 Test"
     },
-    "1001": {
+    {
       "id": "1001",
-      "assetName": "Field2",
-	  "name": "필드2"   
+      "assetName": "TestEngine",
+	  "name": "물리 공간 Test"   
+    },
+    {
+      "id": "1002",
+      "assetName": "TestAttack",
+	  "name": "공격 Test"   
     }
-  }
+  ]
 }
