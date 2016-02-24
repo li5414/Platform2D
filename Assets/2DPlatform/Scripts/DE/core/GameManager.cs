@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
 	[RuntimeInitializeOnLoadMethodAttribute]
 	public static void InitializeManager()
 	{
-		if( Instance == null )
+		if( Instance == null && string.IsNullOrEmpty( SceneManager.GetActiveScene().name ) == false )
 		{
 			GameManager prefab = Resources.Load<GameManager>("GameManager");
 			GameManager manager = GameObject.Instantiate<GameManager>( prefab );
@@ -102,7 +102,7 @@ public class GameManager : MonoBehaviour
 
 		if( loc == null )
 		{
-			Debug.LogError("[GM] Level Object was null");
+			Debug.Log("[GM] Level Object was null");
 			UI.FadeIn();
 			yield break;
 		}
