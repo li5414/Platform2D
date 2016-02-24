@@ -27,6 +27,8 @@ namespace druggedcode.engine
 
 		void OnUpdateInput ()
 		{
+			if( GameManager.Instance.playerControllable == false ) return;
+
 			mPlayer.horizontalAxis = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));
 			mPlayer.verticalAxis = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
 			mPlayer.isRun = Input.GetKey (runKey);
@@ -100,34 +102,32 @@ namespace druggedcode.engine
 			{
 				//_player.GetComponent<CharacterMelee>().Melee();
 			}
-			/*
-            //발사
-			if ( _player.GetComponent<CharacterShoot>() != null) 
-			{
-				_player.GetComponent<CharacterShoot>().SetHorizontalAxis(CrossPlatformInputManager.GetAxis ("Horizontal"));
-				_player.GetComponent<CharacterShoot>().SetVerticalAxis(CrossPlatformInputManager.GetAxis ("Vertical"));
-
-				if (CrossPlatformInputManager.GetButtonDown("Fire"))
-					_player.GetComponent<CharacterShoot>().ShootOnce();         
-
-				if (CrossPlatformInputManager.GetButton("Fire")) 
-					_player.GetComponent<CharacterShoot>().ShootStart();
-
-				if (CrossPlatformInputManager.GetButtonUp("Fire"))
-					_player.GetComponent<CharacterShoot>().ShootStop();
-
-			}
-
-			//제트팩
-			if ( _player.GetComponent<CharacterJetpack>() != null )
-			{
-				if ( (CrossPlatformInputManager.GetButtonDown("Jetpack")||CrossPlatformInputManager.GetButton("Jetpack")) )
-					_player.GetComponent<CharacterJetpack>().JetpackStart();
-
-				if (CrossPlatformInputManager.GetButtonUp("Jetpack"))
-					_player.GetComponent<CharacterJetpack>().JetpackStop();
-			}
-			*/
+//            //발사
+//			if ( _player.GetComponent<CharacterShoot>() != null) 
+//			{
+//				_player.GetComponent<CharacterShoot>().SetHorizontalAxis(CrossPlatformInputManager.GetAxis ("Horizontal"));
+//				_player.GetComponent<CharacterShoot>().SetVerticalAxis(CrossPlatformInputManager.GetAxis ("Vertical"));
+//
+//				if (CrossPlatformInputManager.GetButtonDown("Fire"))
+//					_player.GetComponent<CharacterShoot>().ShootOnce();         
+//
+//				if (CrossPlatformInputManager.GetButton("Fire")) 
+//					_player.GetComponent<CharacterShoot>().ShootStart();
+//
+//				if (CrossPlatformInputManager.GetButtonUp("Fire"))
+//					_player.GetComponent<CharacterShoot>().ShootStop();
+//
+//			}
+//
+//			//제트팩
+//			if ( _player.GetComponent<CharacterJetpack>() != null )
+//			{
+//				if ( (CrossPlatformInputManager.GetButtonDown("Jetpack")||CrossPlatformInputManager.GetButton("Jetpack")) )
+//					_player.GetComponent<CharacterJetpack>().JetpackStart();
+//
+//				if (CrossPlatformInputManager.GetButtonUp("Jetpack"))
+//					_player.GetComponent<CharacterJetpack>().JetpackStop();
+//			}
 		}
 	}
 }

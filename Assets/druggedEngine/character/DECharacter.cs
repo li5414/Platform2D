@@ -60,8 +60,6 @@ namespace druggedcode.engine
 
 		public int jumpCount{ get; set; }
 
-		public bool controllable{ get; set; }
-
 		public CharacterState state { get; protected set; }
 
 		//----------------------------------------------------------------------------------------------------------
@@ -239,7 +237,7 @@ namespace druggedcode.engine
 				}
 
 				StateExit ();
-				Debug.Log (state + " > " + next);
+				//Debug.Log (state + " > " + next);
 				state = next;
 			}
 
@@ -248,7 +246,7 @@ namespace druggedcode.engine
 
 		void Update ()
 		{
-			if (controllable && OnUpdateInput != null) OnUpdateInput ();
+			if (OnUpdateInput != null) OnUpdateInput ();
 
 			StateUpdate ();
 
@@ -304,20 +302,13 @@ namespace druggedcode.engine
 		public void DeActive ()
 		{
 			gameObject.SetActive (false);
-			//origin was player
-//			if( mIsActive == false ) return;
-//
-//			Stop();
-//			Controllable( false );
-//
-//			_controller.enabled = false;
-//
-//			mIsActive = false;
 		}
 
 		public void Active ()
 		{
 			gameObject.SetActive (true);
+			//			SetState( CharacterState.IDLE );
+
 			//origin was player
 //			if( mIsActive ) return;
 //

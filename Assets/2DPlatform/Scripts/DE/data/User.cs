@@ -29,12 +29,10 @@ public class User : Singleton<User>
 		print(string.Format("[User] Gold: {0}, LocationID: {1}, selectedCharacterID: {2}",gold,locationID, mSelectedCharcterID ));
     }
 
-    public YieldInstruction Move( string locID, string chID )
+    public void Move( string locID, string chID )
     {
 		locationID = locID;
         checkPointID = chID;
-
-        return new WaitForSeconds(0f);
     }
 
     public DEPlayer GetCharacter()

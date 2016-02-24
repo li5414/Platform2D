@@ -19,7 +19,8 @@ public class GameManager : MonoBehaviour
     public DEPlayer player { get; private set; }
 
 	public ALocation location{ get; private set;}
-    
+	public bool playerControllable{ get; set; }
+
     float mSavedTimeScale;
 	Scene mCurrentScene;
 
@@ -39,8 +40,8 @@ public class GameManager : MonoBehaviour
 		name = typeof( GameManager ).Name;
 		DontDestroyOnLoad( this );
 
-		var cam = GameObject.Find("Main Camera");
-		DestroyObject( cam );
+		GameObject cam = GameObject.FindGameObjectWithTag("MainCamera");
+		if( cam != null ) DestroyObject( cam );
 
 		ServerCommunicator.SetParent( transform );
 		User.SetParent( transform );
@@ -77,25 +78,35 @@ public class GameManager : MonoBehaviour
 		UI.MainMode();
 	}
 
+	ALocation FindLocationInCurrentScene()
+	{
+		GameObject levelObj = GameObject.FindWithTag(Config.TAG_LOCATION);
+
+		if( levelObj == null )
+		{
+			return null;
+		}
+
+		return levelObj.GetComponent<ALocation>();
+	}
+
 	IEnumerator StartedAtLocation()
 	{
 		print("[GM] DevRoute");
 
 		yield return UI.FadeOut(0f);
 		yield return StartCoroutine(ServerCommunicator.Instance.LoadDTS());
-
 		yield return StartCoroutine( LoginRoutine() );
 
-		GameObject levelObj = GameObject.FindWithTag(Config.TAG_LOCATION);
+		ALocation loc = FindLocationInCurrentScene();
 
-		if( levelObj == null )
+		if( loc == null )
 		{
 			Debug.LogError("[GM] Level Object was null");
 			UI.FadeIn();
 			yield break;
 		}
 
-		ALocation loc = levelObj.GetComponent<ALocation>();
 		DTSLocation dts = ResourceManager.Instance.GetDTSLocationByAssetName( mCurrentScene.name );
 
 		if( dts == null )
@@ -109,7 +120,7 @@ public class GameManager : MonoBehaviour
 
 		loc.dts = dts;
 
-		StartLocation( loc );
+		StartCoroutine( RunLocation( loc ));
 	}
 
 	//called by Title
@@ -124,50 +135,6 @@ public class GameManager : MonoBehaviour
 		User.Instance.SetData("loaded data");
 	}
 
-    //------------------------------------------------------------------------------------------
-    //-- Starat
-    //------------------------------------------------------------------------------------------
-	void StartLocation( ALocation loc )
-	{
-		location = loc;
-		if( location == null )
-		{
-			print( "[GM] Location null");
-		}
-
-		print("[GM] StartWorld");
-
-		UI.LocationMode();
-
-		player = User.Instance.GetCharacter();
-
-		location.Run( player, User.Instance.checkPointID );
-
-		UI.FadeIn();
-		PlayBGM();
-//		MoveLocation(User.Instance.locationID, User.Instance.checkPointID);
-	}
-    
-	void PlayBGM()
-	{
-		// if (bgm != null)
-		// {
-		//     AudioSource levelBgm = gameObject.AddComponent<AudioSource>();
-		//     levelBgm.playOnAwake = false;
-		//     levelBgm.spatialBlend = 0;
-		//     levelBgm.rolloffMode = AudioRolloffMode.Logarithmic;
-		//     levelBgm.loop = true;
-		//     levelBgm.clip = bgm;
-
-		//     SoundManager.Instance.PlayBackgroundMusic(levelBgm);
-		// }
-	}
-
-
-    //------------------------------------------------------------------------------------------
-    //-- World
-    //------------------------------------------------------------------------------------------
-    
     public void MoveLocation( string locationID, string cpID )
     {
         StartCoroutine(MoveLocationRoutine( locationID, cpID ));
@@ -177,53 +144,93 @@ public class GameManager : MonoBehaviour
     {
         print("[GM] MoveLocation locationID: " + locationID + ", cpID: " + cpID );
 
-        //플레이어의 움직임을 멈추고 화면을 페이드 아웃
-		if( player != null ) player.DeActive();
-        
+		playerControllable = false;
+
+		if( player != null ) player.Stop();
+
+
 		yield return UI.FadeOut();
+
+		if( player != null ) player.DeActive();
+
+		gameCamera.Reset();
+		gameCamera.RemoveAllTarget();
          
-		//이동하고자 하는 위치를 저장해야한다.( 추후 서버 작업 필요 )
-		yield return User.Instance.Move( locationID, cpID );
+		yield return ServerCommunicator.Instance.Move( locationID, cpID );
 
-        //카메라를 리셋하자.
-        gameCamera.Reset();
-        
-//        //만약 월드 씬이 아니라면 월드 씬으로 이동한다.
-//        if (mScene.CurrentSceneName != Config.SC_WORLD)
-//        {
-//            yield return StartCoroutine(mScene.LoadLevelAsync( Config.SC_WORLD ));
-//
-//			world = GameObject.FindWithTag(Config.TAG_BATTLE_WORLD).GetComponent<World>();
-//			mUI.WorldMode();
-//        }
+		DTSLocation dts = ResourceManager.Instance.GetDTSLocation( locationID );
 
-        //현재 location이 목표 location이 아니라면 해당 로케이션을 로드한다.
-//        if ( world.checkLocation( locationID ) == false )
-//        {
-//            yield return StartCoroutine(world.Load(locationID));
-//        }
-//
-//        if (world.currentLocation == null)
-//        {
-//            throw new UnityException("location is null!!!!");
-//        }
-//
-//        yield return null;
-//        
-//        //시작
-//        player = User.Instance.GetCharacter();
-//		world.Run( player, cpID );
-//        gameCamera.Run();
-//		player.Active();
-//
-//		UI.FadeIn();
+		//현재 Scene 에 이동해야 할 Locatino 이 없다면 해당 location Scene으로 이동한다.
+		if( location == null || location.dts.name != dts.name )
+		{
+			yield return StartCoroutine( LoadScene( dts.assetName ));
 
+			ALocation loc = FindLocationInCurrentScene();
+
+			if( loc == null )
+			{
+				print( "'" + dts.assetName + "' Location was null in Scene '" + mCurrentScene.name + "'");
+				yield break;
+			}
+
+			GameObject cam = GameObject.FindGameObjectWithTag("MainCamera");
+			if( cam != null ) DestroyObject( cam );
+
+			loc.dts = dts;
+			location = loc;
+		}
+
+		yield return StartCoroutine ( RunLocation( location ));
     }
+
+	IEnumerator RunLocation( ALocation loc )
+	{
+		if( loc == null )
+		{
+			Debug.LogError( "[GM] Location null. RunLocation Fail");
+			yield break;
+		}
+
+		if( location != loc )
+		{
+			location = loc;
+
+			UI.LocationMode();
+
+			gameCamera.SetSkybox( location.skybox );
+		}
+
+		player = User.Instance.GetCharacter();
+		player.Active();
+
+		yield return null; //wait one frame for Objects's Start
+
+		location.SpawnPlayer( player );
+
+		gameCamera.AddPlayer( player );
+		gameCamera.SetBound( location.GetBoundariesInfo());
+		gameCamera.Run();
+		location.Run();
+
+		yield return UI.FadeIn();
+
+		playerControllable = true;
+
+	}
 
     public void Restart()
     {
         //Application.LoadLevel (Application.loadedLevelName);
     }
+
+	IEnumerator LoadScene( string sceneName )
+	{
+		print( "CurrentScene: " + mCurrentScene.name );
+		AsyncOperation async = SceneManager.LoadSceneAsync( sceneName );
+		yield return async;
+		mCurrentScene = SceneManager.GetActiveScene();
+		print("LoadedScene: " + mCurrentScene );
+	}
 
     //--------------------------------------------------------------------------------------
     // time controll
@@ -266,12 +273,12 @@ public class GameManager : MonoBehaviour
     {
         if( player == null ) return;
         player.Stop();
-		player.controllable = false;
+		playerControllable = false;
     }
 
     public void PlayerResume()
     {
-		player.controllable = true;
+		playerControllable = true;
     }
 
     public void PlayerKill()

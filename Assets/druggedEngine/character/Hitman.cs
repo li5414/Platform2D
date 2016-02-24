@@ -48,7 +48,6 @@ namespace druggedcode.engine
 		{
 			base.Start();
 
-			controllable = true;
 			SetState(CharacterState.IDLE );
 		}
 

@@ -23,9 +23,6 @@ public class ALocation : MonoBehaviour
 
 	List<EnemySpawner> mSpawners;
 
-    bool mIsRun;
-
-    DECamera mCam;
     Mission mMission;
 
     void Awake()
@@ -63,27 +60,9 @@ public class ALocation : MonoBehaviour
         }
     }
 
-    //현재 실행되어야 할 미션이 있을 경우 실행한다. 없다면기본실행을 한다.
-	virtual public void Run( DEPlayer player, string cpID )
+	public void SpawnPlayer( DEPlayer player )
     {
-        if (mIsRun == false)
-        {
-			mCam = GameManager.Instance.gameCamera;
-			mCam.AddPlayer( player );
-			mCam.SetSkybox( skybox );
-			mCam.Run();
-
-            mStarted = DateTime.UtcNow;
-            mIsRun = true;
-			Debug.Log("[Location]" + dts.name + "Run! (" + mStarted +")");
-        }
-
-        SpawnPlayer( player, cpID );
-    }
-
-	public void SpawnPlayer( DEPlayer player, string cpID )
-    {
-        CheckPoint cp = GetCheckPoint( cpID );
+		CheckPoint cp = GetCheckPoint( User.Instance.checkPointID );
 
 		if ( currentCheckPoint != null && currentCheckPoint != cp)
         {
@@ -101,24 +80,39 @@ public class ALocation : MonoBehaviour
 			currentCheckPoint.Spawn();
 			player.Spawn( currentCheckPoint.transform.position );
 		}
-
-		BoundariesInfo bound = GetBoundariesInfo();
-
-        mCam.SetBound(bound);
-        mCam.CenterOnTargets();
-
-        CheckEvent();
-
-//		player.Active();
     }
 
-    void CheckEvent()
+	//현재 실행되어야 할 미션이 있을 경우 실행한다. 없다면기본실행을 한다.
+	virtual public void Run()
+	{
+		mStarted = DateTime.UtcNow;
+		Debug.Log("[Location]" + dts.name + "Run! (" + mStarted +")");
+
+		CheckMission();
+	}
+
+    void CheckMission()
     {
         if (mMission == null) return;
         mMission.Check();
     }
 
-	BoundariesInfo GetBoundariesInfo()
+	void PlayBGM()
+	{
+		// if (bgm != null)
+		// {
+		//     AudioSource levelBgm = gameObject.AddComponent<AudioSource>();
+		//     levelBgm.playOnAwake = false;
+		//     levelBgm.spatialBlend = 0;
+		//     levelBgm.rolloffMode = AudioRolloffMode.Logarithmic;
+		//     levelBgm.loop = true;
+		//     levelBgm.clip = bgm;
+
+		//     SoundManager.Instance.PlayBackgroundMusic(levelBgm);
+		// }
+	}
+
+	public BoundariesInfo GetBoundariesInfo()
 	{
 		BoundariesInfo bound = currentCheckPoint == null ? null : currentCheckPoint.GetComponent<BoundariesInfo>();
 		if( bound == null ) bound = defaultBoundary;
@@ -138,11 +132,5 @@ public class ALocation : MonoBehaviour
         }
 
         return null;
-    }
-
-    public void Dispose()
-    {
-		mCam.RemoveAllTarget();
-        Destroy(gameObject);
     }
 }

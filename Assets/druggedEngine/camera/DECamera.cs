@@ -80,13 +80,14 @@ namespace druggedcode.engine
         
         public void Reset()
         {
+			mPro.Reset();
             mPro.enabled = false;
-            transform.localPosition = new Vector3( 0f, 0f, -10f );
         }
         
         public void Run()
         {
             mPro.enabled = true;   
+			CenterOnTargets();
         }
     }
 }

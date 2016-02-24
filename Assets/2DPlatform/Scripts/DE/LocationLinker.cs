@@ -28,6 +28,11 @@ namespace druggedcode.engine
             mCollider.isTrigger = true;
         }
 
+		void Start()
+		{
+			LayerUtil.ChangeLayer( gameObject, DruggedEngine.MASK_TRIGGER_AT_PLAYER );
+		}
+
         public void In(DEPlayer player)
         {
             GameManager.Instance.MoveLocation(locationID, cpID);

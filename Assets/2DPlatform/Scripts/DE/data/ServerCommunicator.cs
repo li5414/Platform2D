@@ -16,8 +16,9 @@ public class ServerCommunicator : Singleton<ServerCommunicator>
     	yield return new WaitForSeconds(0.01f);
     }
 
-    public YieldInstruction Move()
+	public IEnumerator Move( string locID, string chID )
     {
-        return null;
+		yield return new WaitForSeconds(0.01f);
+		User.Instance.Move( locID, chID );
     }
 }
