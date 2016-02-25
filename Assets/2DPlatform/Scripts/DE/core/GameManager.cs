@@ -148,14 +148,13 @@ public class GameManager : MonoBehaviour
 
 		if( player != null ) player.Stop();
 
-
+		yield break;
 		yield return UI.FadeOut();
 
 		if( player != null ) player.DeActive();
 
 		gameCamera.Reset();
-		gameCamera.RemoveAllTarget();
-         
+
 		yield return ServerCommunicator.Instance.Move( locationID, cpID );
 
 		DTSLocation dts = ResourceManager.Instance.GetDTSLocation( locationID );

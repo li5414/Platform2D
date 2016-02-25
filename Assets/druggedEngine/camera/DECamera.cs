@@ -13,6 +13,7 @@ namespace druggedcode.engine
 
         ProCamera2D mPro;
         ProCamera2DNumericBoundaries mBoundaries;
+		ProCamera2DForwardFocus mFocus;
 
         void Awake()
         {
@@ -20,6 +21,7 @@ namespace druggedcode.engine
 
             mPro = GetComponent< ProCamera2D >();
             mBoundaries = GetComponent< ProCamera2DNumericBoundaries >();
+			mFocus = GetComponent< ProCamera2DForwardFocus>();
             
             Reset();
         }
@@ -29,11 +31,6 @@ namespace druggedcode.engine
 			mPro.AddCameraTarget( player.transform ).TargetOffset = new Vector2( 0f, 2f );
         }
 
-		public void RemoveAllTarget()
-		{
-			mPro.RemoveAllCameraTargets();
-		}
-        
         public void SetBound( BoundariesInfo info )
         {
             if( info == null )
@@ -72,7 +69,7 @@ namespace druggedcode.engine
 				mSkyBox.transform.position = mTr.position + mDiffSkyBox;
 			}
 		}
-        
+
         public void CenterOnTargets()
         {
             mPro.Reset( true );
@@ -80,13 +77,16 @@ namespace druggedcode.engine
         
         public void Reset()
         {
-			mPro.Reset();
+			mPro.RemoveAllCameraTargets();
+			mPro.Reset( false );
             mPro.enabled = false;
+			mFocus.enabled = false;
         }
         
         public void Run()
         {
-            mPro.enabled = true;   
+            mPro.enabled = true;
+			mFocus.enabled = false;
 			CenterOnTargets();
         }
     }

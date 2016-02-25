@@ -50,13 +50,32 @@ namespace druggedcode.engine
 
 		public float CurrentSpeed { get; set; }
 
-		public float axisX { get; set; }
+		public Vector2 Velocity {
+			get { return _speed; }
+			set
+			{
+				_speed = value;
+				_externalForce = value;
+			}
+		}
 
-		public Vector2 Velocity { get { return mVelocity; } }
+		public float vx {
+			get { return _speed.x; }
+			set
+			{
+				_speed.x = value;
+				_externalForce.x = value;
+			}
+		}
 
-		public float vx { get { return mVelocity.x; } set { mVelocity.x = value; } }
-
-		public float vy { get { return mVelocity.y; } set { mVelocity.y = value; } }
+		public float vy {
+			get { return _speed.y; }
+			set
+			{
+				_speed.y = value;
+				_externalForce.y = value;
+			}
+		}
 
 		public float gravity { get { return DruggedEngine.Gravity + _physicSpaceInfo.Gravity; } }
 
@@ -70,10 +89,9 @@ namespace druggedcode.engine
 		// 속도, 움직임. y가 마이너스인 경우가 낙하상태이다.
 		//----------------------------------------------------------------------------------------------------------
 
-		Vector2 _addForce;
 		Vector2 _externalForce;
 
-		Vector2 mVelocity;
+		Vector2 _speed;
 		Vector2 mMoveDirection = Vector2.right;
 
 
@@ -146,20 +164,8 @@ namespace druggedcode.engine
 
 		public void AddForce (Vector2 force)
 		{
-			_addForce += force;
+			_speed += force;
 			_externalForce += force;
-		}
-
-		public void AddHorizontalForce (float x)
-		{
-			_addForce.x += x;
-			_externalForce.x += x;
-		}
-
-		public void AddVerticalForce (float y)
-		{
-			_addForce.y += y;
-			_externalForce.y += y;
 		}
 
 		public void LockMove (float duration)
@@ -174,11 +180,10 @@ namespace druggedcode.engine
 			yield return new WaitForRealSeconds (duration);
 			mMoveLocked = false;
 		}
-
+			
 		public void Stop ()
 		{
-			axisX = 0f;
-			mVelocity = Vector2.zero;
+			_speed = Vector2.zero;
 		}
 
 		//----------------------------------------------------------------------------------------------------------
@@ -198,67 +203,40 @@ namespace druggedcode.engine
 		//void FixedUpdate ()
 		void LateUpdate ()
 		{
+			float delta: af
 			_sideHittedPushableObject.Clear ();
 
-			CalculateTranslateVector ();
+			mTranslateVector = _speed * Time.deltaTime;
+
+			//y speed
+			if (mLockedVY != 0f)
+			{
+				_speed.y = mLockedVY;
+			}
+			else
+			{
+				_speed.y += gravity * GravityScale * delta;
+			}
 
 			state.SaveLastStateAndReset ();
 			UpdateBound ();
-
 
 			CheckMoveDirection ();
 
 			CheckCollisions ();
 
 			mTr.Translate (mTranslateVector, Space.World);
-		}
 
-		void CalculateTranslateVector ()
-		{
-			float delta = Time.deltaTime;
-
-			//x speed
-			if (mMoveLocked == false)
-			{
-				float moveFactor = state.IsGrounded ? AccelOnGround : AccelOnAir;
-				float tx = axisX * CurrentSpeed;
-				if (tx != 0f) tx = Mathf.Lerp (mVelocity.x, tx, delta * moveFactor);
-
-				if (state.IsGrounded)
-				{
-					mVelocity.x += (tx - mVelocity.x) * PlatformFriction;
-				}
-				else
-				{
-					mVelocity.x = tx;
-				}
-			}
-
-			mVelocity += _addForce;
-			mVelocity.x *= _physicSpaceInfo.MoveFactor;
-
-			//y speed
-			if (mLockedVY != 0f)
-			{
-				mVelocity.y = mLockedVY;
-			}
-			else
-			{
-				mVelocity.y += gravity * GravityScale * delta;
-			}
-
-			_addForce = Vector2.zero;
-
-			mTranslateVector = mVelocity * Time.deltaTime;
+			_externalForce = Vector2.zero;
 		}
 
 		void CheckMoveDirection ()
 		{
-			if ( mMoveDirection.x == 1 && mVelocity.x < 0)
+			if ( mMoveDirection.x == 1 && _speed.x < 0)
 			{
 				mMoveDirection = new Vector2 (-1, 0);
 			}
-			else if (mMoveDirection.x == -1 && mVelocity.x > 0)
+			else if (mMoveDirection.x == -1 && _speed.x > 0)
 			{
 				mMoveDirection = new Vector2 (1, 0);
 			}
@@ -273,7 +251,7 @@ namespace druggedcode.engine
 			CastRaysSide ();
 			CastRaysAbove ();
 
-			mVelocity = mTranslateVector / Time.deltaTime; //충돌로 인해 변경된 벡터를 바탕으로 속도 재설정.
+			if (Time.deltaTime > 0)	_speed = mTranslateVector / Time.deltaTime; //충돌로 인해 변경된 벡터를 바탕으로 속도 재설정.
 
 			if (state.HasCollisions) PushHittedObject (); //밀수 있는 것들은 민다.
 

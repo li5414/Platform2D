@@ -260,6 +260,8 @@ namespace druggedcode.engine
 			controller.axisX = horizontalAxis;
 		}
 
+
+
 		void FacingUpdate ()
 		{
 			if (mCanFacingUpdate == false) return;
@@ -273,6 +275,133 @@ namespace druggedcode.engine
 				SetFacing (Facing.LEFT);
 			}
 		}
+
+		void tempControllersxMove()
+		{
+//			if (mMoveLocked == false)
+//			{
+//				float moveFactor = state.IsGrounded ? AccelOnGround : AccelOnAir;
+//				float tx = axisX * CurrentSpeed;
+//
+//				if( stopped ) Debug.Log("tx:" + tx + "axisX: " + axisX + ", speed: " + CurrentSpeed );
+//
+//				if (tx != 0f) tx = Mathf.Lerp (_speed.x, tx, delta * moveFactor);
+//
+//				if (state.IsGrounded)
+//				{
+//					_speed.x += (tx - _speed.x) * PlatformFriction;
+//				}
+//				else
+//				{
+//					_speed.x = tx;
+//				}
+//			}
+		}
+
+
+//		protected virtual void HorizontalMovement()
+//		{	
+//			// if movement is prevented, we exit and do nothing
+//			if (!BehaviorState.CanMoveFreely)
+//				return;				
+//
+//			// If the value of the horizontal axis is positive, the character must face right.
+//			if (_horizontalMove>0.1f)
+//			{
+//				_normalizedHorizontalSpeed = _horizontalMove;
+//				if (!_isFacingRight)
+//					Flip();
+//			}		
+//			// If it's negative, then we're facing left
+//			else if (_horizontalMove<-0.1f)
+//			{
+//				_normalizedHorizontalSpeed = _horizontalMove;
+//				if (_isFacingRight)
+//					Flip();
+//			}
+//			else
+//			{
+//				_normalizedHorizontalSpeed=0;
+//			}
+//
+//			// we pass the horizontal force that needs to be applied to the controller.
+//			var movementFactor = _controller.State.IsGrounded ? _controller.Parameters.SpeedAccelerationOnGround : _controller.Parameters.SpeedAccelerationInAir;
+//			if (BehaviorParameters.SmoothMovement)
+//				_controller.SetHorizontalForce(Mathf.Lerp(_controller.Speed.x, _normalizedHorizontalSpeed * BehaviorParameters.MovementSpeed, Time.deltaTime * movementFactor));
+//			else
+//				_controller.SetHorizontalForce(_normalizedHorizontalSpeed * BehaviorParameters.MovementSpeed);
+//		}
+//
+//		protected virtual void VerticalMovement()
+//		{
+//
+//			// Looking up
+//			if ( (_verticalMove>0) && (_controller.State.IsGrounded) )
+//			{
+//				BehaviorState.LookingUp = true;		
+//				_sceneCamera.LookUp();
+//			}
+//			else
+//			{
+//				BehaviorState.LookingUp = false;
+//				_sceneCamera.ResetLookUpDown();
+//			}
+//
+//			// Manages the ground touching effect
+//			if (_controller.State.JustGotGrounded)
+//			{
+//				if (TouchTheGroundEffect != null)
+//				{
+//					Instantiate(TouchTheGroundEffect, _controller.BottomPosition, transform.rotation);
+//				}
+//			}
+//
+//			// if the character is not in a position where it can move freely, we do nothing.
+//			if (!BehaviorState.CanMoveFreely)
+//				return;
+//
+//			// Crouch Detection : if the player is pressing "down" and if the character is grounded and the crouch action is enabled
+//			if ( (_verticalMove<-0.1) && (_controller.State.IsGrounded) && (Permissions.CrouchEnabled) )
+//			{
+//				BehaviorState.Crouching = true;
+//				BehaviorParameters.MovementSpeed = BehaviorParameters.CrouchSpeed;
+//				BehaviorState.Running=false;
+//				_sceneCamera.LookDown();			
+//			}
+//			else
+//			{	
+//				// if the character is currently crouching, we'll check if it's in a tunnel
+//				if (BehaviorState.Crouching)
+//				{	
+//					if (HeadCollider==null)
+//					{
+//						BehaviorState.Crouching=false;
+//						return;
+//					}
+//					bool headCheck = Physics2D.OverlapCircle(HeadCollider.transform.position,HeadCollider.size.x/2,_controller.PlatformMask);			
+//					// if the character is not crouched anymore, we set 
+//					if (!headCheck)
+//					{
+//						if (!BehaviorState.Running)
+//							BehaviorParameters.MovementSpeed = BehaviorParameters.WalkSpeed;
+//						BehaviorState.Crouching = false;
+//						BehaviorState.CanJump=true;
+//					}
+//					else
+//					{
+//
+//						BehaviorState.CanJump=false;
+//					}
+//				}
+//			}
+//
+//			if (BehaviorState.CrouchingPreviously!=BehaviorState.Crouching)
+//			{
+//				Invoke ("RecalculateRays",Time.deltaTime*10);		
+//			}
+//
+//			BehaviorState.CrouchingPreviously=BehaviorState.Crouching;
+//		}
 
 		virtual protected void StateExit ()
 		{
