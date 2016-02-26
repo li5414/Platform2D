@@ -45,8 +45,8 @@ public class GameManager : MonoBehaviour
 
 		ServerCommunicator.SetParent( transform );
 		User.SetParent( transform );
+		ResourceManager.SetParent( transform);
 //        SoundManager.SetParent(sInstance.transform);
-//        ResourceManager.SetParent(sInstance.transform);
     }
 
     IEnumerator Start()
@@ -146,18 +146,21 @@ public class GameManager : MonoBehaviour
 
 		playerControllable = false;
 
-		if( player != null ) player.Stop();
-
-		yield break;
-		yield return UI.FadeOut();
-
 		if( player != null ) player.DeActive();
 
 		gameCamera.Reset();
 
+		yield return UI.FadeOut();
+
+		if( player != null )
+		{
+			player.transform.SetParent( User.Instance.transform );
+			player.gameObject.SetActive( false );
+		}
+
 		yield return ServerCommunicator.Instance.Move( locationID, cpID );
 
-		DTSLocation dts = ResourceManager.Instance.GetDTSLocation( locationID );
+		DTSLocation dts = string.IsNullOrEmpty( locationID ) ?  location.dts : ResourceManager.Instance.GetDTSLocation( locationID );
 
 		//현재 Scene 에 이동해야 할 Locatino 이 없다면 해당 location Scene으로 이동한다.
 		if( location == null || location.dts.name != dts.name )
@@ -190,6 +193,9 @@ public class GameManager : MonoBehaviour
 			yield break;
 		}
 
+		player = User.Instance.GetCharacter();
+		player.transform.SetParent( transform.parent );
+
 		if( location != loc )
 		{
 			location = loc;
@@ -199,12 +205,11 @@ public class GameManager : MonoBehaviour
 			gameCamera.SetSkybox( location.skybox );
 		}
 
-		player = User.Instance.GetCharacter();
-		player.Active();
-
-		yield return null; //wait one frame for Objects's Start
-
 		location.SpawnPlayer( player );
+
+		yield return null;
+
+		player.SetState( CharacterState.IDLE );
 
 		gameCamera.AddPlayer( player );
 		gameCamera.SetBound( location.GetBoundariesInfo());
@@ -228,6 +233,9 @@ public class GameManager : MonoBehaviour
 		AsyncOperation async = SceneManager.LoadSceneAsync( sceneName );
 		yield return async;
 		mCurrentScene = SceneManager.GetActiveScene();
+
+		System.GC.Collect();
+
 		print("LoadedScene: " + mCurrentScene );
 	}
 

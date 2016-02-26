@@ -13,15 +13,15 @@ namespace druggedcode.engine
         public bool movable { get; set; }
 		public bool oneway;
 
-        Collider2D mCollider;
-        PathFollow mPathFollow;
+        protected Collider2D mCollider;
+		protected PathFollow mPathFollow;
 
         public Collider2D GetCollider()
         {
             return mCollider;
         }
 
-        void Awake()
+        virtual protected void Awake()
         {
             mCollider = GetComponent<Collider2D>();
             mPathFollow = GetComponent<PathFollow>();
@@ -29,20 +29,12 @@ namespace druggedcode.engine
 			if( mCollider is EdgeCollider2D ) oneway = true;
         }
 
-        void Start()
+        virtual protected void Start()
         {
             if (mPathFollow != null) movable = true;
 
 			if( oneway ) LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_ONEWAY);
 			else LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_PLATFORM );
-        }
-
-        public void PassThough(FailCharacterController controller)
-        {
-            if (oneway == false) return;
-
-            controller.currentMask = DruggedEngine.MASK_ENVIRONMENT;
-            controller.IgnoreCollision(mCollider, true);
         }
 
         public Vector2 translateVector

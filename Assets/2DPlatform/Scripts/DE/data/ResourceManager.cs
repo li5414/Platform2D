@@ -63,14 +63,6 @@ public class ResourceManager : Singleton<ResourceManager>
 		return mDTSDataCharacter.Get( id );
 	}
 
-	//asset
-    public DEPlayer CreatePlayer( string id )
-    {
-		DTSCharacter dts = ResourceManager.Instance.GetDTSCharacter( id );
-        DEPlayer prefab = Resources.Load<DEPlayer>("characters/player/" + dts.assetName );
-        return GameObject.Instantiate<DEPlayer>( prefab );
-    }
-
     public Object Load( string path )
     {
         return Resources.Load( path );

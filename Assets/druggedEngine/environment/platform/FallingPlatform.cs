@@ -10,7 +10,7 @@ namespace druggedcode.engine
     /// 현재 밟은 시간이 누적되지만 시간이 되기 전에 다시 점프하면 리셋되는 기능 고려
     /// </summary>
     [RequireComponent(typeof(Animator))]
-    public class FallingPlatform : TempPlatform, IPlayerRespawnListener
+    public class FallingPlatform : Platform, IPlayerRespawnListener
     {
         /// 바닥이 추락할 때 까지 남은 시간.
         public float TimeBeforeFall = 2f;
@@ -42,7 +42,7 @@ namespace druggedcode.engine
 
             if (_remainTime < 0)
             {
-                _collider.enabled = false;
+				mCollider.enabled = false;
                 _characterOn = false;
                 UpdateAnimator();
 
@@ -64,7 +64,7 @@ namespace druggedcode.engine
         public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint )
         {
             gameObject.SetActive(true);
-            _collider.enabled = true;
+			mCollider.enabled = true;
         }
 
         void OnCollisionEnter2D(Collision2D coll)

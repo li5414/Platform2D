@@ -86,7 +86,7 @@ public class ALocation : MonoBehaviour
 	virtual public void Run()
 	{
 		mStarted = DateTime.UtcNow;
-		Debug.Log("[Location]" + dts.name + "Run! (" + mStarted +")");
+		Debug.Log("[Location]'" + dts.name + "' Run! (" + mStarted +")");
 
 		CheckMission();
 	}

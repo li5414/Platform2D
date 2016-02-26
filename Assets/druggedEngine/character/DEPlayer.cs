@@ -11,7 +11,6 @@ namespace druggedcode.engine
 		protected bool mCanSlide;
 		protected bool mCanDash;
 
-
 		protected float mDashStartTime;
 
 		public void Slide()
@@ -28,7 +27,6 @@ namespace druggedcode.engine
 			mCanMove = false;
 			mCanDash = false;
 			mCanFacingUpdate = false;
-			controller.axisX = mFacing == Facing.LEFT ? -1f : 1f;
 			SetState( CharacterState.DASH );
 
 			mDashStartTime = Time.time;

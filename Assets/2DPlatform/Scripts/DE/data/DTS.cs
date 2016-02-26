@@ -66,7 +66,6 @@ public class DTS
 
 public class DTSCharacter: DTS
 {
-	
     public int hp;
     public int str;
     public int agi;

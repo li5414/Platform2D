@@ -10,9 +10,31 @@ using UnityEditor;
 
 namespace druggedcode.engine
 {
+	public enum CharacterState
+	{
+		NULL,
+		IDLE,
+		WALK,
+		RUN,
+		DASH,
+		ESCAPE,
+		CROUCH,
+		LADDER,
+		LOOKUP,
+		JUMP,
+		FALL,
+		WALLSLIDE,
+		JETPACK,
+		ATTACK,
+		DOWNATTACK,
+		UPATTACK,
+		DANCE,
+		DEAD
+	}
+
 	public class DECharacter : MonoBehaviour, IDamageable
 	{
-		static List<DECharacter> All = new List<DECharacter> ();
+		public static List<DECharacter> All = new List<DECharacter> ();
 
 		//----------------------------------------------------------------------------------------------------------
 		// Inspector
@@ -55,20 +77,17 @@ namespace druggedcode.engine
 		// public
 		//----------------------------------------------------------------------------------------------------------
 		public Ladder currentLadder{ get; set; }
-
 		public DEController controller{ get; private set; }
-
 		public int jumpCount{ get; set; }
-
 		public CharacterState state { get; protected set; }
+		public float CurrentSpeed { get; set; }
+		public DTSCharacter dts{get;set;}
 
 		//----------------------------------------------------------------------------------------------------------
 		// input
 		//----------------------------------------------------------------------------------------------------------
 		public float horizontalAxis { get; set; }
-
 		public float verticalAxis { get; set; }
-
 		public bool isRun{ get; set; }
 
 		//----------------------------------------------------------------------------------------------------------
@@ -256,11 +275,45 @@ namespace druggedcode.engine
 
 		void Move ()
 		{
-			if (mCanMove == false) return;
-			controller.axisX = horizontalAxis;
+			if( mCanMove == false ) return;
+			controller.vx = horizontalAxis * CurrentSpeed;
 		}
 
+		public void DeActive ()
+		{
+			print("----------DeActive");
+			controller.Stop();
+			controller.enabled = false;
 
+			CurrentSpeed = 0f;
+			horizontalAxis = 0f;
+			currentLadder = null;
+			enabled = false;
+
+			SetState( CharacterState.NULL );
+
+			/* reset state
+            InDialogueZone = false;
+            CurrentDialogueZone = null;
+            */
+		}
+
+		public void Active()
+		{
+			print("----------Active");
+			controller.enabled = true;
+			controller.CollisionsOn ();
+
+			enabled = true;
+			ResetJump ();
+
+			gameObject.SetActive( true );
+		}
+
+		public void Stop ()
+		{
+			controller.Stop ();
+		}
 
 		void FacingUpdate ()
 		{
@@ -275,133 +328,6 @@ namespace druggedcode.engine
 				SetFacing (Facing.LEFT);
 			}
 		}
-
-		void tempControllersxMove()
-		{
-//			if (mMoveLocked == false)
-//			{
-//				float moveFactor = state.IsGrounded ? AccelOnGround : AccelOnAir;
-//				float tx = axisX * CurrentSpeed;
-//
-//				if( stopped ) Debug.Log("tx:" + tx + "axisX: " + axisX + ", speed: " + CurrentSpeed );
-//
-//				if (tx != 0f) tx = Mathf.Lerp (_speed.x, tx, delta * moveFactor);
-//
-//				if (state.IsGrounded)
-//				{
-//					_speed.x += (tx - _speed.x) * PlatformFriction;
-//				}
-//				else
-//				{
-//					_speed.x = tx;
-//				}
-//			}
-		}
-
-
-//		protected virtual void HorizontalMovement()
-//		{	
-//			// if movement is prevented, we exit and do nothing
-//			if (!BehaviorState.CanMoveFreely)
-//				return;				
-//
-//			// If the value of the horizontal axis is positive, the character must face right.
-//			if (_horizontalMove>0.1f)
-//			{
-//				_normalizedHorizontalSpeed = _horizontalMove;
-//				if (!_isFacingRight)
-//					Flip();
-//			}		
-//			// If it's negative, then we're facing left
-//			else if (_horizontalMove<-0.1f)
-//			{
-//				_normalizedHorizontalSpeed = _horizontalMove;
-//				if (_isFacingRight)
-//					Flip();
-//			}
-//			else
-//			{
-//				_normalizedHorizontalSpeed=0;
-//			}
-//
-//			// we pass the horizontal force that needs to be applied to the controller.
-//			var movementFactor = _controller.State.IsGrounded ? _controller.Parameters.SpeedAccelerationOnGround : _controller.Parameters.SpeedAccelerationInAir;
-//			if (BehaviorParameters.SmoothMovement)
-//				_controller.SetHorizontalForce(Mathf.Lerp(_controller.Speed.x, _normalizedHorizontalSpeed * BehaviorParameters.MovementSpeed, Time.deltaTime * movementFactor));
-//			else
-//				_controller.SetHorizontalForce(_normalizedHorizontalSpeed * BehaviorParameters.MovementSpeed);
-//		}
-//
-//		protected virtual void VerticalMovement()
-//		{
-//
-//			// Looking up
-//			if ( (_verticalMove>0) && (_controller.State.IsGrounded) )
-//			{
-//				BehaviorState.LookingUp = true;		
-//				_sceneCamera.LookUp();
-//			}
-//			else
-//			{
-//				BehaviorState.LookingUp = false;
-//				_sceneCamera.ResetLookUpDown();
-//			}
-//
-//			// Manages the ground touching effect
-//			if (_controller.State.JustGotGrounded)
-//			{
-//				if (TouchTheGroundEffect != null)
-//				{
-//					Instantiate(TouchTheGroundEffect, _controller.BottomPosition, transform.rotation);
-//				}
-//			}
-//
-//			// if the character is not in a position where it can move freely, we do nothing.
-//			if (!BehaviorState.CanMoveFreely)
-//				return;
-//
-//			// Crouch Detection : if the player is pressing "down" and if the character is grounded and the crouch action is enabled
-//			if ( (_verticalMove<-0.1) && (_controller.State.IsGrounded) && (Permissions.CrouchEnabled) )
-//			{
-//				BehaviorState.Crouching = true;
-//				BehaviorParameters.MovementSpeed = BehaviorParameters.CrouchSpeed;
-//				BehaviorState.Running=false;
-//				_sceneCamera.LookDown();			
-//			}
-//			else
-//			{	
-//				// if the character is currently crouching, we'll check if it's in a tunnel
-//				if (BehaviorState.Crouching)
-//				{	
-//					if (HeadCollider==null)
-//					{
-//						BehaviorState.Crouching=false;
-//						return;
-//					}
-//					bool headCheck = Physics2D.OverlapCircle(HeadCollider.transform.position,HeadCollider.size.x/2,_controller.PlatformMask);			
-//					// if the character is not crouched anymore, we set 
-//					if (!headCheck)
-//					{
-//						if (!BehaviorState.Running)
-//							BehaviorParameters.MovementSpeed = BehaviorParameters.WalkSpeed;
-//						BehaviorState.Crouching = false;
-//						BehaviorState.CanJump=true;
-//					}
-//					else
-//					{
-//
-//						BehaviorState.CanJump=false;
-//					}
-//				}
-//			}
-//
-//			if (BehaviorState.CrouchingPreviously!=BehaviorState.Crouching)
-//			{
-//				Invoke ("RecalculateRays",Time.deltaTime*10);		
-//			}
-//
-//			BehaviorState.CrouchingPreviously=BehaviorState.Crouching;
-//		}
 
 		virtual protected void StateExit ()
 		{
@@ -428,26 +354,6 @@ namespace druggedcode.engine
 			}
 		}
 
-		public void DeActive ()
-		{
-			gameObject.SetActive (false);
-		}
-
-		public void Active ()
-		{
-			gameObject.SetActive (true);
-			//			SetState( CharacterState.IDLE );
-
-			//origin was player
-//			if( mIsActive ) return;
-//
-//			Controllable( true );
-//
-//			_controller.enabled = true;
-//
-//			mIsActive = true;
-		}
-
 		public void Kill ()
 		{
 			//GravityActive(true);
@@ -458,22 +364,9 @@ namespace druggedcode.engine
 		public void Spawn ( Vector3 pos )
 		{
 			mTr.position = pos;
-
-			controller.CollisionsOn ();
 			SetFacing (Facing.RIGHT);
-			ResetJump ();
 
-			/* reset state
-            InDialogueZone = false;
-            CurrentDialogueZone = null;
-            */
-
-			gameObject.SetActive (true);
-		}
-
-		public void Stop ()
-		{
-			controller.Stop ();
+			Active();
 		}
 
 		public void Attack ()
@@ -695,18 +588,18 @@ namespace druggedcode.engine
 		{
 			if (state)
 			{
-				if (controller.GravityScale == 0)
+				if (controller.gravityScale == 0)
 				{
-					controller.GravityScale = _originalGravity;
+					controller.gravityScale = _originalGravity;
 				}
 			}
 			else
 			{
-				if (controller.GravityScale != 0)
+				if (controller.gravityScale != 0)
 				{
-					_originalGravity = controller.GravityScale;
+					_originalGravity = controller.gravityScale;
 				}
-				controller.GravityScale = 0;
+				controller.gravityScale = 0;
 			}
 		}
 

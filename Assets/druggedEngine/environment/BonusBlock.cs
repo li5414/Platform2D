@@ -9,7 +9,7 @@ namespace druggedcode.engine
 	/// 히트 할 때마다 아이템을 스폰 할 건지 마지막 히트시에만 스폰할 것인지 결정하는 플래그 필요
 	/// </summary>
     [RequireComponent(typeof( Animator))]
-    public class BonusBlock : TempPlatform, IPlayerRespawnListener
+	public class BonusBlock : Platform, IPlayerRespawnListener
 	{
 		public GameObject SpawnedObject;
 		public int NumberOfAllowedHits = 3;

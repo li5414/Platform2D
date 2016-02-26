@@ -7,6 +7,7 @@
     "100": {
       "id": "100",
       "assetName": "Hitman",
+      "name": "Player_Hitman",
       "hp": 3,
       "str": 3,
       "agi": 3,
@@ -21,6 +22,7 @@
     "101": {
       "id": "101",
       "assetName": "Gunman",
+      "name": "Player_Gunman",
       "hp": 4,
       "str": 4,
       "agi": 4,
