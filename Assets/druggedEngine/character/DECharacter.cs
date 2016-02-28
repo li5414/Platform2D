@@ -10,696 +10,750 @@ using UnityEditor;
 
 namespace druggedcode.engine
 {
-	public enum CharacterState
-	{
-		NULL,
-		IDLE,
-		WALK,
-		RUN,
-		DASH,
-		ESCAPE,
-		CROUCH,
-		LADDER,
-		LOOKUP,
-		JUMP,
-		FALL,
-		WALLSLIDE,
-		JETPACK,
-		ATTACK,
-		DOWNATTACK,
-		UPATTACK,
-		DANCE,
-		DEAD
-	}
+    public enum CharacterState
+    {
+        NULL,
+        IDLE,
+        WALK,
+        RUN,
+        DASH,
+        ESCAPE,
+        CROUCH,
+        LADDER,
+        LOOKUP,
+        JUMP,
+        FALL,
+        WALLSLIDE,
+        JETPACK,
+        ATTACK_GROUND,
+        ATTACK_AIR,
+        DEAD
+    }
 
-	public class DECharacter : MonoBehaviour, IDamageable
-	{
-		public static List<DECharacter> All = new List<DECharacter> ();
+    public class DECharacter : MonoBehaviour, IDamageable
+    {
+        public static List<DECharacter> All = new List<DECharacter>();
 
-		//----------------------------------------------------------------------------------------------------------
-		// Inspector
-		//----------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------
+        // Inspector
+        //----------------------------------------------------------------------------------------------------------
 
-		public Transform body;
-		public AnimationType bodyType;
+        public Transform body;
+        public AnimationType bodyType;
 
-		[Header ("Speed")]
-		public float CrouchSpeed = 1f;
-		public float WalkSpeed = 4f;
-		public float RunSpeed = 10f;
-		public float LadderSpeed = 2f;
+        [Header("Move")]
+        public bool smoothMovement = true;
+        public float accelOnGround = 10f;
+        public float accelOnAir = 3f;
 
-		[Header ("Jump")]
-		public float JumpHeight = 3f;
-		public float JumpHeightOnAir = 2f;
-		public int jumpMax = 3;
+        [Header("Speed")]
+        public float CrouchSpeed = 1f;
+        public float WalkSpeed = 4f;
+        public float RunSpeed = 10f;
+        public float LadderSpeed = 2f;
 
-		[Header ("Animations")]
-		[SpineAnimation]
-		public string idleAnim;
-		[SpineAnimation]
-		public string walkAnim;
-		[SpineAnimation]
-		public string runAnim;
-		[SpineAnimation]
-		public string jumpAnim;
-		[SpineAnimation]
-		public string fallAnim;
-		[SpineAnimation]
-		public string attackAnim;
+        [Header("Jump")]
+        public float JumpHeight = 3f;
+        public float JumpHeightOnAir = 2f;
+        public int jumpMax = 3;
 
-		//----------------------------------------------------------------------------------------------------------
-		// event
-		//----------------------------------------------------------------------------------------------------------
-		public UnityAction OnUpdateInput;
+        [Header("Attack")]
+        public float waitAttackDuration = 0.5f;
 
-		//----------------------------------------------------------------------------------------------------------
-		// public
-		//----------------------------------------------------------------------------------------------------------
-		public Ladder currentLadder{ get; set; }
-		public DEController controller{ get; private set; }
-		public int jumpCount{ get; set; }
-		public CharacterState state { get; protected set; }
-		public float CurrentSpeed { get; set; }
-		public DTSCharacter dts{get;set;}
+        [Header("Animations")]
+        [SpineAnimation]
+        public string idleAnim;
+        [SpineAnimation]
+        public string walkAnim;
+        [SpineAnimation]
+        public string runAnim;
+        [SpineAnimation]
+        public string jumpAnim;
+        [SpineAnimation]
+        public string fallAnim;
+        [SpineAnimation]
+        public string groundAttackAnim;
+        [SpineAnimation]
+        public string airAttackAnim;
 
-		//----------------------------------------------------------------------------------------------------------
-		// input
-		//----------------------------------------------------------------------------------------------------------
-		public float horizontalAxis { get; set; }
-		public float verticalAxis { get; set; }
-		public bool isRun{ get; set; }
+        //----------------------------------------------------------------------------------------------------------
+        // event
+        //----------------------------------------------------------------------------------------------------------
+        public UnityAction OnUpdateInput;
 
-		//----------------------------------------------------------------------------------------------------------
-		// private,protected
-		//----------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------
+        // public
+        //----------------------------------------------------------------------------------------------------------
+        public Ladder currentLadder { get; set; }
+        public DEController controller { get; private set; }
+        public int jumpCount { get; set; }
+        public CharacterState state { get; protected set; }
+        public float CurrentSpeed { get; set; }
+        public DTSCharacter dts { get; set; }
 
-		protected Transform mTr;
-		protected float jumpStartTime;
+        //----------------------------------------------------------------------------------------------------------
+        // input
+        //----------------------------------------------------------------------------------------------------------
+        public float horizontalAxis { get; set; }
+        public float verticalAxis { get; set; }
+        public bool isRun { get; set; }
 
-		protected float jumpElapsedTime{ get { return Time.time - jumpStartTime; } }
+        //----------------------------------------------------------------------------------------------------------
+        // private,protected
+        //----------------------------------------------------------------------------------------------------------
 
-		//캐릭터의 중력을 활성화 하거나 비활성화 할때 이전 중력값을 기억하기 위한 용도
-		protected float _originalGravity;
-		protected Facing mFacing;
+        protected Transform mTr;
 
-		SkeletonAnimation mSkeletonAnimation;
-		protected SkeletonGhost mGhost;
+        protected float jumpStartTime;
+        protected float jumpElapsedTime { get { return Time.time - jumpStartTime; } }
 
-		protected float mWaitNextAttackStartTime;
-		protected bool mWaitNextAttack;
+        protected float mDashStartTime;
 
-		//----------------------------------------------------------------------------------------------------------
-		// behaviour
-		//----------------------------------------------------------------------------------------------------------
-		protected bool mCanJump;
-		protected bool mCanMove;
-		protected bool mCanFacingUpdate;
-		protected bool mCanAttack;
-
-		virtual protected void Awake ()
-		{
-			mTr = transform;
-
-			controller = GetComponent<DEController> ();
-
-		}
-
-		virtual protected void OnEnable ()
-		{
-			Register ();
-		}
-
-		virtual protected void OnDisable ()
-		{
-			Unregister ();
-		}
-
-		void Register ()
-		{
-			if (All.Contains (this) == false) All.Add (this);
-		}
-
-		void Unregister ()
-		{
-			if (All.Contains (this)) All.Remove (this);
-		}
-
-		virtual protected void Start ()
-		{
-			switch (bodyType)
-			{
-				case AnimationType.SPINE:
-
-					mGhost = GetComponentInChildren<SkeletonGhost> ();
-
-					mSkeletonAnimation = GetComponentInChildren<SkeletonAnimation> ();
-					mSkeletonAnimation.state.Event += HandleEvent;
-					mSkeletonAnimation.state.Complete += HandleComplete;
-					//mSkeletonAnimation.state.Start += OnStart;
-					//mSkeletonAnimation.state.End += OnEnd;
-					break;
-			}
-		}
-
-		virtual protected void HandleComplete (Spine.AnimationState state, int trackIndex, int loopCount)
-		{
-			var entry = state.GetCurrent (trackIndex);
-			if (entry.Animation.Name.IndexOf ("Attack") == 0)
-			{
-				SetState (CharacterState.IDLE);
-			}
-		}
-
-		virtual protected void HandleEvent (Spine.AnimationState state, int trackIndex, Spine.Event e)
-		{
-			var entry = state.GetCurrent (trackIndex);
-			string name = entry.Animation.Name;
-			switch (e.Data.name)
-			{
-				case "XVelocity":
-					//punch
-					//mVelocity.x = mFlipped ? -punchVelocity * e.Float : punchVelocity * e.Float;
-					break;
-				case "YVelocity":
-					//업어택하면서 위로 올라갖.
-					//mVelocity.y = uppercutVelocity * e.Float;
-					break;
-
-				case "Pause":
-					mWaitNextAttackStartTime = Time.time;
-					mWaitNextAttack = true;
-					entry.TimeScale = 0f;
-
-					//downattack
-					//							velocityLock = e.Int == 1 ? true : false;
-					break;
-
-				case "Ghosting":
-					GhostMode( e.Int == 1 ? true : false );
-					break;
+        protected float mWaitNextAttackStartTime;
+        protected bool mWaitNextAttack;
 
 
+        //캐릭터의 중력을 활성화 하거나 비활성화 할때 이전 중력값을 기억하기 위한 용도
+        protected float _originalGravity;
+        protected Facing mFacing;
 
-				case "Footstep":
-					//if (OnFootstep != null) OnFootstep(transform);
-					break;
-				case "Sound":
-					SoundPalette.PlaySound(e.String, 1f, 1, transform.position);
-					break;
-				case "Effect":
-					switch (e.String)
-					{
-						case "GroundJump":
-							//								if (groundJumpPrefab && controller.state.IsGround)
-							//								{
-							//									SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
-							//								}
-							break;
-					}
-					break;
-			}
-		}
+        SkeletonAnimation mSkeletonAnimation;
+        protected SkeletonGhost mGhost;
 
-		protected void GhostMode (bool use)
-		{
-			if (mGhost == null) return;
-			mGhost.ghostingEnabled = use;
-		}
+        //----------------------------------------------------------------------------------------------------------
+        // behaviour
+        //----------------------------------------------------------------------------------------------------------
+        protected bool mCanJump;
+        protected bool mCanMove;
+        protected bool mCanFacingUpdate;
+        protected bool mCanAttack;
+        protected bool mCanEscape;
+        protected bool mCanDash;
 
-		protected void IgnoreCharacterCollisions (bool ignore)
-		{
-//			foreach (GameCharacter gc in All)
-//			{
-//				if (gc == this) continue;
-//				gc.IgnoreCollision(controller.primaryCollider, ignore);
-//			}
-		}
 
-		void IgnoreCollision (Collider2D tgCollider, bool ignore)
-		{
-//			Physics2D.IgnoreCollision(controller.primaryCollider, tgCollider, ignore);
-		}
+        virtual protected void Awake()
+        {
+            mTr = transform;
 
-		public void SetState (CharacterState next)
-		{
-			if (state == next)
-			{
-				Debug.Log ("---------same state!!!!! " + state + " > " + next);
-				return;
-			}
-			else
-			{
-				if (state == CharacterState.WALLSLIDE && next == CharacterState.FALL)
-				{
-					float a = 1f;
-				}
+            controller = GetComponent<DEController>();
 
-				StateExit ();
-				//Debug.Log (state + " > " + next);
-				state = next;
-			}
+        }
 
-			StateEnter ();
-		}
+        virtual protected void OnEnable()
+        {
+            Register();
+        }
 
-		void Update ()
-		{
-			if (OnUpdateInput != null) OnUpdateInput ();
+        virtual protected void OnDisable()
+        {
+            Unregister();
+        }
 
-			StateUpdate ();
+        void Register()
+        {
+            if (All.Contains(this) == false) All.Add(this);
+        }
 
-			FacingUpdate ();
-			Move ();
-		}
+        void Unregister()
+        {
+            if (All.Contains(this)) All.Remove(this);
+        }
 
-		void Move ()
-		{
-			if( mCanMove == false ) return;
-			controller.vx = horizontalAxis * CurrentSpeed;
-		}
+        virtual protected void Start()
+        {
+            switch (bodyType)
+            {
+                case AnimationType.SPINE:
 
-		public void DeActive ()
-		{
-			print("----------DeActive");
-			controller.Stop();
-			controller.enabled = false;
+                    mGhost = GetComponentInChildren<SkeletonGhost>();
 
-			CurrentSpeed = 0f;
-			horizontalAxis = 0f;
-			currentLadder = null;
-			enabled = false;
+                    mSkeletonAnimation = GetComponentInChildren<SkeletonAnimation>();
+                    mSkeletonAnimation.state.Event += HandleEvent;
+                    mSkeletonAnimation.state.Complete += HandleComplete;
+                    break;
+            }
+        }
 
-			SetState( CharacterState.NULL );
+        virtual protected void HandleComplete(Spine.AnimationState animState, int trackIndex, int loopCount)
+        {
+            var entry = animState.GetCurrent(trackIndex);
+            if (entry.Animation.Name.IndexOf("Attack") == 0)
+            {
+                SetState(CharacterState.IDLE);
+            }
+        }
 
-			/* reset state
+        virtual protected void HandleEvent(Spine.AnimationState animState, int trackIndex, Spine.Event e)
+        {
+            var entry = animState.GetCurrent(trackIndex);
+            string name = entry.Animation.Name;
+            switch (e.Data.name)
+            {
+                //				WaitAttack
+                case "VX":
+                    controller.AddForceX(mFacing == Facing.RIGHT ? e.Float : -e.Float);
+                    break;
+                case "VY":
+                    controller.AddForceY(e.Float);
+                    break;
+
+                case "WaitAttack":
+                    WaitNextAttack();
+                    break;
+
+                case "GravityScale":
+                    controller.Stop();
+                    controller.gravityScale = e.Float;
+                    break;
+
+                case "Ghosting":
+                    GhostMode(e.Int == 1 ? true : false, e.String, e.Float);
+                    break;
+
+                case "Footstep":
+                    //if (OnFootstep != null) OnFootstep(transform);
+                    break;
+                case "Sound":
+                    SoundPalette.PlaySound(e.String, 1f, 1, transform.position);
+                    break;
+            }
+        }
+
+        protected void GhostMode(bool use, string str = "", float f = 0f)
+        {
+            if (mGhost == null) return;
+
+            mGhost.ghostingEnabled = use;
+
+            if (use == false) return;
+
+            if (f != 0f)
+            {
+                //mGhost.spawnRate = f;
+                //or
+                //mGhost.fadeSpeed = f;
+            }
+
+            if (string.IsNullOrEmpty(str) == false)
+            {
+                mGhost.color = ColorUtil.HexToColor(str);
+            }
+        }
+
+        public void DeActive()
+        {
+            controller.Stop();
+            controller.enabled = false;
+
+            CurrentSpeed = 0f;
+            horizontalAxis = 0f;
+            currentLadder = null;
+            enabled = false;
+
+            /* reset state
             InDialogueZone = false;
             CurrentDialogueZone = null;
             */
-		}
-
-		public void Active()
-		{
-			print("----------Active");
-			controller.enabled = true;
-			controller.CollisionsOn ();
-
-			enabled = true;
-			ResetJump ();
-
-			gameObject.SetActive( true );
-		}
-
-		public void Stop ()
-		{
-			controller.Stop ();
-		}
-
-		void FacingUpdate ()
-		{
-			if (mCanFacingUpdate == false) return;
-
-			if (mFacing == Facing.LEFT && horizontalAxis > 0.1f)
-			{
-				SetFacing (Facing.RIGHT);
-			}
-			else if (mFacing == Facing.RIGHT && horizontalAxis < -0.1f)
-			{
-				SetFacing (Facing.LEFT);
-			}
-		}
-
-		virtual protected void StateExit ()
-		{
-
-		}
-
-		virtual protected void StateUpdate ()
-		{
-
-		}
-
-		virtual protected void StateEnter ()
-		{
-
-		}
-
-		void LateUpdate ()
-		{
-			if (controller.state.JustGotGrounded)
-			{
-				ResetJump ();
-				//SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-				//if (_effectAndSound.TouchTheGroundEffect != null) Instantiate(_effectAndSound.TouchTheGroundEffect, transform.position, transform.rotation);
-			}
-		}
-
-		public void Kill ()
-		{
-			//GravityActive(true);
-			//_state.TriggerDead = true;
-			//todo. respawn after dead motion.
-		}
-
-		public void Spawn ( Vector3 pos )
-		{
-			mTr.position = pos;
-			SetFacing (Facing.RIGHT);
-
-			Active();
-		}
-
-		public void Attack ()
-		{
-			if( mCanAttack == false ) return;
-
-			if( state != CharacterState.ATTACK )
-			{
-				SetState( CharacterState.ATTACK );
-
-				mCanMove = false;
-				mCanFacingUpdate = false;
-				mWaitNextAttack = false;
-				Stop();
-			}
-
-			if( controller.state.IsGrounded == false )
-			{
-				AirAttack();
-			}
-			else
-			{
-				GroundAttack();
-			}
-
-		}
-
-		virtual protected void GroundAttack()
-		{
-			PlayAnimation( attackAnim );
-		}
-
-		virtual protected void AirAttack()
-		{
-
-		}
-
-		protected void NextAttack ()
-		{
-			mWaitNextAttack = false;
-			switch (bodyType)
-			{
-				case AnimationType.SPINE:
-					mSkeletonAnimation.state.GetCurrent (0).TimeScale = 1;
-					break;
-			}
-
-		}
-
-
-		public void ResetJump ()
-		{
-			jumpCount = 0;
-		}
-
-		//추후 wall 이 아니라 특정 오브젝트를 밀고 있는지를 알 수 있는 메소드로 변경하자
-		public bool IsPressAgainstWall {
-			get {
-				if (controller.state.CollidingSide == null) return false;
-
-				Wall wall = controller.state.CollidingSide.GetComponent<Wall> ();
-
-				if (wall == null) return false;
-				else if (wall.slideWay == WallSlideWay.NOTHING) return false;
-				else if ((wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH) && mFacing == Facing.RIGHT && horizontalAxis > 0f) return true;
-				else if ((wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH) && mFacing == Facing.LEFT && horizontalAxis < 0f) return true;
-				return false;
-			}
-		}
-
-		bool IsAblePassOneWay ()
-		{
-			if (verticalAxis >= 0f) return false;
-			if (controller.state.IsOnOneway == false) return false;
-
-			return true;
-		}
-
-		virtual public void Jump ()
-		{
-			if (mCanJump == false) return;
-			if (jumpCount == jumpMax) return;
-
-			mCanMove = true;
-			mCanFacingUpdate = true;
-
-			var wasWall = false;
-
-//			else if( _characterState.IsLadderClimb == true )
-//			{
-//				_character.DoJumpBelow();
-//				SetState(PlayerState.FALL);
-//			}
-
-			//아래 점프 체크도 한다
-			if (IsAblePassOneWay ())
-			{
-				mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
-				controller.state.ClearPlatform ();
-				controller.PassThroughOneway ();
-				return;
-			}
-			//사다리타는 상황이고 아래를 눌렀다면
-			else if (state == CharacterState.LADDER && verticalAxis < -0.1f)
-			{
-				Fall ();
-				return;
-			}
-			else if (state == CharacterState.WALLSLIDE)
-			{
-				wasWall = true;
-				controller.vx = mFacing == Facing.LEFT ? 4 : -4;
-				controller.LockMove (0.5f);
-			}
-
-			float jumpPower;
-			if (jumpCount == 0)
-			{
-				controller.state.ClearPlatform ();
-				GravityActive (true);
-				PlayAnimation (jumpAnim);
-
-				jumpPower = Mathf.Sqrt (2f * JumpHeight * Mathf.Abs (controller.gravity));//min 3 , max 100000
-
-				//			if (groundJumpPrefab != null)
-				//			{
-				//				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
-				//				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
-				//			}
-
-//				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
-//				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
-			}
-			else
-			{
-				PlayAnimation (jumpAnim);
-				jumpPower = Mathf.Sqrt (2f * JumpHeightOnAir * Mathf.Abs (controller.gravity));
-
-				//if (airJumpPrefab != null) Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
-			}
-
-			controller.vy = jumpPower;
-			jumpStartTime = Time.time;
-
-
-//			SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-			//if (_effectAndSound.JumpSfx != null) SoundManager.Instance.PlaySound(_effectAndSound.JumpSfx, transform.position);
-
-			jumpCount++;
-
-			SetState (CharacterState.JUMP);
-		}
-
-		protected void DoJumpBelow ()
-		{
-			//if can't try jump
-			Fall ();
-		}
-
-		//ActionState.FALL은 직접적으로 호출 하지 말도록 하자. 점프 후 떨어지는 것과 지면에서 갑자기 떨어지는 것은 차이가 있따.
-		//이 차이는 점프 수를 소비하냐 아니냐의 차이이다.
-		//가령 이미 점프 중이였다면 fall 상태로 가면서 점프 수는 변동이 되지 않지만 갑자기 지면에서 떨어진 경우 점프를 소비 시켜야 한다.
-		protected void Fall (bool useJump = true)
-		{
-			if (useJump) jumpCount++;
-
-			GravityActive (true);
-			PlayAnimation (fallAnim);
-			SetState (CharacterState.FALL);
-		}
-
-		//----------------------------------------------------------------------------------------------------------
-		// body controll
-		//----------------------------------------------------------------------------------------------------------
-
-		public void BodyPosition (Vector2 translate)
-		{
-			body.transform.localPosition = translate;
-		}
-
-
-		//----------------------------------------------------------------------------------------------------------
-		// ientface
-		//----------------------------------------------------------------------------------------------------------
-
-		public void TakeDamage (int damage, GameObject attacker)
-		{
-			//hit sound play
-			//hit effect instantiate
-
-			// 일정시간동안 레이어12 와 13 과의 충돌을 제거한다 (탄,적)
-			//Physics2D.IgnoreLayerCollision(9, 12, true);
-			//Physics2D.IgnoreLayerCollision(9, 13, true);
-
-			//StartCoroutine(ResetLayerCollision(0.5f));
-
-			// 캐릭터의 sprite 를 반짝거리게 만든다.
-			//			if (GetComponent<Renderer>() != null)
-			//			{
-			//				Color flickerColor = new Color32(255, 20, 20, 255);
-			//				StartCoroutine(Flicker(_initialColor, flickerColor, 0.05f));
-			//			}
-
-			//데미지만큼 hp 감소
-
-			//            Health -= damage;
-			//            if (Health<=0)
-			//            {
-			//                LevelManager.Instance.KillPlayer();
-			//            }
-		}
-
-		//----------------------------------------------------------------------------------------------------------
-		// state
-		//----------------------------------------------------------------------------------------------------------
-
-		//캐릭터의 중력을 활성화 하거나 비활성화한다.
-		public void GravityActive (bool state)
-		{
-			if (state)
-			{
-				if (controller.gravityScale == 0)
-				{
-					controller.gravityScale = _originalGravity;
-				}
-			}
-			else
-			{
-				if (controller.gravityScale != 0)
-				{
-					_originalGravity = controller.gravityScale;
-				}
-				controller.gravityScale = 0;
-			}
-		}
-
-		public void UpdatePhysicInfo (PhysicInfo physicInfo)
-		{
-			controller.SetPhysicsSpace (physicInfo);
-		}
-
-		public void ResetPhysicInfo ()
-		{
-			controller.ResetPhysicInfo ();
-		}
-
-		//----------------------------------------------------------------------------------------------------------
-		// bodyHandle
-		//----------------------------------------------------------------------------------------------------------
-
-		void SetFacing (Facing facing)
-		{
-			mFacing = facing;
-
-			switch (mFacing)
-			{
-				case Facing.RIGHT:
-					body.localScale = new Vector3 (1f, body.localScale.y, body.localScale.z);
-					break;
-
-				case Facing.LEFT:
-					body.localScale = new Vector3 (-1f, body.localScale.y, body.localScale.z);
-					break;
-			}
-		}
-
-		protected bool AnimFilp {
-			set {
-				switch (bodyType)
-				{
-					case AnimationType.SPINE:
-						mSkeletonAnimation.Skeleton.FlipX = value;
-						break;
-				}
-			}
-		}
-
-
-		protected float currentAnimationDuration {
-			get {
-				switch (bodyType)
-				{
-					case AnimationType.SPINE:
-						return mSkeletonAnimation.state.GetCurrent (0).animation.Duration;
-						break;
-				}
-
-				return 0f;
-			}
-		}
-
-		protected void currentAnimationTimeScale (float timeScale)
-		{
-			switch (bodyType)
-			{
-				case AnimationType.SPINE:
-					mSkeletonAnimation.state.GetCurrent (0).TimeScale = timeScale;
-					break;
-			}
-		}
-
-		protected void PlayAnimation (string animName, bool loop = true, int trackIndex = 0)
-		{
-			switch (bodyType)
-			{
-				case AnimationType.SPINE:
-					mSkeletonAnimation.state.SetAnimation (trackIndex, animName, loop);
-					break;
-			}
-		}
-
-		protected bool HasAnim (string animName)
-		{
-			switch (bodyType)
-			{
-				case AnimationType.SPINE:
-					return mSkeletonAnimation.state.Data.SkeletonData.FindAnimation (animName) == null ? false : true;
-					break;
-			}
-
-			return false;
-		}
-
-
-		#if UNITY_EDITOR
-		void OnDrawGizmos ()
-		{
-			if (!Application.isPlaying) return;
-
-			Handles.Label (mTr.position + new Vector3 (0, 1.2f, 0), state.ToString ());
-		}
-		#endif
-	}
+        }
+
+        public void Active()
+        {
+            controller.enabled = true;
+            controller.CollisionsOn();
+
+            enabled = true;
+            ResetJump();
+
+            gameObject.SetActive(true);
+        }
+
+        protected void IgnoreCharacterCollisions(bool ignore)
+        {
+            //			foreach (GameCharacter gc in All)
+            //			{
+            //				if (gc == this) continue;
+            //				gc.IgnoreCollision(controller.primaryCollider, ignore);
+            //			}
+        }
+
+        void IgnoreCollision(Collider2D tgCollider, bool ignore)
+        {
+            //			Physics2D.IgnoreCollision(controller.primaryCollider, tgCollider, ignore);
+        }
+
+        void Update()
+        {
+            if (OnUpdateInput != null) OnUpdateInput();
+
+            TimesUpdate();
+            StateUpdate();
+            FacingUpdate();
+            Move();
+        }
+
+        void LateUpdate()
+        {
+            if (controller.state.JustGotGrounded)
+            {
+                ResetJump();
+                //SoundPalette.PlaySound(landSound, 1, 1, transform.position);
+                //if (_effectAndSound.TouchTheGroundEffect != null) Instantiate(_effectAndSound.TouchTheGroundEffect, transform.position, transform.rotation);
+            }
+        }
+
+        void FacingUpdate()
+        {
+            if (mCanFacingUpdate == false) return;
+
+            if (mFacing == Facing.LEFT && horizontalAxis > 0.1f)
+            {
+                SetFacing(Facing.RIGHT);
+            }
+            else if (mFacing == Facing.RIGHT && horizontalAxis < -0.1f)
+            {
+                SetFacing(Facing.LEFT);
+            }
+        }
+
+        void Move()
+        {
+            if (mCanMove == false) return;
+
+            float targetVX = horizontalAxis * CurrentSpeed;
+            if (targetVX != 0f && smoothMovement)
+            {
+                float moveFactor = controller.state.IsGrounded ? accelOnGround : accelOnAir;
+                targetVX = Mathf.Lerp(controller.vx, targetVX, Time.deltaTime * moveFactor);
+            }
+
+            controller.vx = targetVX;
+        }
+
+        public void Stop()
+        {
+            controller.Stop();
+        }
+
+        void TimesUpdate()
+        {
+            if (mWaitNextAttack)
+            {
+                if (Time.time - mWaitNextAttackStartTime > waitAttackDuration) StopWaitNextAttack();
+            }
+        }
+
+        public void SetState(CharacterState next)
+        {
+            if (state == next)
+            {
+                //Debug.Log("---------same state!!!!! " + state + " > " + next);
+                return;
+            }
+            else
+            {
+                StateExit();
+                //Debug.Log (state + " > " + next);
+                state = next;
+            }
+
+            StateEnter();
+        }
+
+        virtual protected void StateExit()
+        {
+
+        }
+
+        virtual protected void StateUpdate()
+        {
+
+        }
+
+        virtual protected void StateEnter()
+        {
+
+        }
+
+        public void Kill()
+        {
+            //GravityActive(true);
+            //_state.TriggerDead = true;
+            //todo. respawn after dead motion.
+        }
+
+        public void Spawn(Vector3 pos)
+        {
+            mTr.position = pos;
+            SetFacing(Facing.RIGHT);
+
+            Active();
+        }
+
+        public void Escape()
+        {
+            if (mCanEscape == false) return;
+
+            SetState(CharacterState.ESCAPE);
+        }
+
+        public void Dash()
+        {
+            if (mCanDash == false) return;
+
+            mCanMove = false;
+            mCanDash = false;
+            mCanFacingUpdate = false;
+            SetState(CharacterState.DASH);
+
+            mDashStartTime = Time.time;
+        }
+
+        public void Attack()
+        {
+            if (mCanAttack == false) return;
+
+            mCanMove = false;
+            mCanFacingUpdate = false;
+            mCanAttack = false;
+
+            Stop();
+
+            if (mWaitNextAttack)
+            {
+                NextAttack();
+            }
+            else if (controller.state.IsGrounded)
+            {
+                SetState(CharacterState.ATTACK_GROUND);
+                GroundAttack();
+            }
+            else
+            {
+                SetState(CharacterState.ATTACK_AIR);
+                AirAttack();
+            }
+        }
+
+        virtual protected void GroundAttack()
+        {
+            PlayAnimation(groundAttackAnim);
+        }
+
+        virtual protected void AirAttack()
+        {
+            PlayAnimation(airAttackAnim);
+        }
+
+        void WaitNextAttack()
+        {
+            if (state == CharacterState.ATTACK_GROUND == false) return;
+
+            mCanAttack = true;
+            mWaitNextAttack = true;
+            mWaitNextAttackStartTime = Time.time;
+            currentAnimationTimeScale(0f);
+        }
+
+        void StopWaitNextAttack()
+        {
+            mWaitNextAttack = false;
+            SetState(CharacterState.IDLE);
+        }
+
+        protected void NextAttack()
+        {
+            mWaitNextAttack = false;
+            switch (bodyType)
+            {
+                case AnimationType.SPINE:
+                    mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
+                    break;
+            }
+        }
+
+        public void ResetJump()
+        {
+            jumpCount = 0;
+        }
+
+        bool IsAblePassOneWay()
+        {
+            if (verticalAxis >= 0f) return false;
+            if (controller.state.IsOnOneway == false) return false;
+
+            return true;
+        }
+
+        virtual public void Jump()
+        {
+            if (mCanJump == false) return;
+            if (jumpCount == jumpMax) return;
+
+            mCanMove = true;
+            mCanFacingUpdate = true;
+            mCanEscape = false;
+
+            //아래 점프 체크도 한다
+            if (IsAblePassOneWay())
+            {
+                PassOneway();
+                return;
+            }
+            //사다리타는 상황이고 아래를 눌렀다면
+            else if (state == CharacterState.LADDER && verticalAxis < -0.1f)
+            {
+                Fall();
+                return;
+            }
+            //벽을 타고 있다면
+            else if (state == CharacterState.WALLSLIDE)
+            {
+                controller.vx = mFacing == Facing.LEFT ? 4 : -4;
+                controller.LockMove(0.5f);
+            }
+
+            CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
+
+            float jumpPower;
+            if (jumpCount == 0)
+            {
+                controller.state.ClearPlatform();
+                GravityActive(true);
+                PlayAnimation(jumpAnim);
+
+                jumpPower = Mathf.Sqrt(2f * JumpHeight * Mathf.Abs(controller.Gravity));//min 3 , max 100000
+
+                //			if (groundJumpPrefab != null)
+                //			{
+                //				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
+                //				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
+                //			}
+
+                //				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
+                //				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
+            }
+            else
+            {
+                PlayAnimation(jumpAnim);
+                jumpPower = Mathf.Sqrt(2f * JumpHeightOnAir * Mathf.Abs(controller.Gravity));
+
+                //if (airJumpPrefab != null) Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
+            }
+
+            controller.vy = jumpPower;
+            jumpStartTime = Time.time;
+
+
+            //			SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
+            //if (_effectAndSound.JumpSfx != null) SoundManager.Instance.PlaySound(_effectAndSound.JumpSfx, transform.position);
+
+            jumpCount++;
+
+            SetState(CharacterState.JUMP);
+        }
+
+        protected void PassOneway()
+        {
+            mTr.position = new Vector2(mTr.position.x, mTr.position.y - 0.1f);
+            controller.state.ClearPlatform();
+            controller.PassThroughOneway();
+            Fall();
+        }
+
+        //ActionState.FALL은 직접적으로 호출 하지 말도록 하자. 점프 후 떨어지는 것과 지면에서 갑자기 떨어지는 것은 차이가 있다.
+        //이 차이는 점프 수를 소비하냐 아니냐의 차이이다.
+        //가령 이미 점프 중이였다면 fall 상태로 가면서 점프 수는 변동이 되지 않지만 갑자기 지면에서 떨어진 경우 점프를 소비 시켜야 한다.
+        protected void Fall(bool useJump = true)
+        {
+            if (useJump) jumpCount++;
+
+            GravityActive(true);
+            PlayAnimation(fallAnim);
+            SetState(CharacterState.FALL);
+        }
+
+        //----------------------------------------------------------------------------------------------------------
+        // interface
+        //----------------------------------------------------------------------------------------------------------
+
+        public void TakeDamage(int damage, GameObject attacker)
+        {
+            //hit sound play
+            //hit effect instantiate
+
+            // 일정시간동안 레이어12 와 13 과의 충돌을 제거한다 (탄,적)
+            //Physics2D.IgnoreLayerCollision(9, 12, true);
+            //Physics2D.IgnoreLayerCollision(9, 13, true);
+
+            //StartCoroutine(ResetLayerCollision(0.5f));
+
+            // 캐릭터의 sprite 를 반짝거리게 만든다.
+            //			if (GetComponent<Renderer>() != null)
+            //			{
+            //				Color flickerColor = new Color32(255, 20, 20, 255);
+            //				StartCoroutine(Flicker(_initialColor, flickerColor, 0.05f));
+            //			}
+
+            //데미지만큼 hp 감소
+
+            //            Health -= damage;
+            //            if (Health<=0)
+            //            {
+            //                LevelManager.Instance.KillPlayer();
+            //            }
+        }
+
+        //----------------------------------------------------------------------------------------------------------
+        // physics
+        //----------------------------------------------------------------------------------------------------------
+
+        //캐릭터의 중력을 활성화 하거나 비활성화한다.
+        public void GravityActive(bool state)
+        {
+            if (state)
+            {
+                if (controller.gravityScale == 0)
+                {
+                    controller.gravityScale = _originalGravity;
+                }
+            }
+            else
+            {
+                if (controller.gravityScale != 0)
+                {
+                    _originalGravity = controller.gravityScale;
+                }
+                controller.gravityScale = 0;
+            }
+        }
+
+        public void UpdatePhysicInfo(PhysicInfo physicInfo)
+        {
+            controller.SetPhysicsSpace(physicInfo);
+        }
+
+        public void ResetPhysicInfo()
+        {
+            controller.ResetPhysicInfo();
+        }
+
+        //----------------------------------------------------------------------------------------------------------
+        // body Controll
+        //----------------------------------------------------------------------------------------------------------
+
+        public void BodyPosition(Vector2 translate)
+        {
+            body.transform.localPosition = translate;
+        }
+
+        void SetFacing(Facing facing)
+        {
+            mFacing = facing;
+
+            switch (mFacing)
+            {
+                case Facing.RIGHT:
+                    body.localScale = new Vector3(1f, body.localScale.y, body.localScale.z);
+                    break;
+
+                case Facing.LEFT:
+                    body.localScale = new Vector3(-1f, body.localScale.y, body.localScale.z);
+                    break;
+            }
+        }
+
+        protected bool AnimFilp
+        {
+            set
+            {
+                switch (bodyType)
+                {
+                    case AnimationType.SPINE:
+                        mSkeletonAnimation.Skeleton.FlipX = value;
+                        break;
+                }
+            }
+        }
+
+
+        protected float currentAnimationDuration
+        {
+            get
+            {
+                switch (bodyType)
+                {
+                    case AnimationType.SPINE:
+                        return mSkeletonAnimation.state.GetCurrent(0).animation.Duration;
+                        break;
+                }
+
+                return 0f;
+            }
+        }
+
+        protected void currentAnimationTimeScale(float timeScale)
+        {
+            switch (bodyType)
+            {
+                case AnimationType.SPINE:
+                    mSkeletonAnimation.state.GetCurrent(0).TimeScale = timeScale;
+                    break;
+            }
+        }
+
+        protected void PlayAnimation(string animName, bool loop = true, int trackIndex = 0)
+        {
+            switch (bodyType)
+            {
+                case AnimationType.SPINE:
+                    mSkeletonAnimation.state.SetAnimation(trackIndex, animName, loop);
+                    break;
+            }
+        }
+
+        protected bool HasAnim(string animName)
+        {
+            switch (bodyType)
+            {
+                case AnimationType.SPINE:
+                    return mSkeletonAnimation.state.Data.SkeletonData.FindAnimation(animName) == null ? false : true;
+                    break;
+            }
+
+            return false;
+        }
+
+
+        //----------------------------------------------------------------------------------------------------------
+        // get;set;
+        //----------------------------------------------------------------------------------------------------------
+        //추후 wall 이 아니라 특정 오브젝트를 밀고 있는지를 알 수 있는 메소드로 변경하자
+        public bool IsPressAgainstWall
+        {
+            get
+            {
+                if (controller.state.CollidingSide == null) return false;
+
+                Wall wall = controller.state.CollidingSide.GetComponent<Wall>();
+
+                if (wall == null) return false;
+                else if (wall.slideWay == WallSlideWay.NOTHING) return false;
+                else if ((wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH) && mFacing == Facing.RIGHT && horizontalAxis > 0f) return true;
+                else if ((wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH) && mFacing == Facing.LEFT && horizontalAxis < 0f) return true;
+                return false;
+            }
+        }
+
+
+#if UNITY_EDITOR
+        void OnDrawGizmos()
+        {
+            if (!Application.isPlaying) return;
+
+            Handles.Label(mTr.position + new Vector3(0, 1.2f, 0), state.ToString());
+        }
+#endif
+    }
 }
 
 

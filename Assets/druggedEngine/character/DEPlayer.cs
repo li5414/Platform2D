@@ -8,30 +8,6 @@ namespace druggedcode.engine
 		public LocationLinker currentManualLinker{ get;set; }
 		public DialogueZone currentDialogueZone{ get;set; }
 
-		protected bool mCanSlide;
-		protected bool mCanDash;
-
-		protected float mDashStartTime;
-
-		public void Slide()
-		{
-			if( mCanSlide == false ) return;
-
-			SetState( CharacterState.ESCAPE );
-		}
-
-		public void Dash()
-		{
-			if( mCanDash == false ) return;
-
-			mCanMove = false;
-			mCanDash = false;
-			mCanFacingUpdate = false;
-			SetState( CharacterState.DASH );
-
-			mDashStartTime = Time.time;
-		}
-
 		protected virtual IEnumerator Dive()
 		{	
 			yield break;

@@ -1,8 +1,31 @@
 {
-"skeleton": { "hash": "KtmhcAvYfSC600zEZZLw9N5Khoo", "spine": "3.0.12", "width": 402.97, "height": 591.25, "images": "./images/" },
+"skeleton": { "hash": "py6vv0+P9S2yBI2uwlMWjt38ceE", "spine": "3.0.16", "width": 402.97, "height": 591.25, "images": "./images/" },
 "bones": [
 	{ "name": "root" },
 	{ "name": "Hip", "parent": "root", "y": 157.1, "color": "989c9aff" },
+	{ "name": "B_Leg_Goal", "parent": "root", "x": 19.26, "y": 2.83, "color": "ff3f00ff" },
+	{
+		"name": "B_Thigh",
+		"parent": "Hip",
+		"length": 97.48,
+		"x": 25.68,
+		"y": 5.18,
+		"scaleX": 0.715,
+		"scaleY": 0.715,
+		"rotation": -91.32,
+		"color": "ff0000ff"
+	},
+	{ "name": "B_Shin", "parent": "B_Thigh", "length": 117.02, "x": 92.14, "y": -0.52, "rotation": -0.92, "color": "ff0000ff" },
+	{
+		"name": "B_Foot",
+		"parent": "B_Shin",
+		"length": 47.69,
+		"x": 112.26,
+		"y": -1.87,
+		"rotation": -30.34,
+		"inheritRotation": false,
+		"color": "ff0000ff"
+	},
 	{
 		"name": "Torso",
 		"parent": "Hip",
@@ -14,49 +37,6 @@
 		"rotation": 89.54,
 		"color": "989c9aff"
 	},
-	{
-		"name": "Neck",
-		"parent": "Torso",
-		"length": 109.83,
-		"x": 185.23,
-		"y": 3.19,
-		"scaleX": 1.025,
-		"rotation": 1.35,
-		"color": "989c9aff"
-	},
-	{
-		"name": "Head",
-		"parent": "Neck",
-		"length": 126.72,
-		"x": 80.71,
-		"y": 0.48,
-		"scaleX": 1.398,
-		"scaleY": 1.398,
-		"rotation": -89.99,
-		"color": "c900c6ff"
-	},
-	{
-		"name": "Hair",
-		"parent": "Head",
-		"length": 263.09,
-		"x": -55.38,
-		"y": 68.73,
-		"scaleX": 0.715,
-		"scaleY": 0.715,
-		"rotation": 149.03,
-		"color": "989c9aff"
-	},
-	{
-		"name": "F_UpperArm",
-		"parent": "Torso",
-		"length": 110.93,
-		"x": 168.94,
-		"y": 59.02,
-		"scaleX": 1.025,
-		"rotation": 142.14,
-		"color": "00ff00ff"
-	},
-	{ "name": "F_Forearm", "parent": "F_UpperArm", "length": 184.11, "x": 107.05, "y": -1.04, "rotation": 8.06, "color": "00ff00ff" },
 	{
 		"name": "B_UpperArm",
 		"parent": "Torso",
@@ -91,28 +71,48 @@
 		"inheritRotation": false,
 		"color": "00ff00ff"
 	},
-	{ "name": "B_Leg_Goal", "parent": "root", "x": 19.26, "y": 2.83, "color": "ff3f00ff" },
 	{
-		"name": "B_Thigh",
-		"parent": "Hip",
-		"length": 97.48,
-		"x": 25.68,
-		"y": 5.18,
+		"name": "F_UpperArm",
+		"parent": "Torso",
+		"length": 110.93,
+		"x": 168.94,
+		"y": 59.02,
+		"scaleX": 1.025,
+		"rotation": 142.14,
+		"color": "00ff00ff"
+	},
+	{ "name": "F_Forearm", "parent": "F_UpperArm", "length": 184.11, "x": 107.05, "y": -1.04, "rotation": 8.06, "color": "00ff00ff" },
+	{
+		"name": "Neck",
+		"parent": "Torso",
+		"length": 109.83,
+		"x": 185.23,
+		"y": 3.19,
+		"scaleX": 1.025,
+		"rotation": 1.35,
+		"color": "989c9aff"
+	},
+	{
+		"name": "Head",
+		"parent": "Neck",
+		"length": 126.72,
+		"x": 80.71,
+		"y": 0.48,
+		"scaleX": 1.398,
+		"scaleY": 1.398,
+		"rotation": -89.99,
+		"color": "c900c6ff"
+	},
+	{
+		"name": "Hair",
+		"parent": "Head",
+		"length": 263.09,
+		"x": -55.38,
+		"y": 68.73,
 		"scaleX": 0.715,
 		"scaleY": 0.715,
-		"rotation": -91.32,
-		"color": "ff0000ff"
-	},
-	{ "name": "B_Shin", "parent": "B_Thigh", "length": 117.02, "x": 92.14, "y": -0.52, "rotation": -0.92, "color": "ff0000ff" },
-	{
-		"name": "B_Foot",
-		"parent": "B_Shin",
-		"length": 47.69,
-		"x": 112.26,
-		"y": -1.87,
-		"rotation": -30.34,
-		"inheritRotation": false,
-		"color": "ff0000ff"
+		"rotation": 149.03,
+		"color": "989c9aff"
 	}
 ],
 "ik": [
@@ -213,13 +213,13 @@
 	}
 },
 "events": {
-	"Effect": {},
 	"Footstep": {},
 	"Ghosting": {},
-	"Pause": {},
+	"GravityScale": {},
 	"Sound": {},
-	"XVelocity": {},
-	"YVelocity": {}
+	"VX": {},
+	"VY": {},
+	"WaitAttack": {}
 },
 "animations": {
 	"Attack_AirDown": {
@@ -883,13 +883,12 @@
 			]
 		},
 		"events": [
-			{ "time": 0, "name": "Pause", "int": 1 },
-			{ "time": 0, "name": "YVelocity", "float": 0.35 },
+			{ "time": 0, "name": "VY", "float": 2 },
+			{ "time": 0.2333, "name": "GravityScale" },
 			{ "time": 0.5333, "name": "Ghosting", "int": 1 },
-			{ "time": 0.5333, "name": "Pause" },
-			{ "time": 0.5666, "name": "YVelocity", "float": -1 },
-			{ "time": 2, "name": "Sound", "string": "Ruler" },
-			{ "time": 2.4, "name": "Ghosting" }
+			{ "time": 0.5333, "name": "GravityScale", "float": 1 },
+			{ "time": 0.5333, "name": "VY", "float": -3 },
+			{ "time": 2.9666, "name": "Ghosting" }
 		]
 	},
 	"Attack_Punch": {
@@ -916,6 +915,17 @@
 					{ "time": 0.5, "name": "B_Hand_FistIn" },
 					{ "time": 0.5666, "name": "B_Hand_FistSide" },
 					{ "time": 0.7333, "name": "B_Hand_FistIn" }
+				],
+				"color": [
+					{ "time": 0.1333, "color": "ffffffff" },
+					{ "time": 0.1666, "color": "e00b24ff" },
+					{ "time": 0.2, "color": "ffffffff", "curve": "stepped" },
+					{ "time": 0.3666, "color": "ffffffff" },
+					{ "time": 0.4, "color": "e00b24ff" },
+					{ "time": 0.4333, "color": "ffffffff", "curve": "stepped" },
+					{ "time": 0.6333, "color": "ffffffff" },
+					{ "time": 0.6666, "color": "e00b24ff" },
+					{ "time": 0.7, "color": "ffffffff" }
 				]
 			},
 			"F_Hand": {
@@ -1442,21 +1452,15 @@
 			}
 		},
 		"events": [
-			{ "time": 0.0573, "name": "Sound", "string": "Woosh/Random" },
-			{ "time": 0.0955, "name": "XVelocity", "float": 0.5 },
-			{ "time": 0.1338, "name": "Pause" },
-			{ "time": 0.2, "name": "XVelocity", "float": 0.65 },
-			{ "time": 0.2666, "name": "Sound", "string": "Woosh/Random" },
-			{ "time": 0.4, "name": "Pause" },
-			{ "time": 0.4666, "name": "XVelocity", "float": 0.5 },
-			{ "time": 0.5333, "name": "Sound", "string": "Woosh/Random" },
-			{ "time": 0.6666, "name": "Pause" },
-			{ "time": 0.7333, "name": "XVelocity", "float": 0.5 },
+			{ "time": 0.0666, "name": "VX", "float": 4 },
+			{ "time": 0.1666, "name": "WaitAttack" },
+			{ "time": 0.3, "name": "VX", "float": 4 },
+			{ "time": 0.4, "name": "WaitAttack" },
+			{ "time": 0.5666, "name": "VX", "float": 3 },
+			{ "time": 0.6666, "name": "WaitAttack" },
 			{ "time": 0.9, "name": "Ghosting", "int": 1 },
-			{ "time": 0.9666, "name": "Sound", "string": "Woosh/Random" },
-			{ "time": 1, "name": "Effect", "string": "GroundJump" },
-			{ "time": 1, "name": "XVelocity", "float": 0.5 },
-			{ "time": 1, "name": "YVelocity", "float": 1 },
+			{ "time": 1, "name": "VX", "float": 2 },
+			{ "time": 1, "name": "VY", "float": 2 },
 			{ "time": 1.3333, "name": "Ghosting" }
 		]
 	},
@@ -1654,10 +1658,8 @@
 		},
 		"events": [
 			{ "time": 0.0666, "name": "Ghosting", "int": 1 },
-			{ "time": 0.1, "name": "Sound", "string": "Woosh/Random" },
-			{ "time": 0.1333, "name": "Effect", "string": "GroundJump" },
-			{ "time": 0.1333, "name": "XVelocity", "float": 0.2 },
-			{ "time": 0.1333, "name": "YVelocity", "float": 1 },
+			{ "time": 0.1333, "name": "VX", "float": 3 },
+			{ "time": 0.1333, "name": "VY", "float": 2 },
 			{ "time": 0.4666, "name": "Ghosting" }
 		]
 	},
@@ -3050,9 +3052,7 @@
 		},
 		"events": [
 			{ "time": 0.3666, "name": "Footstep" },
-			{ "time": 0.3666, "name": "Sound", "string": "Footsteps/Random" },
-			{ "time": 0.7333, "name": "Footstep" },
-			{ "time": 0.7333, "name": "Sound", "string": "Footsteps/Random" }
+			{ "time": 0.7333, "name": "Footstep" }
 		]
 	},
 	"Slide": {
@@ -3488,9 +3488,7 @@
 		},
 		"events": [
 			{ "time": 0.4666, "name": "Footstep" },
-			{ "time": 0.4666, "name": "Sound", "string": "Footsteps/Random" },
-			{ "time": 0.9333, "name": "Footstep" },
-			{ "time": 0.9333, "name": "Sound", "string": "Footsteps/Random" }
+			{ "time": 0.9333, "name": "Footstep" }
 		]
 	},
 	"WallSlide": {

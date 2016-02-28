@@ -144,9 +144,7 @@ public class GameManager : MonoBehaviour
     {
         print("[GM] MoveLocation locationID: " + locationID + ", cpID: " + cpID );
 
-		playerControllable = false;
-
-		if( player != null ) player.DeActive();
+		PlayerPause();
 
 		gameCamera.Reset();
 
@@ -278,14 +276,25 @@ public class GameManager : MonoBehaviour
 
     public void PlayerPause()
     {
-        if( player == null ) return;
-        player.Stop();
+		if( playerControllable == false ) return;
 		playerControllable = false;
+
+		if( player != null )
+		{
+			player.DeActive();
+			player.SetState( CharacterState.IDLE );
+		}
     }
 
     public void PlayerResume()
     {
+		if( playerControllable ) return;
 		playerControllable = true;
+
+		if( player != null )
+		{
+			player.Active();
+		}
     }
 
     public void PlayerKill()

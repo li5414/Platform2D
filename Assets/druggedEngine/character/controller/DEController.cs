@@ -23,11 +23,6 @@ namespace druggedcode.engine
 		[Header ("Collision")]
 		public BoxCollider2D headChecker;
 
-		[Header ("Move")]
-		public float accelOnGround = 10f;
-		public float accelOnAir = 3f;
-		public bool smoothMovement = true;
-
 		[Header ("Parameters")]
 		public float gravityScale = 1;
 		//넘을 수 있는 바닥 높이 비율 ( 충돌 BoxCollider2D 의 크기에 비례 )
@@ -51,10 +46,7 @@ namespace druggedcode.engine
 		public float vx { get { return mVelocity.x; } set { mTargetVX = value;}}
 		public float vy { get { return mVelocity.y; } set { mVelocity.y = value; }}
 
-		public float gravity { get { return DruggedEngine.Gravity + _physicSpaceInfo.Gravity; } }
-
-//		public float PlatformFriction{ get { return state.StandingOn == null ? 1f : state.StandingOn.friction; } }
-//		public Vector2 PlatformVelocity{ get { return state.StandingOn == null ? Vector2.zero : state.StandingOn.velocity; } }
+		public float Gravity { get { return DruggedEngine.Gravity + _physicSpaceInfo.Gravity; } }
 
 		public float PlatformFriction{ get;set;}
 		public Vector2 PlatformVelocity{ get { return Vector2.zero; }}
@@ -62,13 +54,11 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 		// 속도, 움직임. y가 마이너스인 경우가 낙하상태이다.
 		//----------------------------------------------------------------------------------------------------------
-
-		Vector2 _externalForce;
-
-		Vector2 mVelocity;
+		public Vector2 mVelocity;
 		float mTargetVX;
-		Vector2 mMoveDirection = Vector2.right;
+		Vector2 mAddedForce;
 
+		Vector2 mMoveDirection = Vector2.right;
 
 		LayerMask mDefaultPlatformMask;
 		Vector2 mTranslateVector;
@@ -139,8 +129,17 @@ namespace druggedcode.engine
 
 		public void AddForce (Vector2 force)
 		{
-			mVelocity += force;
-			_externalForce += force;
+			mAddedForce += force;
+		}
+
+		public void AddForceX( float x )
+		{
+			mAddedForce.x += x;
+		}
+
+		public void AddForceY( float y )
+		{
+			mAddedForce.y += y;
 		}
 
 		public void LockMove (float duration)
@@ -155,10 +154,11 @@ namespace druggedcode.engine
 			yield return new WaitForRealSeconds (duration);
 			mMoveLocked = false;
 		}
-			
+
 		public void Stop ()
 		{
 			mVelocity = Vector2.zero;
+			mTargetVX = 0f;
 		}
 
 		//----------------------------------------------------------------------------------------------------------
@@ -191,17 +191,10 @@ namespace druggedcode.engine
 			CheckCollisions ();
 
 			mTr.Translate (mTranslateVector, Space.World);
-
-			_externalForce = Vector2.zero;
 		}
 
 		void Move()
 		{
-			if( smoothMovement )
-			{
-				mTargetVX = Mathf.Lerp( mVelocity.x, mTargetVX, mDelta * ( state.IsGrounded ? accelOnGround: accelOnAir));
-			}
-
 			if( state.IsGrounded )
 			{
 				mVelocity.x += ( mTargetVX - mVelocity.x ) * PlatformFriction;
@@ -211,6 +204,7 @@ namespace druggedcode.engine
 				mVelocity.x = mTargetVX;
 			}
 
+
 			//y speed
 			if (mLockedVY != 0f)
 			{
@@ -218,9 +212,10 @@ namespace druggedcode.engine
 			}
 			else
 			{
-				mVelocity.y += gravity * gravityScale * mDelta;
+				mVelocity.y += Gravity * gravityScale * mDelta;
 			}
 
+			mVelocity += mAddedForce;
 
 			if( state.StandingPlatform != null )
 			{
@@ -229,6 +224,15 @@ namespace druggedcode.engine
 
 			mTranslateVector = mVelocity * mDelta;
 
+			if( mAddedForce.x != 0f )
+			{
+				mAddedForce.x =  Mathf.MoveTowards( mAddedForce.x, 0f, mDelta * 16f);
+			}
+
+			if( mAddedForce.y != 0f )
+			{
+				mAddedForce.y =  Mathf.MoveTowards( mAddedForce.y, 0f,mDelta * 16f );
+			}
 		}
 
 		void CheckMoveDirection ()

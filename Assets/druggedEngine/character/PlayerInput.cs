@@ -14,7 +14,7 @@ namespace druggedcode.engine
 		public KeyCode runKey = KeyCode.LeftShift;
 
 		public KeyCode jumpKey = KeyCode.Space;
-		public KeyCode slideKey = KeyCode.Q;
+		public KeyCode escapeKey = KeyCode.Q;
 		public KeyCode dashKey = KeyCode.E;
 
 		DEPlayer mPlayer;
@@ -34,15 +34,11 @@ namespace druggedcode.engine
 			mPlayer.isRun = Input.GetKey (runKey);
 
 			if( Input.GetKeyDown (jumpKey)) mPlayer.Jump();
-			if( Input.GetKeyDown (slideKey)) mPlayer.Slide();
+			if( Input.GetKeyDown (escapeKey)) mPlayer.Escape();
 			if( Input.GetKeyDown (dashKey)) mPlayer.Dash();
 			if (Input.GetButtonDown("Fire1")) mPlayer.Attack();
 		}
 
-		void Update ()
-		{
-			//Debug.Log( (string) Input.inputString );
-		}
 
 		void UpdateTemp()
 		{

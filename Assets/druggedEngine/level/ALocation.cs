@@ -39,6 +39,12 @@ public class ALocation : MonoBehaviour
         mCheckPointList = FindObjectsOfType<CheckPoint>().OrderBy(t => t.transform.position.x).ToList();
 
 		GetComponentsInChildren<EnemySpawner>( mSpawners );
+
+		DEPlayer[] players = GameObject.FindObjectsOfType<DEPlayer>();
+		foreach( DEPlayer player in players )
+		{
+			if( player.dts == null )Destroy( player.gameObject );
+		}
     }
     
     void Start()

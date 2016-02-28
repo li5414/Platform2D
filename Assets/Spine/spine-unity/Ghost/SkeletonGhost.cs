@@ -22,7 +22,7 @@ public class SkeletonGhost : MonoBehaviour {
 	public float textureFade = 1;
 
 	float nextSpawnTime;
-	SkeletonGhostRenderer[] pool;
+	public SkeletonGhostRenderer[] pool;
 	int poolIndex = 0;
 	SkeletonRenderer skeletonRenderer;
 	MeshRenderer meshRenderer;
@@ -39,17 +39,31 @@ public class SkeletonGhost : MonoBehaviour {
 		meshFilter = GetComponent<MeshFilter>();
 		meshRenderer = GetComponent<MeshRenderer>();
 		nextSpawnTime = Time.time + spawnRate;
+
+		MakeGhostPool();
+
+//		if (skeletonRenderer is SkeletonAnimation) ((SkeletonAnimation)skeletonRenderer).state.Event += OnEvent;
+
+	}
+
+	void MakeGhostPool()
+	{
+		if( pool != null )
+		{
+			int len = pool.Length;
+			for (int i = 0; i < len; i++)
+			{
+				if (pool[i] != null) pool[i].Cleanup();
+			}
+		}
+
 		pool = new SkeletonGhostRenderer[maximumGhosts];
 		for (int i = 0; i < maximumGhosts; i++) {
 			GameObject go = new GameObject(gameObject.name + " Ghost", typeof(SkeletonGhostRenderer));
 			pool[i] = go.GetComponent<SkeletonGhostRenderer>();
-			go.SetActive(false);
+			go.SetActive(true);
 			go.hideFlags = HideFlags.HideInHierarchy;
 		}
-
-		if (skeletonRenderer is SkeletonAnimation)
-			((SkeletonAnimation)skeletonRenderer).state.Event += OnEvent;
-
 	}
 
 	//SkeletonAnimation
@@ -79,6 +93,8 @@ public class SkeletonGhost : MonoBehaviour {
 		if (!ghostingEnabled)
 			return;
 
+		if( pool[0] == null ) MakeGhostPool();
+
 		if (Time.time >= nextSpawnTime) {
 			GameObject go = pool[poolIndex].gameObject;
 
@@ -101,8 +117,7 @@ public class SkeletonGhost : MonoBehaviour {
 			}
 
 			pool[poolIndex].Initialize(meshFilter.sharedMesh, materials, color, additive, fadeSpeed, meshRenderer.sortingOrder - 1);
-			go.transform.parent = transform;
-
+			go.transform.SetParent( transform );
 			go.transform.localPosition = Vector3.zero;
 			go.transform.localRotation = Quaternion.identity;
 			go.transform.localScale = Vector3.one;

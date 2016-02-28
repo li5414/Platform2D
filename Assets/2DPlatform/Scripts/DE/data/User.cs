@@ -38,6 +38,7 @@ public class User : Singleton<User>
 			character.name = dts.name;
 			character.transform.SetParent( transform );
 			character.gameObject.SetActive( false );
+			character.dts = dts;
 			mCharacterList.Add( dts.id, character );
 		}
 
