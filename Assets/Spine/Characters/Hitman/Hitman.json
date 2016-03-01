@@ -1,5 +1,5 @@
 {
-"skeleton": { "hash": "py6vv0+P9S2yBI2uwlMWjt38ceE", "spine": "3.0.16", "width": 402.97, "height": 591.25, "images": "./images/" },
+"skeleton": { "hash": "BoeB+AboALJCbGkZ0ctD6QZ98Es", "spine": "3.0.16", "width": 402.97, "height": 591.25, "images": "./images/" },
 "bones": [
 	{ "name": "root" },
 	{ "name": "Hip", "parent": "root", "y": 157.1, "color": "989c9aff" },
@@ -213,10 +213,11 @@
 	}
 },
 "events": {
-	"Footstep": {},
+	"Effect": {},
 	"Ghosting": {},
-	"GravityScale": {},
+	"Gravity": {},
 	"Sound": {},
+	"Step": {},
 	"VX": {},
 	"VY": {},
 	"WaitAttack": {}
@@ -884,9 +885,9 @@
 		},
 		"events": [
 			{ "time": 0, "name": "VY", "float": 2 },
-			{ "time": 0.2333, "name": "GravityScale" },
+			{ "time": 0.2333, "name": "Gravity" },
 			{ "time": 0.5333, "name": "Ghosting", "int": 1 },
-			{ "time": 0.5333, "name": "GravityScale", "float": 1 },
+			{ "time": 0.5333, "name": "Gravity", "float": 1 },
 			{ "time": 0.5333, "name": "VY", "float": -3 },
 			{ "time": 2.9666, "name": "Ghosting" }
 		]
@@ -1452,13 +1453,17 @@
 			}
 		},
 		"events": [
+			{ "time": 0.0666, "name": "Effect", "string": "punch" },
 			{ "time": 0.0666, "name": "VX", "float": 4 },
 			{ "time": 0.1666, "name": "WaitAttack" },
+			{ "time": 0.3, "name": "Effect", "string": "punch" },
 			{ "time": 0.3, "name": "VX", "float": 4 },
 			{ "time": 0.4, "name": "WaitAttack" },
+			{ "time": 0.5666, "name": "Effect", "string": "punch" },
 			{ "time": 0.5666, "name": "VX", "float": 3 },
 			{ "time": 0.6666, "name": "WaitAttack" },
 			{ "time": 0.9, "name": "Ghosting", "int": 1 },
+			{ "time": 1, "name": "Effect", "string": "uppercut" },
 			{ "time": 1, "name": "VX", "float": 2 },
 			{ "time": 1, "name": "VY", "float": 2 },
 			{ "time": 1.3333, "name": "Ghosting" }
@@ -3051,8 +3056,8 @@
 			}
 		},
 		"events": [
-			{ "time": 0.3666, "name": "Footstep" },
-			{ "time": 0.7333, "name": "Footstep" }
+			{ "time": 0.3666, "name": "Step" },
+			{ "time": 0.7333, "name": "Step" }
 		]
 	},
 	"Slide": {
@@ -3487,8 +3492,8 @@
 			}
 		},
 		"events": [
-			{ "time": 0.4666, "name": "Footstep" },
-			{ "time": 0.9333, "name": "Footstep" }
+			{ "time": 0.4666, "name": "Step" },
+			{ "time": 0.9333, "name": "Step" }
 		]
 	},
 	"WallSlide": {

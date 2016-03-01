@@ -10,9 +10,14 @@ namespace druggedcode.engine
         [Range(0f, 1f)]
 		public float friction = 1f;
 
-        public bool movable { get; set; }
 		public bool oneway;
-
+        
+        [Header("Sound")]
+        public AudioClip footStep;
+        
+        
+        public bool movable { get; set; }
+        
         protected Collider2D mCollider;
 		protected PathFollow mPathFollow;
 
@@ -27,6 +32,7 @@ namespace druggedcode.engine
             mPathFollow = GetComponent<PathFollow>();
 
 			if( mCollider is EdgeCollider2D ) oneway = true;
+            else oneway = false;
         }
 
         virtual protected void Start()

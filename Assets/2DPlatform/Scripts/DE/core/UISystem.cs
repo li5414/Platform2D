@@ -6,33 +6,47 @@ namespace druggedcode.engine
 {
 	public class UISystem : MonoBehaviour
     {
+        [Header("POPUP")]
+        public GameObject pauseScreen;
+        public GameObject timeSplash;
+        public Image fader;
+        
+        [Header("MAIN")]
+        public GameObject main;
+        
+        [Header("HUD")]
         public GameObject HUD;
-        /// 특수화면
-        public GameObject PauseScreen;
-        public GameObject TimeSplash;
-        public Image Fader;
-
-        public GameObject Main;
-
-        /// 스테이지 레벨 표시 
-        public Text LevelText;
-        public Text GoldText;
-
+        public Text levelText;
+        public Text goldText;
+        
+        [Header("DEBUG")]
+        public GameObject debug;
+        public Text debugText;
 		Coroutine mFadeRoutine;
 
        	void Awake()
         {
             HUD.SetActive(false);
-            Main.SetActive(false);
+            main.SetActive(false);
 
-            MotionUI.SetAlpha(Fader, 0f);
-            Fader.gameObject.SetActive(false);
+            MotionUI.SetAlpha(fader, 0f);
+            fader.gameObject.SetActive(false);
+            
+            if( Application.isEditor ) debug.SetActive( true );
+            else debug.SetActive( false );
         }
 
 		public void Init()
 		{
 			User.Instance.OnGold += OnGold;
 		}
+        
+        #if UNITY_EDITOR
+        void Update()
+        {
+            debugText.text = "character : " + DECharacter.All.Count;
+        }
+        #endif
 
         //--------------------------------------------------------------------------------------------------
         // main
@@ -40,7 +54,7 @@ namespace druggedcode.engine
 
         public void MainMode()
         {
-            Main.SetActive(true);
+            main.SetActive(true);
 			HUD.SetActive(false);
         }
 
@@ -54,7 +68,7 @@ namespace druggedcode.engine
         //--------------------------------------------------------------------------------------------------
         public void LocationMode()
         {
-            Main.SetActive(false);
+            main.SetActive(false);
             HUD.SetActive(true);
 
 //			public Text LevelText;
@@ -67,12 +81,12 @@ namespace druggedcode.engine
 
         void OnUpdateLocation ( ALocation loc )
         {
-			LevelText.text = loc.dts.name + "_"+ loc.currentCheckPoint.name;
+			levelText.text = loc.dts.name + "_"+ loc.currentCheckPoint.name;
         }
 
 		void OnGold (int gold )
 		{
-			GoldText.text = "$ " +gold;
+			goldText.text = "$ " +gold;
 		}
 
         //--------------------------------------------------------------------------------------------------
@@ -80,7 +94,7 @@ namespace druggedcode.engine
         //--------------------------------------------------------------------------------------------------
         public void TownMode()
         {
-            Main.SetActive(false);
+            main.SetActive(false);
             HUD.SetActive(true);
         }
 
@@ -89,7 +103,7 @@ namespace druggedcode.engine
         //--------------------------------------------------------------------------------------------------
         public void WorldMapMode()
         {
-            Main.SetActive(false);
+            main.SetActive(false);
         }
 
         //--------------------------------------------------------------------------------------------------
@@ -97,26 +111,26 @@ namespace druggedcode.engine
         //--------------------------------------------------------------------------------------------------
         public void SetPause(bool state)
         {
-            PauseScreen.SetActive(state);
+            pauseScreen.SetActive(state);
         }
 
         public void SetTimeSplash(bool state)
         {
             Debug.Log("SetTimeSplash:" + state);
-            TimeSplash.SetActive(state);
+            timeSplash.SetActive(state);
         }
 
         public Coroutine FadeOut(float duration = 0.3f )
         {
 			if( mFadeRoutine != null ) StopCoroutine( mFadeRoutine );
-			mFadeRoutine = StartCoroutine(MotionUI.FadeAlpha(Fader, duration, 1f ));
+			mFadeRoutine = StartCoroutine(MotionUI.FadeAlpha(fader, duration, 1f ));
 			return mFadeRoutine;
         }
 
         public Coroutine FadeIn(float duration = 0.3f )
         {
 			if( mFadeRoutine != null ) StopCoroutine( mFadeRoutine );
-			mFadeRoutine = StartCoroutine(MotionUI.FadeAlpha(Fader, duration, 0f ));
+			mFadeRoutine = StartCoroutine(MotionUI.FadeAlpha(fader, duration, 0f ));
 			return mFadeRoutine;
         }
 
