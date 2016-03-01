@@ -5,19 +5,9 @@ namespace druggedcode
 {
     public class MathUtil
     {
-        static public float GetRandom(float min = 0.0f , float max = 1.0f )
-        {
-            return Random.Range( min , max );
-        }
-
-        static public int GetRandomInt(int min = 0 , int max = 1 )
-        {
-            return Random.Range( min , max );
-        }
-
         static public bool GetRandomBool( float successPer = 0.5f )
         {
-            if( GetRandom() < successPer )
+            if( Random.Range( 0f , 1f ) < successPer )
                 return true;
             else
                 return false;
@@ -28,7 +18,7 @@ namespace druggedcode
 
             int count = funcs.Length;
             float quotient = 1 / (float)count;
-            float ran = MathUtil.GetRandom();
+            float ran = Random.Range( 0f , 1f );
 
             while( count-- > 0 )
             {
@@ -38,19 +28,6 @@ namespace druggedcode
                     break;
                 }
             }
-//            float ran = MathUtil.GetRandom();
-//            
-//            if( ran < 0.33f )
-//            {
-//                FastReady();
-//            }
-//            else if( ran < 0.66f )
-//            {
-//                DelayReady();
-//            }else
-//            {
-//                BlitzReady();
-//            }
         }
 
         static public float ByteToMB( float fromByte, uint fix = 1)
@@ -68,59 +45,6 @@ namespace druggedcode
         {
             return Mathf.Round( num/ roundInterval) * roundInterval;
         }
-
-        //최소값과 최대값을 입력 후 범위안 임의의 값을 입력하면 해당 퍼센테이지를 반환 0~1
-        //최소값과 최대값을 입력 후 범위안 임의의 값을 입력하면 해당 퍼센테이지를 반환 0~1
-        static public float GetRatePer( float current, float max )
-        {
-            return GetRatePer( 0f, max, current );
-        }
-
-        static public float GetRatePer( float min, float max, float value )
-        {
-            return Mathf.InverseLerp( min, max, value );
-
-            /*
-            float per;
-
-            if( value < min )
-                value = min;
-            else if( value > max )
-                value = max;
-
-            float range = max - min;
-            float current = value - min;
-
-            if( current == 0 )
-                per = 0f;
-            else
-            {
-                per = current/range;
-                per = Round( per, 0.001f );
-            }
-
-            return per;
-            */
-        }
-
-        //최소값과 최대값을 입력후 퍼센테이지를 입력하면 해당하는 범위안의 값을 반환. 퍼센테이지는 0~1
-        static public float GetRateValue( float min, float max, float per )
-        {
-            return Mathf.Lerp( min, max, per );
-
-            /*
-            if( per < 0f )
-                per = 0f;
-            else if( per > 1f )
-                per = 1f;
-
-            float range = max - min;
-            float current = range * per;
-            float value = current + min;
-            return value;
-            */
-        }
-
         /*
         }
         //각도를 -360 ~ 360 사이의 값으로 변환 (500 -> 140,  -400 -> -40)

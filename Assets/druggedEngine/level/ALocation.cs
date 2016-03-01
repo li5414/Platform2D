@@ -94,29 +94,20 @@ public class ALocation : MonoBehaviour
 		mStarted = DateTime.UtcNow;
 		Debug.Log("[Location]'" + dts.name + "' Run! (" + mStarted +")");
 
-		CheckMission();
+		if( CheckMission())
+        {
+            SoundManager.Instance.PlayBGM( bgm );
+        }
 	}
-
-    void CheckMission()
+    
+    //미션이 없을 경우 true를 반환
+    bool CheckMission()
     {
-        if (mMission == null) return;
+        if (mMission == null) return true;
+        
         mMission.Check();
+        return false;
     }
-
-	void PlayBGM()
-	{
-		// if (bgm != null)
-		// {
-		//     AudioSource levelBgm = gameObject.AddComponent<AudioSource>();
-		//     levelBgm.playOnAwake = false;
-		//     levelBgm.spatialBlend = 0;
-		//     levelBgm.rolloffMode = AudioRolloffMode.Logarithmic;
-		//     levelBgm.loop = true;
-		//     levelBgm.clip = bgm;
-
-		//     SoundManager.Instance.PlayBackgroundMusic(levelBgm);
-		// }
-	}
 
 	public BoundariesInfo GetBoundariesInfo()
 	{

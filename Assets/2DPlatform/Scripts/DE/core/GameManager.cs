@@ -30,7 +30,7 @@ public class GameManager : MonoBehaviour
 		if( Instance == null && string.IsNullOrEmpty( SceneManager.GetActiveScene().name ) == false )
 		{
 			GameManager prefab = Resources.Load<GameManager>("GameManager");
-			GameManager manager = GameObject.Instantiate<GameManager>( prefab );
+			GameObject.Instantiate<GameManager>( prefab );
 		}
 	}
 

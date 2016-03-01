@@ -25,7 +25,7 @@ namespace druggedcode.engine
 			mPlayer.OnUpdateInput += OnUpdateInput;
 		}
 
-		void OnUpdateInput ()
+		void OnUpdateInput ( DECharacter ch )
 		{
 			if( GameManager.Instance.playerControllable == false ) return;
 

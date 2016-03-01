@@ -404,12 +404,7 @@ namespace druggedcode.engine
 			{
 				Vector2 rayOriginPoint = Vector2.Lerp (horizontalRayCastToTop, horizontalRayCastFromBottom, (float)i / (float)(rayHorizontalCount - 1));
 
-//				if ( state.WasColldingBelowLastFrame && i == RayHorizontalCount - 1)
-//					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, mDefaultPlatformMask, Color.red);
-//				else
-//					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);
-
-				if (false)
+				if ( state.WasColldingBelowLastFrame && i == rayHorizontalCount - 1)
 					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
 				else
 					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);

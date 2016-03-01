@@ -20,7 +20,7 @@ public class AnimatedFXHelper : MonoBehaviour
 
     public void PlaySound(string sound)
     {
-        SoundPalette.PlaySound(sound, 1, 1, transform.position);
+        //SoundPalette.PlaySound(sound, 1, 1, transform.position);
     }
 
     public void Remove()

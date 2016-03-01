@@ -79,7 +79,8 @@ namespace druggedcode.engine
         //----------------------------------------------------------------------------------------------------------
         // event
         //----------------------------------------------------------------------------------------------------------
-        public UnityAction OnUpdateInput;
+        public UnityAction<DECharacter> OnUpdateInput;
+        public UnityAction<DECharacter> OnFootStep;
 
         //----------------------------------------------------------------------------------------------------------
         // public
@@ -185,11 +186,8 @@ namespace druggedcode.engine
 
         virtual protected void HandleEvent(Spine.AnimationState animState, int trackIndex, Spine.Event e)
         {
-            var entry = animState.GetCurrent(trackIndex);
-            string name = entry.Animation.Name;
             switch (e.Data.name)
             {
-                //				WaitAttack
                 case "VX":
                     controller.AddForceX(mFacing == Facing.RIGHT ? e.Float : -e.Float);
                     break;
@@ -211,10 +209,10 @@ namespace druggedcode.engine
                     break;
 
                 case "Footstep":
-                    //if (OnFootstep != null) OnFootstep(transform);
+                    if (OnFootStep != null) OnFootStep(this);
                     break;
                 case "Sound":
-                    SoundPalette.PlaySound(e.String, 1f, 1, transform.position);
+                    SoundManager.Instance.PlaySound(e.String, 1f, 1, transform.position);
                     break;
             }
         }
@@ -283,7 +281,7 @@ namespace druggedcode.engine
 
         void Update()
         {
-            if (OnUpdateInput != null) OnUpdateInput();
+            if (OnUpdateInput != null) OnUpdateInput(this);
 
             TimesUpdate();
             StateUpdate();
@@ -684,7 +682,6 @@ namespace druggedcode.engine
                 {
                     case AnimationType.SPINE:
                         return mSkeletonAnimation.state.GetCurrent(0).animation.Duration;
-                        break;
                 }
 
                 return 0f;
@@ -717,7 +714,6 @@ namespace druggedcode.engine
             {
                 case AnimationType.SPINE:
                     return mSkeletonAnimation.state.Data.SkeletonData.FindAnimation(animName) == null ? false : true;
-                    break;
             }
 
             return false;

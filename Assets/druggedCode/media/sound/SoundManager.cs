@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace druggedcode
 {
@@ -7,76 +8,206 @@ namespace druggedcode
     /// 사운드 재생을 관리
     /// </summary>
     public class SoundManager : Singleton<SoundManager>
-    {   
-        //[Header("Particle Effects")]
+    {
+        //-----------------------------------------------------------------------------------
+        // inspector
+        //-----------------------------------------------------------------------------------
         [Header("BGM")]
-        ///BGM 활성화
-        public bool MusicOn = true;
-
-        ///BGM 볼륨
-        [Range(0,1)]
-        public float MusicVolume=0.3f;
+        [SerializeField]
+        bool isBgmOn = true;
+        [Range(0, 1)]
+        public float bgmMultiplier = 0.3f;
 
         [Header("SFX")]
-        ///SFX 볼륨
-        [Range(0,1)]
-        public float SfxVolume=1f;
+        [SerializeField]
+        bool isSfxOn = true;
+        [Range(0, 1)]
+        public float sfxMultiplier = 1f;
+        public int maxChannels = 5;
 
-        ///SFX 활성화 
-        public bool SfxOn = true;
+        [Space(10)]
+        [Header("PALETTE")]
+        public List<AudioClip> basicClips;
+        public List<SoundCategory> categoryList;
 
-        AudioSource _backgroundMusic;   
-        Transform _tr;
+        //-----------------------------------------------------------------------------------
+        // member
+        //-----------------------------------------------------------------------------------
+
+        Transform mTr;
+        AudioSource mBgmChannel;
+        List<AudioSource> mSfxChannelList;
+
+        Dictionary<string, AudioClip> mPalette;
+        Dictionary<string, SoundCategory> mCategories;
 
         override protected void Awake()
         {
             base.Awake();
-            
-            _tr = transform;
-        }
 
-        /// <summary>
-        /// BGM 을 재생한다. BGM 은 한번에 하나만 플레이 된다.
-        /// </summary>
-        public void PlayBackgroundMusic( AudioSource Music )
-        {
-            if (MusicOn == false ) return;
+            mTr = transform;
 
-            //이전 bgm 스톱
-            if (_backgroundMusic != null )
+            //create channel
+            mBgmChannel = GameObjectUtil.Create<AudioSource>("BGM_Channel", mTr);
+            mBgmChannel.playOnAwake = false;
+            mBgmChannel.loop = true;
+
+            mSfxChannelList = new List<AudioSource>();
+            for (int i = 0; i < maxChannels; ++i)
             {
-                _backgroundMusic.Stop();
+                AudioSource ch = GameObjectUtil.Create<AudioSource>("SFX_Channel_" + i, mTr);
+                ch.playOnAwake = false;
+                mSfxChannelList.Add(ch);
             }
 
-            //신규 bgm 재생 
-            _backgroundMusic = Music;
-            _backgroundMusic.volume = MusicVolume;
-            _backgroundMusic.loop = true;
-            _backgroundMusic.Play();        
-        }   
+            //create palette
+            mPalette = new Dictionary<string, AudioClip>();
+            mCategories = new Dictionary<string, SoundCategory>();
 
-        /// <summary>
-        /// 효과음을 재생한다. bgm 은 AudioSource 를 전달 받지만 SFX 는 AudioClip 을 전달 받는다. 이부분 통일 필요.
-        /// </summary>
-        public AudioSource PlaySound( AudioClip Sfx, Vector3 Location )
+            foreach (AudioClip clip in basicClips)
+            {
+                mPalette.Add(clip.name, clip);
+            }
+
+            foreach (SoundCategory category in categoryList)
+            {
+                mCategories.Add(category.name, category);
+                foreach (AudioClip clip in category.clips)
+                {
+                    string clipName = clip.name;
+
+                    if (mPalette.ContainsKey(category.name + "/" + clipName))
+                    {
+                        int i = 0;
+                        while (mPalette.ContainsKey(category.name + "/" + clipName))
+                        {
+                            i++;
+                            clipName = clip.name + i;
+                        }
+                    }
+                    mPalette.Add(category.name + "/" + clipName, clip);
+                }
+            }
+        }
+
+        void Update()
         {
-            if( SfxOn == false ) return null;
-            if (Sfx == null)
-                return null;
+            if (Time.timeScale == 1f) return;
 
-            // 오디오 소스 생성
-            GameObject temporaryAudioHost = new GameObject("TempAudio");
-            temporaryAudioHost.transform.position = Location;
-            temporaryAudioHost.transform.SetParent( _tr );
-            AudioSource audioSource = temporaryAudioHost.AddComponent<AudioSource>() as AudioSource; 
+            float pitch = Mathf.Lerp(0.4f, 1f, Mathf.InverseLerp(0.5f, 1f, Time.timeScale));
+            AudioSource s;
+            for (int i = 0; i < maxChannels; ++i)
+            {
+                s = mSfxChannelList[i];
+                if (s.isPlaying == false) continue;
+                s.pitch = pitch;
+            }
+        }
 
-            audioSource.clip = Sfx; 
-            audioSource.volume = SfxVolume;
-            audioSource.Play(); 
+        //언제나 하나의 bgm만을 재생
+        public AudioSource PlayBGM(AudioClip clip, float volume = 1f, float pitch = 1f)
+        {
+            if (isBgmOn == false) return null;
+            if (clip == null) return null;
 
-            //사운드 재생이 끝나면 관련 객체 제거
-            Destroy(temporaryAudioHost, Sfx.length);
-            return audioSource;
+            if (mBgmChannel.isPlaying) mBgmChannel.Stop();
+
+            mBgmChannel.clip = clip;
+            mBgmChannel.pitch = pitch;
+            mBgmChannel.volume = volume * bgmMultiplier;
+            mBgmChannel.Play();
+
+            return mBgmChannel;
+        }
+
+        public AudioSource PlaySound(AudioClip clip, float volume, float pitch, Vector3 position)
+        {
+            if (isSfxOn == false) return null;
+            if (clip == null) return null;
+
+            AudioSource ch = null;
+            bool canPlay = false;
+
+            for (int i = 0; i < maxChannels; ++i)
+            {
+                ch = mSfxChannelList[i];
+                if (ch.isPlaying == false)
+                {
+                    canPlay = true;
+                    break;
+                }
+            }
+
+            if (canPlay == false || ch == null) return null;
+
+            ch.transform.position = position;
+            ch.pitch = pitch;
+            ch.volume = volume * sfxMultiplier;
+            ch.clip = clip;
+            ch.Play();
+
+            return ch;
+        }
+
+        public AudioSource PlaySound(AudioClip clip, float volume = 1f, float pitch = 1f)
+        {
+            return PlaySound(clip, volume, pitch, Vector3.zero);
+        }
+
+        public AudioSource PlaySound(string str, float volume = 1f, float pitch = 1f)
+        {
+            return PlaySound(str, volume, pitch, Vector3.zero);
+        }
+
+        public AudioSource PlaySound(string str, float volume, float pitch, Vector3 position)
+        {
+            if (str == "") return null;
+
+            if (str.Contains("/"))
+            {
+                string[] chunks = str.Split('/');
+
+                if (mCategories.ContainsKey(chunks[0]))
+                {
+                    if (chunks[1] == "Random")
+                    {
+                        SoundCategory c = mCategories[chunks[0]];
+                        return PlaySound(c.clips[(int)Random.Range(0, c.clips.Count)], volume, pitch, position);
+                    }
+                }
+            }
+
+            if (mPalette.ContainsKey(str))
+            {
+                return PlaySound(mPalette[str], volume, pitch, position);
+            }
+
+            return null;
+        }
+        public bool bgmMute
+        {
+            set
+            {
+                mBgmChannel.mute = value;
+            }
+        }
+
+        public bool sfxMute
+        {
+            set
+            {
+                foreach (AudioSource s in mSfxChannelList)
+                {
+                    s.mute = value;
+                }
+            }
+        }
+
+        [System.Serializable]
+        public class SoundCategory
+        {
+            public string name;
+            public List<AudioClip> clips;
         }
     }
 }

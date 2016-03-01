@@ -24,7 +24,7 @@ public class SkeletonGhost : MonoBehaviour {
 	float nextSpawnTime;
 	public SkeletonGhostRenderer[] pool;
 	int poolIndex = 0;
-	SkeletonRenderer skeletonRenderer;
+	//SkeletonRenderer skeletonRenderer;
 	MeshRenderer meshRenderer;
 	MeshFilter meshFilter;
 
@@ -35,7 +35,7 @@ public class SkeletonGhost : MonoBehaviour {
 		if (ghostShader == null)
 			ghostShader = Shader.Find("Spine/SkeletonGhost");
 
-		skeletonRenderer = GetComponent<SkeletonRenderer>();
+		//skeletonRenderer = GetComponent<SkeletonRenderer>();
 		meshFilter = GetComponent<MeshFilter>();
 		meshRenderer = GetComponent<MeshRenderer>();
 		nextSpawnTime = Time.time + spawnRate;
