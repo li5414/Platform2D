@@ -88,6 +88,11 @@ namespace druggedcode.engine
 		[SpineAnimation]
 		public string airAttackAnim;
 
+		[Header ("Effect")]
+		public GameObject jumpEffectPrefab;
+		public GameObject airJumpEffectPrefab;
+
+
 		//----------------------------------------------------------------------------------------------------------
 		// event
 		//----------------------------------------------------------------------------------------------------------
@@ -252,28 +257,36 @@ namespace druggedcode.engine
 		{
 			if (controller.state.IsGrounded)
 			{
-				PlayPlatformSound ();
+				PlatformSoundPlay ();
 			}
 
 			if (OnFootStep != null) OnFootStep (this);
 		}
 
-		protected void PlayPlatformSound ()
+		protected void PlatformSoundPlay()
 		{
 			Platform platform = controller.state.StandingPlatform;
-			if (platform != null) SoundManager.Instance.PlaySFX (platform.footStep, 1f, 1f, mTr.position);
+			if (platform != null) platform.PlaySound( mTr.position,1f,1f );
+		}
+
+		protected void PlatformEffectSpawn()
+		{
+			Platform platform = controller.state.StandingPlatform;
+			if( platform != null ) platform.ShowEffect( mTr.position, new Vector3( mFacing == Facing.RIGHT ? 1f : -1f ,1f,1f)  );
 		}
 
 		protected void SpawnAtFoot (GameObject prefab, Quaternion rotation, Vector3 scale)
 		{
+			if( prefab == null ) return;
+
 			Vector3 pos = mTr.position;
 			if (footEffectBone != null)
 			{
 				Bone bone = mSkeletonAnimation.Skeleton.FindBone (footEffectBone);
-				if (bone != null) pos = mTr.TransformPoint (bone.WorldX, bone.WorldY, 0f);
+				if (bone != null) pos = body.transform.TransformPoint( bone.WorldX, bone.WorldY, 0f);
 			}
 
-			((GameObject)Instantiate (prefab, pos, rotation)).transform.localScale = scale;
+			FXManager.Instance.SpawnFX( prefab, pos, rotation, scale );
 		}
 
 		protected void GhostMode (bool use, string str = "", float f = 0f)
@@ -353,9 +366,8 @@ namespace druggedcode.engine
 			if (controller.state.JustGotGrounded)
 			{
 				ResetJump ();
-				PlayPlatformSound ();
-				//SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-				//if (_effectAndSound.TouchTheGroundEffect != null) Instantiate(_effectAndSound.TouchTheGroundEffect, transform.position, transform.rotation);
+				PlatformSoundPlay();
+				PlatformEffectSpawn();
 			}
 		}
 
@@ -551,6 +563,12 @@ namespace druggedcode.engine
 			mCanFacingUpdate = true;
 			mCanEscape = false;
 
+			bool wallJump = false;
+
+			Platform platform = controller.state.StandingPlatform;
+
+			GameObject effect = jumpEffectPrefab;
+
 			//아래 점프 체크도 한다
 			if (IsAblePassOneWay ())
 			{
@@ -568,6 +586,8 @@ namespace druggedcode.engine
 			{
 				controller.vx = mFacing == Facing.LEFT ? 4 : -4;
 				controller.LockMove (0.5f);
+
+				wallJump = true;
 			}
 
 			CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
@@ -575,37 +595,34 @@ namespace druggedcode.engine
 			float jumpPower;
 			if (jumpCount == 0)
 			{
-				controller.state.ClearPlatform ();
 				GravityActive (true);
 				PlayAnimation (jumpAnim);
 
-				jumpPower = Mathf.Sqrt (2f * JumpHeight * Mathf.Abs (controller.Gravity));//min 3 , max 100000
-
-				//			if (groundJumpPrefab != null)
-				//			{
-				//				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
-				//				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
-				//			}
-
-				//				if (wasWallJump) SpawnAtFoot(groundJumpPrefab, Quaternion.Euler(0, 0, controller.vx >= 0 ? -90 : 90));
-				//				else SpawnAtFoot(groundJumpPrefab, Quaternion.identity );
+				PlatformSoundPlay();
+				PlatformEffectSpawn();
+				controller.state.ClearPlatform ();
+				jumpPower = Mathf.Sqrt (2f * JumpHeight * Mathf.Abs (controller.Gravity));
 			}
 			else
 			{
 				PlayAnimation (jumpAnim);
 				jumpPower = Mathf.Sqrt (2f * JumpHeightOnAir * Mathf.Abs (controller.Gravity));
 
-				//if (airJumpPrefab != null) Instantiate(airJumpPrefab, transform.position, Quaternion.identity);
+				effect = airJumpEffectPrefab;
 			}
 
 			controller.vy = jumpPower;
 			jumpStartTime = Time.time;
-
-
-			//			SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-			//if (_effectAndSound.JumpSfx != null) SoundManager.Instance.PlaySound(_effectAndSound.JumpSfx, transform.position);
-
 			jumpCount++;
+
+			if( wallJump )
+			{
+				SpawnAtFoot(effect, Quaternion.Euler(0, 0, mFacing == Facing.RIGHT ? 90 : -90), new Vector3( mFacing == Facing.RIGHT ? 1f : -1f ,1f,1f) );
+			}
+			else
+			{
+				FXManager.Instance.SpawnFX( effect,mTr.position,new Vector3( mFacing == Facing.RIGHT ? 1f : -1f ,1f,1f));
+			}
 
 			SetState (CharacterState.JUMP);
 		}

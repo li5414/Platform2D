@@ -14,6 +14,9 @@ namespace druggedcode.engine
         
         [Header("Sound")]
         public AudioClip footStep;
+
+		[Header("Prefab")]
+		public GameObject jumpPrefab;
         
         
         public bool movable { get; set; }
@@ -42,6 +45,19 @@ namespace druggedcode.engine
 			if( oneway ) LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_ONEWAY);
 			else LayerUtil.ChangeLayer(gameObject, DruggedEngine.MASK_PLATFORM );
         }
+
+		public void PlaySound( Vector3 pos, float v = 1f , float p = 1f)
+		{
+			if( footStep == null ) return;
+
+			SoundManager.Instance.PlaySFX( footStep,v,p, pos );
+		}
+
+		public void ShowEffect( Vector3 pos, Vector3 scale )
+		{
+			if( jumpPrefab == null ) return;
+			((GameObject)Instantiate ( jumpPrefab, pos, Quaternion.identity)).transform.localScale = scale;
+		}
 
         public Vector2 translateVector
         {
