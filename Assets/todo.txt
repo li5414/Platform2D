@@ -14,6 +14,7 @@ FXManager 클래스 생성 (미완 )
 DECharacter의 SetState 를 protected로 변경 직접적으로 변경하지 않고 해당 메소드를 통해 변경 되도록.
 StateEnter 제거. 각 행동은 SetState가 아니라 메소드를 통해 이루어지도록
 SpineEvent - Sound, SendMessage 추가
+점프다운 공격
 
 
 무빙플랫폼 속도, 위의 캐릭터(물건) 위치 조정

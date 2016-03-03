@@ -214,14 +214,14 @@ namespace druggedcode.engine
                 case CharacterState.LADDER:
                     if (controller.state.IsGrounded || currentLadder == null)
                     {
-                        SetState(CharacterState.IDLE);
+						Idle();
                         return;
                     }
 
                     // 캐릭터가 사다리의 정상 바닥보다 y 위치가 올라간 경우 등반을 멈춘다.
                     if (mTr.position.y > currentLadder.PlatformY)
                     {
-                        SetState(CharacterState.IDLE);
+						Idle();
                         return;
                     }
                     if (verticalAxis == 0f) currentAnimationTimeScale(0f);
@@ -326,10 +326,6 @@ namespace druggedcode.engine
         {
             switch (state)
             {
-                //모든 땅에서의 움직임은 Idle에서 시작한다.
-                case CharacterState.IDLE:
-                    break;
-
                 case CharacterState.WALK:
                     break;
 
@@ -373,7 +369,7 @@ namespace druggedcode.engine
         bool CheckIdle()
         {
             if (horizontalAxis != 0f) return false;
-            SetState(CharacterState.IDLE);
+			Idle();
             return true;
         }
 
@@ -396,7 +392,7 @@ namespace druggedcode.engine
             if (isRun) return false;
 
             if (horizontalAxis != 0f) SetState(CharacterState.WALK);
-            else SetState(CharacterState.IDLE);
+				else Idle();
             return true;
         }
 

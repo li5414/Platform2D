@@ -404,6 +404,14 @@ namespace druggedcode.engine
 			controller.Stop ();
 		}
 
+		public void Spawn (Vector3 pos)
+		{
+			mTr.position = pos;
+			SetFacing (Facing.RIGHT);
+
+			Active ();
+		}
+
 		void TimesUpdate ()
 		{
 			if (mWaitNextAttack)
@@ -451,12 +459,22 @@ namespace druggedcode.engine
 			//todo. respawn after dead motion.
 		}
 
-		public void Spawn (Vector3 pos)
+		public void Idle()
 		{
-			mTr.position = pos;
-			SetFacing (Facing.RIGHT);
+			SetState( CharacterState.IDLE );
 
-			Active ();
+			PlayAnimation(idleAnim);
+			GravityActive(true);
+			CurrentSpeed = 0f;
+
+			mCanEscape = true;
+			mCanDash = true;
+			mCanJump = true;
+			mCanMove = true;
+			mCanAttack = true;
+			mCanFacingUpdate = true;
+
+			controller.ResetColliderSize();
 		}
 
 		public void Escape ()
