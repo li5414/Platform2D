@@ -207,8 +207,6 @@ public class GameManager : MonoBehaviour
 
 		yield return null;
 
-		player.SetState( CharacterState.IDLE );
-
 		gameCamera.AddPlayer( player );
 		gameCamera.SetBound( location.GetBoundariesInfo());
 		gameCamera.Run();
@@ -281,8 +279,7 @@ public class GameManager : MonoBehaviour
 
 		if( player != null )
 		{
-			player.DeActive();
-			player.SetState( CharacterState.IDLE );
+			player.Pause();
 		}
     }
 

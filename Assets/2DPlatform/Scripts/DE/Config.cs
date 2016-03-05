@@ -8,7 +8,7 @@ public class Config
     public const string SC_TITLE = "Title";
 
     //-- Tag
-	public const string TAG_LOCATION = "Location";
+    public const string TAG_LOCATION = "Location";
     public const string TAG_CHECKPOINT = "CheckPoint";
     public const string TAG_PLAYER = "Player";
 
@@ -24,6 +24,26 @@ public class Config
         else
             IsMobile = true;
     }
+}
+
+public enum CharacterState
+{
+    NULL,
+    IDLE,
+    WALK,
+    RUN,
+    DASH,
+    ESCAPE,
+    CROUCH,
+    LADDER,
+    LOOKUP,
+    JUMP,
+    FALL,
+    WALLSLIDE,
+    JETPACK,
+    ATTACK_GROUND,
+    ATTACK_AIR,
+    DEAD
 }
 
 public enum UpdateType
@@ -47,16 +67,16 @@ public enum Facing
 
 public enum AnimationType
 {
-	SPINE,
-	ANIMATION,
-	SPRITE,
-	NONE
+    SPINE,
+    ANIMATION,
+    SPRITE,
+    NONE
 }
 
 public enum WallSlideWay
 {
-	NOTHING,
-	LEFT,
-	RIGHT,
-	BOTH
+    NOTHING,
+    LEFT,
+    RIGHT,
+    BOTH
 }
