@@ -36,6 +36,12 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        if( Instance != null && Instance != this )
+        {
+            Destroy( gameObject );
+            return;
+        }
+        
 		Instance = this;
 		name = typeof( GameManager ).Name;
 		DontDestroyOnLoad( this );

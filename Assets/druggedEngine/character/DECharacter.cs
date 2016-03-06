@@ -96,12 +96,20 @@ namespace druggedcode.engine
 
         [Header("AttackGround")]
         [SpineAnimation]
-        public string groundAttackAnim;
+        public string attackGroundAnim;
+        [SpineAnimation]
+        public string attackUpAnim;
+        [SpineAnimation]
+        public string attackDownAnim;
         public float waitAttackDuration = 0.5f;
 
         [Header("AttackAir")]
         [SpineAnimation]
-        public string airAttackAnim;
+        public string attackAirAnim;
+        [SpineAnimation]
+        public string attackAirUpAnim;
+        [SpineAnimation]
+        public string attackAirDownAnim;
 
         [Header("Effect")]
         public GameObject jumpEffectPrefab;
@@ -153,6 +161,7 @@ namespace druggedcode.engine
 
         protected float mWaitNextAttackStartTime;
         protected bool mWaitNextAttack;
+        protected int mAttackIndex;
 
         //캐릭터의 중력을 활성화 하거나 비활성화 할때 이전 중력값을 기억하기 위한 용도
         protected float _originalGravity;
@@ -176,7 +185,10 @@ namespace druggedcode.engine
         {
             mTr = transform;
             controller = GetComponent<DEController>();
-            mStateTransitions = new List< StateTransition >();
+            mStateTransitions = new List<StateTransition>();
+
+            mStateLoop = delegate { };
+            mStateExit = delegate { };
         }
 
         virtual protected void OnEnable()
@@ -203,7 +215,7 @@ namespace druggedcode.engine
                     mSkeletonAnimation.state.Complete += HandleComplete;
                     break;
             }
-            
+
             Idle();
         }
 
@@ -296,7 +308,7 @@ namespace druggedcode.engine
 
         virtual protected void OnAnimEffect(int i, float f, string s)
         {
-            print("Effect : " + s);
+            //print("Effect : " + s);
         }
 
 
@@ -334,17 +346,19 @@ namespace druggedcode.engine
             }
 
             //Debug.Log (state + " > " + next);
-            if (mStateExit != null) mStateExit();
-            state = next;
+
+            mStateExit();
+
+            mStateExit = delegate { };
+            mStateLoop = delegate { };
             mStateTransitions.Clear();
+
+            state = next;
         }
 
         protected void StateUpdate()
         {
-            if (StateTransition() == false)
-            {
-                if (mStateLoop != null) mStateLoop();
-            }
+            if (StateTransition() == false) mStateLoop();
         }
 
         bool StateTransition()
@@ -363,6 +377,11 @@ namespace druggedcode.engine
         {
             mStateTransitions.Add(transition);
         }
+        
+        protected void RemoveTransition(StateTransition transition )
+        {
+            mStateTransitions.Remove( transition );
+        }
 
         virtual protected void Idle()
         {
@@ -375,32 +394,37 @@ namespace druggedcode.engine
 
             PlayAnimation(idleAnim);
             CurrentSpeed = 0f;
-            controller.ResetColliderSize();
-            
-            mStateExit = null;
-            mStateLoop = delegate
-            {
-                Move();
-            };
 
-            AddTransition(TransitionGroundToFall);
-            AddTransition(CheckWalk);
+            AddTransition(TransitionGround_Fall);
+            AddTransition(TransitionIdle_Move);
+
+            mStateLoop += Move;
         }
 
-        protected void Walk()
+        virtual protected void Walk()
         {
             SetState(CharacterState.WALK);
-            
+
             PlayAnimation(walkAnim);
             CurrentSpeed = WalkSpeed;
+
+            AddTransition(TransitionGround_Fall);
+            AddTransition(TransitionWalk_IdleOrRun);
+
+            mStateLoop += Move;
         }
 
-        protected void Run()
+        virtual protected void Run()
         {
             SetState(CharacterState.RUN);
 
             PlayAnimation(runAnim);
             CurrentSpeed = RunSpeed;
+
+            AddTransition(TransitionGround_Fall);
+            AddTransition(TransitionRun_StopOrWalk);
+
+            mStateLoop += Move;
         }
 
         protected void Dash()
@@ -410,27 +434,228 @@ namespace druggedcode.engine
             mCanDash = false;
             mCanJump = false;
             mCanEscape = false;
+            mCanAttack = true;
+
             mDashStartTime = Time.time;
 
-            Stop();
             PlayAnimation(dashAnim);
             GravityActive(false);
+            Stop();
             controller.vx = mFacing == Facing.RIGHT ? dashSpeed : -dashSpeed;
+
+            AddTransition(TransitionDash_Idle);
+
+            mStateExit += delegate
+            {
+                GravityActive(true);
+                Stop();
+            };
         }
 
         protected void Escape()
         {
-            PlayAnimation(escapeAnim);
+            SetState(CharacterState.ESCAPE);
 
-            controller.UpdateColliderSize(1f, 0.5f);
-
+            mCanDash = true;
+            mCanJump = true;
             mCanEscape = false;
-
-            controller.vx = mFacing == Facing.RIGHT ? RunSpeed : -RunSpeed;
+            mCanAttack = false;
 
             mEscapeStartTime = Time.time;
+            PlayAnimation(escapeAnim);
+            controller.UpdateColliderSize(1f, 0.5f);
+            Stop();
+            controller.vx = mFacing == Facing.RIGHT ? RunSpeed : -RunSpeed;
+
+            AddTransition(TransitionGround_Fall);
+            AddTransition(TransitionEscape_Idle);
+
+            mStateExit += delegate
+            {
+                controller.ResetColliderSize();
+                GhostMode(false);
+            };
         }
 
+        virtual protected void DoAttack()
+        {
+            if (mWaitNextAttack)
+            {
+                NextAttack();
+                return;
+            }
+            
+            SetState(CharacterState.ATTACK);
+
+            mCanDash = false;
+            mCanJump = false;
+            mCanEscape = true;
+            mCanAttack = false;
+
+            Stop();
+            
+            mAttackIndex = 0;
+            
+            if (controller.state.IsGrounded)
+            {
+                GroundAttack();
+                AddTransition(TransitionGround_Fall);
+            }
+            else
+            {
+                AirAttack();
+            }
+
+            mStateLoop += delegate
+            {
+                if (mWaitNextAttack)
+                {
+                    if (Time.time - mWaitNextAttackStartTime > waitAttackDuration)
+                    {
+                        mWaitNextAttack = false;
+                        Idle();
+                    }
+                }
+            };
+        }
+
+        virtual protected void GroundAttack()
+        {
+            if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackUpAnim) == false)
+            {
+                PlayAnimation(attackUpAnim);
+            }
+            else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackDownAnim) == false)
+            {
+                PlayAnimation(attackDownAnim);
+            }
+            else if( string.IsNullOrEmpty(attackGroundAnim) == false )
+            {
+                PlayAnimation(attackGroundAnim);
+            }
+        }
+
+        virtual protected void AirAttack()
+        {
+            if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackAirUpAnim) == false)
+            {
+                PlayAnimation(attackAirUpAnim);
+            }
+            else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackAirDownAnim) == false)
+            {
+                PlayAnimation(attackAirDownAnim);
+            }
+            else if( string.IsNullOrEmpty(attackAirAnim) == false )
+            {
+                PlayAnimation(attackAirAnim);
+            }
+        }
+        
+        protected void NextAttack()
+        {
+            mWaitNextAttack = false;
+            mAttackIndex++;
+            print( "NextAttack " + mAttackIndex );
+            if( mAttackIndex == 3 )
+            {
+                print("remove!");
+                RemoveTransition(TransitionGround_Fall);
+            }
+            
+            switch (bodyType)
+            {
+                case AnimationType.SPINE:
+                    mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
+                    break;
+            }
+        }
+
+        void WaitNextAttack()
+        {
+            mCanAttack = true;
+            mWaitNextAttack = true;
+            mWaitNextAttackStartTime = Time.time;
+            currentAnimationTimeScale(0f);
+        }
+
+        virtual protected void Jump()
+        {
+            SetState(CharacterState.JUMP);
+
+            mCanDash = true;
+            mCanJump = true;
+            mCanEscape = false;
+            mCanAttack = false;
+
+            bool wallJump = false;
+            float jumpPower;
+            GameObject effect;
+
+            //firstJump
+            if (jumpCount == 0)
+            {
+                controller.state.ClearPlatform();
+                PlatformSoundPlay();
+                PlatformEffectSpawn();
+
+                if (state == CharacterState.WALLSLIDE)
+                {
+                    controller.vx = mFacing == Facing.LEFT ? 4 : -4;
+                    controller.LockMove(0.5f);
+                    wallJump = true;
+                }
+                else if (controller.state.IsGrounded)
+                {
+
+                }
+
+                PlayAnimation(jumpAnim);
+                jumpPower = Mathf.Sqrt(2f * JumpHeight * Mathf.Abs(controller.Gravity));
+                effect = jumpEffectPrefab;
+            }
+            //airJump
+            else
+            {
+                PlayAnimation(jumpAnim);
+                jumpPower = Mathf.Sqrt(2f * JumpHeightOnAir * Mathf.Abs(controller.Gravity));
+                effect = airJumpEffectPrefab;
+            }
+
+            CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
+            controller.vy = jumpPower;
+            jumpStartTime = Time.time;
+            jumpCount++;
+
+            if (wallJump)
+            {
+                SpawnAtFoot(effect, Quaternion.Euler(0, 0, mFacing == Facing.RIGHT ? 90 : -90), new Vector3(mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
+            }
+            else
+            {
+                FXManager.Instance.SpawnFX(effect, mTr.position, new Vector3(mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
+            }
+
+            AddTransition(TransitionJump_Fall);
+
+            mStateLoop += Move;
+        }
+
+        virtual protected void Fall(bool useJumpCount = true)
+        {
+            SetState(CharacterState.ESCAPE);
+
+            mCanDash = true;
+            mCanJump = true;
+            mCanEscape = false;
+            mCanAttack = true;
+
+            if (useJumpCount) jumpCount++;
+            PlayAnimation(fallAnim);
+
+            mStateLoop += Move;
+
+            AddTransition(TransitionAir_Idle);
+        }
 
         protected void PlatformSoundPlay()
         {
@@ -440,7 +665,6 @@ namespace druggedcode.engine
 
         protected void PlatformEffectSpawn()
         {
-            print("@@@@ PlatformEffectSpawn " + name);
             Platform platform = controller.state.StandingPlatform;
             if (platform != null) platform.ShowEffect(mTr.position, new Vector3(mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
         }
@@ -518,7 +742,6 @@ namespace druggedcode.engine
 
         protected void Move()
         {
-            print("Move " + Time.time );
             if (mFacing == Facing.LEFT && horizontalAxis > 0.1f)
             {
                 SetFacing(Facing.RIGHT);
@@ -551,55 +774,9 @@ namespace druggedcode.engine
             Active();
         }
 
-
-        virtual protected void GroundAttack()
-        {
-            PlayAnimation(groundAttackAnim);
-        }
-
-        virtual protected void AirAttack()
-        {
-            PlayAnimation(airAttackAnim);
-        }
-
-        void WaitNextAttack()
-        {
-            if (state == CharacterState.ATTACK_GROUND == false) return;
-
-            mCanAttack = true;
-            mWaitNextAttack = true;
-            mWaitNextAttackStartTime = Time.time;
-            currentAnimationTimeScale(0f);
-        }
-
-        protected void StopWaitNextAttack()
-        {
-            mWaitNextAttack = false;
-            Idle();
-        }
-
-        protected void NextAttack()
-        {
-            mWaitNextAttack = false;
-            switch (bodyType)
-            {
-                case AnimationType.SPINE:
-                    mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
-                    break;
-            }
-        }
-
         public void ResetJump()
         {
             jumpCount = 0;
-        }
-
-        protected bool IsAblePassOneWay()
-        {
-            if (verticalAxis >= 0f) return false;
-            if (controller.state.IsOnOneway == false) return false;
-
-            return true;
         }
 
         protected void PassOneway()
@@ -608,18 +785,6 @@ namespace druggedcode.engine
             controller.state.ClearPlatform();
             controller.PassThroughOneway();
             Fall();
-        }
-
-        //ActionState.FALL은 직접적으로 호출 하지 말도록 하자. 점프 후 떨어지는 것과 지면에서 갑자기 떨어지는 것은 차이가 있다.
-        //이 차이는 점프 수를 소비하냐 아니냐의 차이이다.
-        //가령 이미 점프 중이였다면 fall 상태로 가면서 점프 수는 변동이 되지 않지만 갑자기 지면에서 떨어진 경우 점프를 소비 시켜야 한다.
-        protected void Fall(bool useJump = true)
-        {
-            if (useJump) jumpCount++;
-
-            GravityActive(true);
-            PlayAnimation(fallAnim);
-            SetState(CharacterState.FALL);
         }
 
         //----------------------------------------------------------------------------------------------------------
@@ -774,7 +939,7 @@ namespace druggedcode.engine
         //--------------------------------------------------------------------------------------------
         // state transition
         //--------------------------------------------------------------------------------------------
-        protected bool TransitionGroundToFall()
+        protected bool TransitionGround_Fall()
         {
             if (controller.state.IsGrounded) return false;
 
@@ -782,34 +947,70 @@ namespace druggedcode.engine
             return true;
         }
 
-        protected bool CheckWalk()
+        protected bool TransitionWalk_IdleOrRun()
+        {
+            if (horizontalAxis == 0f)
+            {
+                Idle();
+                return true;
+            }
+            if (isRun)
+            {
+                Run();
+                return true;
+            }
+
+            return false;
+        }
+
+        protected bool TransitionIdle_Move()
         {
             if (horizontalAxis == 0f) return false;
-            Walk();
+
+            if (isRun) Run();
+            else Walk();
             return true;
         }
 
-        protected bool CheckIdle()
-        {
-            if (horizontalAxis != 0f) return false;
-            Idle();
-            return true;
-        }
-
-
-        protected bool CheckRun()
-        {
-            if (isRun == false) return false;
-            Run();
-            return true;
-        }
-
-        protected bool CheckRunStop()
+        protected bool TransitionRun_StopOrWalk()
         {
             if (isRun) return false;
 
             if (horizontalAxis != 0f) Walk();
             else Idle();
+            return true;
+        }
+
+        protected bool TransitionDash_Idle()
+        {
+            float dashElapsedTime = Time.time - mDashStartTime;
+            if (dashElapsedTime < dashDuration) return false;
+
+            Idle();
+            return true;
+        }
+
+        protected bool TransitionEscape_Idle()
+        {
+            float slideElapsedTime = Time.time - mEscapeStartTime;
+            if (slideElapsedTime < escapeDuration) return false;
+            if (controller.IsCollidingHead) return false;
+
+            Idle();
+            return true;
+        }
+
+        protected bool TransitionJump_Fall()
+        {
+            if (controller.vy > 0) return false;
+            Fall(false);
+            return true;
+        }
+
+        protected bool TransitionAir_Idle()
+        {
+            if (controller.state.IsGrounded == false) return false;
+            Idle();
             return true;
         }
 

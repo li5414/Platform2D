@@ -33,10 +33,10 @@ namespace druggedcode.engine
 			mPlayer.verticalAxis = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
 			mPlayer.isRun = Input.GetKey (runKey);
 
-			if( Input.GetKeyDown (jumpKey)) mPlayer.DoJump();
-			if( Input.GetKeyDown (escapeKey)) mPlayer.DoEscape();
-			if( Input.GetKeyDown (dashKey)) mPlayer.DoDash();
-			if (Input.GetButtonDown("Fire1")) mPlayer.DoAttack();
+			if( Input.GetKeyDown (jumpKey)) mPlayer.OrderJump();
+			if( Input.GetKeyDown (escapeKey)) mPlayer.OrderEscape();
+			if( Input.GetKeyDown (dashKey)) mPlayer.OrderDash();
+			if (Input.GetButtonDown("Fire1")) mPlayer.OrderAttack();
 		}
 
 

@@ -41,8 +41,7 @@ public enum CharacterState
     FALL,
     WALLSLIDE,
     JETPACK,
-    ATTACK_GROUND,
-    ATTACK_AIR,
+    ATTACK,
     DEAD
 }
 

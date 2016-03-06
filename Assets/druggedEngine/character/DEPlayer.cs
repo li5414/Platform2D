@@ -17,164 +17,164 @@ namespace druggedcode.engine
 
         public LocationLinker currentManualLinker { get; set; }
         public DialogueZone currentDialogueZone { get; set; }
-        
-        
-        public void DoEscape()
+
+
+        //--------------------------------------------------------------------
+        // Order
+        //--------------------------------------------------------------------
+
+        public void OrderEscape()
         {
-            if (mCanEscape == false) return;
-            
-            Escape();
+            if (mCanEscape) Escape();
         }
 
-        public void DoDash()
+        public void OrderDash()
         {
-            if (mCanDash == false) return;
-            Dash();
+            if ( mCanDash ) Dash();
         }
 
-        public void DoAttack()
+        public void OrderAttack()
         {
-            if (mCanAttack == false) return;
-
-            mCanAttack = false;
-
-            Stop();
-
-            if (mWaitNextAttack)
-            {
-                NextAttack();
-            }
-            else if (controller.state.IsGrounded)
-            {
-                SetState(CharacterState.ATTACK_GROUND);
-                GroundAttack();
-            }
-            else
-            {
-                SetState(CharacterState.ATTACK_AIR);
-                AirAttack();
-            }
+            if (mCanAttack ) DoAttack();
         }
-        
-        virtual public void DoJump()
+
+        virtual public void OrderJump()
         {
             if (mCanJump == false) return;
             if (jumpCount == jumpMax) return;
-
-            mCanEscape = false;
-
-            bool wallJump = false;
-
-            Platform platform = controller.state.StandingPlatform;
-
-            GameObject effect = jumpEffectPrefab;
-
-            //아래 점프 체크도 한다
-            if (IsAblePassOneWay())
+            if (verticalAxis < -0.1f)
             {
-                PassOneway();
-                return;
-            }
-            //사다리타는 상황이고 아래를 눌렀다면
-            else if (state == CharacterState.LADDER && verticalAxis < -0.1f)
-            {
-                Fall();
-                return;
-            }
-            //벽을 타고 있다면
-            else if (state == CharacterState.WALLSLIDE)
-            {
-                controller.vx = mFacing == Facing.LEFT ? 4 : -4;
-                controller.LockMove(0.5f);
-
-                wallJump = true;
+                if (controller.state.IsOnOneway)
+                {
+                    PassOneway();
+                    return;
+                }
+                if (state == CharacterState.LADDER)
+                {
+                    Fall();
+                    return;
+                }
             }
 
-            CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
-
-            float jumpPower;
-            if (jumpCount == 0)
-            {
-                GravityActive(true);
-                PlayAnimation(jumpAnim);
-
-                PlatformSoundPlay();
-                PlatformEffectSpawn();
-                controller.state.ClearPlatform();
-                jumpPower = Mathf.Sqrt(2f * JumpHeight * Mathf.Abs(controller.Gravity));
-            }
-            else
-            {
-                PlayAnimation(jumpAnim);
-                jumpPower = Mathf.Sqrt(2f * JumpHeightOnAir * Mathf.Abs(controller.Gravity));
-
-                effect = airJumpEffectPrefab;
-            }
-
-            controller.vy = jumpPower;
-            jumpStartTime = Time.time;
-            jumpCount++;
-
-            if (wallJump)
-            {
-                SpawnAtFoot(effect, Quaternion.Euler(0, 0, mFacing == Facing.RIGHT ? 90 : -90), new Vector3(mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
-            }
-            else
-            {
-                FXManager.Instance.SpawnFX(effect, mTr.position, new Vector3(mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
-            }
-
-            SetState(CharacterState.JUMP);
+            Jump();
         }
-        
-        
+
         override protected void Idle()
         {
             base.Idle();
-            
-            AddTransition(CheckLadderClimb);
-            AddTransition(CheckCrouch);
+
+            AddTransition(Transition_Climb);
+            AddTransition(TransitionGround_Crouch);
         }
 
-        protected void ChrouchEnter()
+        override protected void Walk()
+        {
+            base.Walk();
+
+            AddTransition(Transition_Climb);
+            AddTransition(TransitionGround_Crouch);
+        }
+
+        override protected void Run()
+        {
+            base.Run();
+
+            AddTransition(Transition_Climb);
+            AddTransition(TransitionGround_Crouch);
+        }
+
+        protected void Chrouch()
         {
             SetState(CharacterState.CROUCH);
 
             PlayAnimation(crouchAnim);
             CurrentSpeed = CrouchSpeed;
             controller.UpdateColliderSize(1f, 0.5f);
+
+            mStateLoop += Move;
+            mStateLoop += delegate
+            {
+                if (horizontalAxis == 0f) currentAnimationTimeScale(0f);
+                else currentAnimationTimeScale(1f);
+            };
+
+            AddTransition(TransitionGround_Fall);
+            AddTransition(TransitionCrouch_Idle);
         }
 
-        protected void LadderEnter()
+        override protected void Jump()
+        {
+            base.Jump();
+
+            AddTransition(TransitionAir_WallSLide);
+            AddTransition(Transition_Climb);
+        }
+
+        override protected void Fall(bool useJumpCount = true)
+        {
+            base.Fall(useJumpCount);
+
+            AddTransition(TransitionAir_WallSLide);
+            AddTransition(Transition_Climb);
+        }
+
+
+        protected void LadderClimb()
         {
             SetState(CharacterState.LADDER);
 
-            mCanEscape = false;
             mCanDash = false;
+            mCanJump = true;
+            mCanEscape = false;
+            mCanAttack = false;
 
             controller.state.ClearPlatform();
             PlayAnimation(ladderAnim);
             GravityActive(false);
             Stop();
             ResetJump();
+
+            AddTransition(TransitionLadder_Idle);
+
+            mStateLoop += delegate
+            {
+                if (verticalAxis == 0f) currentAnimationTimeScale(0f);
+                else currentAnimationTimeScale(1f);
+                controller.vy = verticalAxis * ladderClimbSpeed;
+            };
+
+            mStateExit += delegate
+            {
+                Stop();
+                GravityActive(true);
+            };
         }
 
-        protected void WallSlideEnter()
+        protected void WallSlide()
         {
             SetState(CharacterState.WALLSLIDE);
-            
-            //spine
-            //					wallSlideStartTime = Time.time;
-            //					controller.LockVY(wallSlideSpeed);
 
-            AnimFilp = true;
+            mCanDash = false;
             mCanJump = true;
+            mCanEscape = false;
+            mCanAttack = false;
 
+            PlayAnimation(wallSlideAnim);
+            AnimFilp = true;
             controller.LockVY(wallSlideSpeed);
             BodyPosition(new Vector2(mFacing == Facing.LEFT ? -0.15f : 0.15f, 0f));
-            PlayAnimation(wallSlideAnim);
             Stop();
             ResetJump();
+
+            AddTransition(TransitionAir_Idle);
+            AddTransition(TransitionWallSlide_Fall);
+
+            mStateExit += delegate
+            {
+                AnimFilp = false;
+                controller.UnLockVY();
+                BodyPosition(Vector2.zero);
+            };
         }
 
         protected virtual IEnumerator Dive()
@@ -202,9 +202,52 @@ namespace druggedcode.engine
             //			_character.SetAnimation("lookup");
             //_sceneCamera.LookUp();
         }
-        
-        
-        protected bool CheckLadderClimb()
+
+        bool TransitionAir_WallSLide()
+        {
+            if (jumpElapsedTime < 0.3f) return false;
+            else if (IsPressAgainstWall == false) return false;
+
+            WallSlide();
+            return true;
+        }
+
+        bool TransitionWallSlide_Fall()
+        {
+            if (IsPressAgainstWall) return false;
+            Fall();
+            return true;
+        }
+
+        protected bool TransitionLadder_Idle()
+        {
+            if (controller.state.IsGrounded || currentLadder == null)
+            {
+                Idle();
+                return true;
+            }
+
+            // 캐릭터가 사다리의 정상 바닥보다 y 위치가 올라간 경우 등반을 멈춘다.
+            if (mTr.position.y > currentLadder.PlatformY)
+            {
+                Idle();
+                return true;
+            }
+
+            return false;
+        }
+
+        protected bool TransitionCrouch_Idle()
+        {
+            if (verticalAxis >= -0.1f && controller.IsCollidingHead == false)
+            {
+                Idle();
+                return true;
+            }
+            return false;
+        }
+
+        protected bool Transition_Climb()
         {
             if (currentLadder == null) return false;
 
@@ -213,24 +256,24 @@ namespace druggedcode.engine
                 //사다리를 등반하며 점프하자마자 다시 붙는현상을 피하기위해 약간의 버퍼타임을 둔다. 
                 if (controller.state.IsGrounded == false && jumpElapsedTime < 0.2f) return false;
                 mTr.position = new Vector2(currentLadder.transform.position.x, mTr.position.y + 0.1f);
-                LadderEnter();
+                LadderClimb();
                 return true;
             }
             else if (verticalAxis < -0.1f && currentLadder.PlatformY <= mTr.position.y)
             {
                 mTr.position = new Vector2(currentLadder.transform.position.x, currentLadder.PlatformY - 0.1f);
-                LadderEnter();
+                LadderClimb();
                 return true;
             }
 
             return false;
         }
-        
-        protected bool CheckCrouch()
+
+        protected bool TransitionGround_Crouch()
         {
             if (verticalAxis < -0.1f)
             {
-                ChrouchEnter();
+                Chrouch();
                 return true;
             }
 
