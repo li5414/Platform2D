@@ -11,7 +11,7 @@ namespace druggedcode.engine
 		/// 발사속도
 		public float FireRate = 1;
 		// 발사 할 탄환
-		public Projectile Projectile;
+		public ProjectileOld Projectile;
 	
 		/// 공격할 사거리
 		public float ShootDistance = 10f;

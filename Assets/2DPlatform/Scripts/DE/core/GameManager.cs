@@ -27,11 +27,15 @@ public class GameManager : MonoBehaviour
 	[RuntimeInitializeOnLoadMethodAttribute]
 	public static void InitializeManager()
 	{
-		if( Instance == null && string.IsNullOrEmpty( SceneManager.GetActiveScene().name ) == false )
-		{
-			GameManager prefab = Resources.Load<GameManager>("GameManager");
-			GameObject.Instantiate<GameManager>( prefab );
-		}
+		if( Instance != null ) return;
+
+		string startSceneName = SceneManager.GetActiveScene().name;
+
+		if( string.IsNullOrEmpty( startSceneName )) return;
+
+		GameManager prefab = Resources.Load<GameManager>("GameManager");
+		GameObject.Instantiate<GameManager>( prefab );
+
 	}
 
     void Awake()

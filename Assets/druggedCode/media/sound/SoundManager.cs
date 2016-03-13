@@ -120,6 +120,42 @@ namespace druggedcode
             return mBgmChannel;
         }
 
+        public AudioSource PlaySFX(AudioClip clip, float volume = 1f, float pitch = 1f)
+        {
+            return PlaySFX(clip, volume, pitch, Vector3.zero);
+        }
+
+        public AudioSource PlaySFX(string str, float volume = 1f, float pitch = 1f)
+        {
+            return PlaySFX(str, volume, pitch, Vector3.zero);
+        }
+
+        public AudioSource PlaySFX(string str, float volume, float pitch, Vector3 position)
+        {
+            if (str == "") return null;
+
+            if (str.Contains("/"))
+            {
+                string[] chunks = str.Split('/');
+
+                if (mCategories.ContainsKey(chunks[0]))
+                {
+                    if (chunks[1] == "Random")
+                    {
+                        SoundCategory c = mCategories[chunks[0]];
+                        return PlaySFX(c.clips[(int)Random.Range(0, c.clips.Count)], volume, pitch, position);
+                    }
+                }
+            }
+
+            if (mPalette.ContainsKey(str))
+            {
+                return PlaySFX(mPalette[str], volume, pitch, position);
+            }
+
+            return null;
+        }
+        
         public AudioSource PlaySFX(AudioClip clip, float volume, float pitch, Vector3 position)
         {
             if (isSfxOn == false) return null;
@@ -145,49 +181,10 @@ namespace druggedcode
             ch.volume = volume * sfxMultiplier;
             ch.clip = clip;
             ch.Play();
-            
-            
-            
-            // ch.
 
             return ch;
         }
-
-        public AudioSource PlaySound(AudioClip clip, float volume = 1f, float pitch = 1f)
-        {
-            return PlaySFX(clip, volume, pitch, Vector3.zero);
-        }
-
-        public AudioSource PlaySound(string str, float volume = 1f, float pitch = 1f)
-        {
-            return PlaySound(str, volume, pitch, Vector3.zero);
-        }
-
-        public AudioSource PlaySound(string str, float volume, float pitch, Vector3 position)
-        {
-            if (str == "") return null;
-
-            if (str.Contains("/"))
-            {
-                string[] chunks = str.Split('/');
-
-                if (mCategories.ContainsKey(chunks[0]))
-                {
-                    if (chunks[1] == "Random")
-                    {
-                        SoundCategory c = mCategories[chunks[0]];
-                        return PlaySFX(c.clips[(int)Random.Range(0, c.clips.Count)], volume, pitch, position);
-                    }
-                }
-            }
-
-            if (mPalette.ContainsKey(str))
-            {
-                return PlaySFX(mPalette[str], volume, pitch, position);
-            }
-
-            return null;
-        }
+        
         public bool bgmMute
         {
             set

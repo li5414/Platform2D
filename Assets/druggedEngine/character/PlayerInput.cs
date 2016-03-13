@@ -12,10 +12,12 @@ namespace druggedcode.engine
 		public KeyCode upKey = KeyCode.W;
 		public KeyCode downKey = KeyCode.S;
 		public KeyCode runKey = KeyCode.LeftShift;
-
 		public KeyCode jumpKey = KeyCode.Space;
 		public KeyCode escapeKey = KeyCode.Q;
 		public KeyCode dashKey = KeyCode.E;
+        
+        [InputAxis]
+        public string attackKey;
 
 		DEPlayer mPlayer;
 
@@ -36,7 +38,7 @@ namespace druggedcode.engine
 			if( Input.GetKeyDown (jumpKey)) mPlayer.OrderJump();
 			if( Input.GetKeyDown (escapeKey)) mPlayer.OrderEscape();
 			if( Input.GetKeyDown (dashKey)) mPlayer.OrderDash();
-			if (Input.GetButtonDown("Fire1")) mPlayer.OrderAttack();
+			if (Input.GetButtonDown( attackKey )) mPlayer.OrderAttack();
 		}
 
 

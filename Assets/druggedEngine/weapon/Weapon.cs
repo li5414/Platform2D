@@ -1,45 +1,84 @@
 ﻿using UnityEngine;
+using Spine;
 
 namespace druggedcode.engine
 {
-    /// <summary>
-    /// Weapon parameters
-    /// </summary>
     public class Weapon : MonoBehaviour
     {
-        /// 발사될 탄환 프리팹
-        public Projectile Projectile;
+        // setup anim 은 애니메이션이 아니라 1frame 짜리 셋팅. slot 의 attachment 설정
+        public new string name;
 
-        /// 발사 빈도
-        public float FireRate;
+        [Header("Anim")]
+        [SpineAnimation(startsWith: "Setup")]
+        public string setupAnim;
+        [SpineAnimation(startsWith: "Idle")]
+        public string idleAnim;
+        [SpineAnimation(startsWith: "Aim")]
+        public string aimAnim;
+        [SpineAnimation(startsWith: "Fire")]
+        public string fireAnim;
+        [SpineAnimation(startsWith: "Reload")]
+        public string reloadAnim;
 
-        /// 발사 시 재생할 파티클 이펙트
-        public ParticleSystem GunFlames;
-        public ParticleSystem GunShells;
+        [Header("Prefab")]
+        public GameObject casingPrefab;
+        public Transform casingEjectPoint;
 
-        /// 탄환이 생성될 위치 
-        public Transform ProjectileFireLocation;
-        public AudioClip GunShootFx;
+        public float minAngle = -40;
+        public float maxAngle = 40;
+        public float refireRate = 0.5f;
+        public int clipSize = 10;
+        public int clip = 10;
+        public int ammo = 50;
 
-		ParticleSystem.EmissionModule mFrameEM;
-		ParticleSystem.EmissionModule mGunEM;
-        void Start()
+        public Spine.Animation SetupAnim;
+        public Spine.Animation IdleAnim;
+        public Spine.Animation AimAnim;
+        public Spine.Animation FireAnim;
+        public Spine.Animation ReloadAnim;
+
+        //states & locks
+        public bool reloadLock;
+        public float nextFireTime = 0;
+
+        public void CacheSpineAnimations(SkeletonData data)
         {
-			mFrameEM = GunFlames.emission;
-			mGunEM = GunShells.emission;
-
-            SetGunFlamesEmission(false);
-            SetGunShellsEmission(false);
+            SetupAnim = data.FindAnimation(setupAnim);
+            IdleAnim = data.FindAnimation(idleAnim);
+            AimAnim = data.FindAnimation(aimAnim);
+            FireAnim = data.FindAnimation(fireAnim);
+            ReloadAnim = data.FindAnimation(reloadAnim);
         }
 
-        public void SetGunFlamesEmission(bool state)
+        public virtual void Setup()
         {
-			mFrameEM.enabled = state;
+
         }
 
-        public void SetGunShellsEmission(bool state)
+        public virtual void Fire()
         {
-			mGunEM.enabled = state;
+            Debug.LogWarning("Not implemented!");
+        }
+
+        public virtual bool Reload()
+        {
+            if (ammo == 0)
+                return false;
+
+            int refill = clipSize;
+            if (refill > ammo)
+                refill = clipSize - ammo;
+            ammo -= refill;
+            clip = refill;
+
+            return true;
+        }
+        
+        //발사 반동
+        public virtual Vector2 GetRecoil()
+        {
+            return Vector2.zero;
         }
     }
 }
+

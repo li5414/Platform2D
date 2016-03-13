@@ -1,104 +1,120 @@
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 
 namespace druggedcode.engine
 {
-    /// <summary>
-    /// 발사되는 탄환
-    /// </summary>
-    public abstract class Projectile : MonoBehaviour
+    public class Projectile : MonoBehaviour
     {
-        //탄환 속력
-        public float Speed;
+        public Transform graphics;
+        public float initialSpeed;
+        public float thrusterForce;
+        public LayerMask targetMask;
+        public GameObject impactPrefab;
+        public string impactSound;
+        public float damage;
+        public float radius = 1.5f;
+        public float impactForce = 20;
+        public float lifeSpan = 3;
+        public Thruster thruster;
+        Rigidbody2D rb;
+        bool thrustActive = false;
+        int bounces = 0;
 
-        /// 탄환 충돌 레이어마스크
-        public LayerMask CollisionMask;
-
-        /// 탄환 주인
-        public GameObject Owner { get; private set; }
-
-        /// 탄환 방향
-        public Vector2 Direction { get; private set; }
-
-        /// 초기 속도. 발사한 주인의 controller 의 Speed 를 받아온다
-        public Vector2 InitialVelocity { get; private set; }
-
-        /// <summary>
-        ///  주인과 방향 속도를 설정
-        /// </summary>
-        public void Initialize(GameObject owner, Vector2 direction, Vector2 initialVelocity)
+        // Use this for initialization
+        void Start()
         {
-            transform.right = direction;
-            Owner = owner;
-            Direction = direction;
-            InitialVelocity = initialVelocity;
-
-            OnInitialized();
+            rb = GetComponent<Rigidbody2D>();
+            rb.velocity = transform.right * initialSpeed;
+            StartCoroutine(Activate(0));
         }
 
-        protected virtual void OnInitialized()
+        void OnDrawGizmos()
         {
-            // override
+            Gizmos.DrawWireSphere(transform.position, radius);
         }
 
-        /// 탄환이 무엇인가에 충돌 되었을 때 
-        public virtual void OnTriggerEnter2D(Collider2D collider)
+
+        void OnCollisionEnter2D(Collision2D collision)
         {
-            if (LayerUtil.Contains(CollisionMask, collider.gameObject.layer) == false)
+
+            bool hitTarget = false;
+            bounces++;
+            foreach (var cp in collision.contacts)
             {
-                OnNotCollideWith(collider);
-                return;
+                if ((1 << cp.collider.gameObject.layer & targetMask) > 0)
+                {
+                    Impact(cp.point);
+                    hitTarget = true;
+                    break;
+                }
             }
 
+            if (bounces > 3 && !hitTarget)
+                Impact(transform.position);
+        }
 
-            var isOwner = collider.gameObject == Owner;
-            if (isOwner)
+        IEnumerator Activate(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            thrustActive = true;
+            thruster.goalThrust = 1;
+            rb.velocity = transform.right * rb.velocity.magnitude;
+        }
+
+        void FixedUpdate()
+        {
+            if (thrustActive == true)
             {
-                OnCollideOwner();
-                return;
+                rb.AddForce(transform.right * thrusterForce * Time.deltaTime);
             }
 
-            IDamageable damageable = collider.GetComponent<IDamageable>();
+            if (thrustActive && rb.velocity.magnitude > 0)
+                graphics.rotation = Quaternion.Slerp(graphics.rotation, Quaternion.FromToRotation(Vector3.right, rb.velocity), Time.deltaTime * 10);
 
-            if (damageable != null)
-            {
-                OnCollideTakeDamage(collider, damageable);
-                return;
+            /*
+            float dist = speed * Time.deltaTime;
+            RaycastHit2D[] hits = Physics2D.RaycastAll(transform.position, transform.right, dist, targetMask);
+            bool impact = false;
+            Collider2D hitCollider;
+            Vector2 point = Vector2.zero;
+            foreach (var hit in hits) {
+                if (hit.collider.isTrigger)
+                    continue;
+
+                hitCollider = hit.collider;
+                point = hit.point;
+                impact = true;
+                break;
             }
 
-            OnCollideOther(collider);
+            transform.Translate(dist, 0, 0);
+
+            if (impact) {
+
+            }*/
         }
 
-        /// <summary>
-        /// 지정한 레이어가 아닌 다른 충돌체와 충돌.
-        /// </summary>
-        protected virtual void OnNotCollideWith(Collider2D collider)
+        void Impact(Vector2 point)
         {
-            // override
-        }
+            Collider2D[] colliders = Physics2D.OverlapCircleAll(point, radius);
+            foreach (var c in colliders)
+            {
+                if (c.isTrigger)
+                    continue;
 
-        /// <summary>
-        /// 발사한 주인과 충돌( 여기를 이용해 부메랑등의 탄환을 구현 )
-        /// </summary>
-        protected virtual void OnCollideOwner()
-        {
-            // override
-        }
+                if (c.attachedRigidbody != null)
+                {
+                    Vector2 origin = point - (Vector2)transform.right;
+                    Vector2 dir = point - origin;
+                    c.attachedRigidbody.SendMessage("Hit", new HitData(damage, origin, point, (Vector2)(dir * impactForce) + new Vector2(0, 5)), SendMessageOptions.DontRequireReceiver);
+                }
 
-        /// <summary>
-        /// 데미지를 입을 수 있는 객체와 충돌한 경우 처리
-        /// </summary>
-        protected virtual void OnCollideTakeDamage(Collider2D collider, IDamageable damageable)
-        {
-            // override
-        }
+            }
 
-        /// <summary>
-        /// 충돌은 허용했지만 데미지를 입을 수 없는 충돌체와 충돌
-        /// </summary>
-        protected virtual void OnCollideOther(Collider2D collider)
-        {
-            // override
+            Instantiate(impactPrefab, point, transform.rotation);
+            // SoundManager.Instance.PlaySFX()
+            // SoundPalette.PlaySound(impactSound, 1, 1, transform.position);
+            Destroy(gameObject);
         }
-
     }
 }

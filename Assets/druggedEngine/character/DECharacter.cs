@@ -17,6 +17,8 @@ namespace druggedcode.engine
         const string ANIM_EVENT_VX = "VX";
         const string ANIM_EVENT_VY = "VY";
         const string ANIM_EVENT_WAITATTACK = "WaitAttack";
+        const string ANIM_EVENT_FIRE = "Fire";
+        const string ANIM_EVENT_EJECT_CASING = "EjectCasing";
         const string ANIM_EVENT_GRAVITY = "Gravity";
         const string ANIM_EVENT_GHOSTING = "Ghosting";
         const string ANIM_EVENT_STEP = "Step";
@@ -159,7 +161,7 @@ namespace druggedcode.engine
         protected float mEscapeStartTime;
         protected List<StateTransition> mStateTransitions;
 
-        protected float mWaitNextAttackStartTime;
+        protected float mWaitNextAttackEndTime;
         protected bool mWaitNextAttack;
         protected int mAttackIndex;
 
@@ -167,7 +169,7 @@ namespace druggedcode.engine
         protected float _originalGravity;
         protected Facing mFacing;
 
-        SkeletonAnimation mSkeletonAnimation;
+        protected SkeletonAnimation mSkeletonAnimation;
         protected SkeletonGhost mGhost;
 
         //----------------------------------------------------------------------------------------------------------
@@ -248,6 +250,14 @@ namespace druggedcode.engine
                     OnAnimWaitAttack(e.Int, e.Float, e.String);
                     break;
 
+                case ANIM_EVENT_FIRE:
+                    OnFire(e.Int, e.Float, e.String);
+                    break;
+
+                case ANIM_EVENT_EJECT_CASING:
+                    OnEjectCasing(e.Int, e.Float, e.String);
+                    break;
+
                 case ANIM_EVENT_GRAVITY:
                     OnAnimGravity(e.Int, e.Float, e.String);
                     break;
@@ -280,6 +290,16 @@ namespace druggedcode.engine
             controller.AddForceY(f);
         }
 
+        virtual protected void OnFire(int i, float f, string s)
+        {
+            FireWeapon();
+        }
+
+        virtual protected void OnEjectCasing(int i, float f, string s)
+        {
+            EjectCasing();
+        }
+        
         virtual protected void OnAnimWaitAttack(int i, float f, string s)
         {
             WaitNextAttack();
@@ -303,7 +323,7 @@ namespace druggedcode.engine
 
         virtual protected void OnAnimSound(int i, float f, string s)
         {
-            SoundManager.Instance.PlaySound(s, 1f, 1, transform.position);
+            SoundManager.Instance.PlaySFX(s, 1f, 1, transform.position);
         }
 
         virtual protected void OnAnimEffect(int i, float f, string s)
@@ -377,10 +397,10 @@ namespace druggedcode.engine
         {
             mStateTransitions.Add(transition);
         }
-        
-        protected void RemoveTransition(StateTransition transition )
+
+        protected void RemoveTransition(StateTransition transition)
         {
-            mStateTransitions.Remove( transition );
+            mStateTransitions.Remove(transition);
         }
 
         virtual protected void Idle()
@@ -427,8 +447,9 @@ namespace druggedcode.engine
             mStateLoop += Move;
         }
 
-        protected void Dash()
+        protected void DoDash()
         {
+            if (mCanDash == false) return;
             SetState(CharacterState.DASH);
 
             mCanDash = false;
@@ -452,8 +473,10 @@ namespace druggedcode.engine
             };
         }
 
-        protected void Escape()
+        protected void DoEscape()
         {
+            if (mCanEscape == false) return;
+
             SetState(CharacterState.ESCAPE);
 
             mCanDash = true;
@@ -479,12 +502,10 @@ namespace druggedcode.engine
 
         virtual protected void DoAttack()
         {
-            if (mWaitNextAttack)
-            {
-                NextAttack();
-                return;
-            }
-            
+            if (mCanAttack == false) return;
+
+            print("<DoAttack>");
+
             SetState(CharacterState.ATTACK);
 
             mCanDash = false;
@@ -492,35 +513,34 @@ namespace druggedcode.engine
             mCanEscape = true;
             mCanAttack = false;
 
-            Stop();
-            
-            mAttackIndex = 0;
-            
+            if (mWaitNextAttack)
+            {
+                NextAttack();
+                return;
+            }
+
             if (controller.state.IsGrounded)
             {
                 GroundAttack();
-                AddTransition(TransitionGround_Fall);
             }
             else
             {
                 AirAttack();
             }
 
-            mStateLoop += delegate
+            mStateExit += delegate
             {
-                if (mWaitNextAttack)
-                {
-                    if (Time.time - mWaitNextAttackStartTime > waitAttackDuration)
-                    {
-                        mWaitNextAttack = false;
-                        Idle();
-                    }
-                }
+                mWaitNextAttack = false;
             };
         }
 
         virtual protected void GroundAttack()
         {
+            print(" GroundAttack");
+
+            mAttackIndex = 0;
+            Stop();
+
             if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackUpAnim) == false)
             {
                 PlayAnimation(attackUpAnim);
@@ -529,43 +549,29 @@ namespace druggedcode.engine
             {
                 PlayAnimation(attackDownAnim);
             }
-            else if( string.IsNullOrEmpty(attackGroundAnim) == false )
+            else if (string.IsNullOrEmpty(attackGroundAnim) == false)
             {
                 PlayAnimation(attackGroundAnim);
             }
+
+            AddTransition(TransitionAttack_Idle);
+            AddTransition(TransitionGround_Fall);
         }
 
-        virtual protected void AirAttack()
-        {
-            if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackAirUpAnim) == false)
-            {
-                PlayAnimation(attackAirUpAnim);
-            }
-            else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackAirDownAnim) == false)
-            {
-                PlayAnimation(attackAirDownAnim);
-            }
-            else if( string.IsNullOrEmpty(attackAirAnim) == false )
-            {
-                PlayAnimation(attackAirAnim);
-            }
-        }
-        
         protected void NextAttack()
         {
             mWaitNextAttack = false;
             mAttackIndex++;
-            print( "NextAttack " + mAttackIndex );
-            if( mAttackIndex == 3 )
+
+            if (mAttackIndex == 3)
             {
-                print("remove!");
                 RemoveTransition(TransitionGround_Fall);
             }
-            
+
             switch (bodyType)
             {
                 case AnimationType.SPINE:
-                    mSkeletonAnimation.state.GetCurrent(0).TimeScale = 1;
+                    GetCurrent(0).TimeScale = 1;
                     break;
             }
         }
@@ -574,18 +580,61 @@ namespace druggedcode.engine
         {
             mCanAttack = true;
             mWaitNextAttack = true;
-            mWaitNextAttackStartTime = Time.time;
+            mWaitNextAttackEndTime = Time.time + waitAttackDuration;
             currentAnimationTimeScale(0f);
         }
 
-        virtual protected void Jump()
+        void StopWaitNextAttack()
         {
+            mWaitNextAttack = false;
+            Idle();
+        }
+
+        virtual protected void AirAttack()
+        {
+            if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackAirUpAnim) == false)
+            {
+                SetState(CharacterState.ATTACK);
+                PlayAnimation(attackAirUpAnim);
+            }
+            else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackAirDownAnim) == false)
+            {
+                SetState(CharacterState.ATTACK);
+                PlayAnimation(attackAirDownAnim);
+            }
+            else if (string.IsNullOrEmpty(attackAirAnim) == false)
+            {
+                SetState(CharacterState.ATTACK);
+                PlayAnimation(attackAirAnim);
+            }
+
+        }
+        
+        virtual protected void FireWeapon()
+        {
+            // currentWeapon.Fire();
+            // if (this.state == ActionState.JETPACK)
+            // {
+            //     doRecoil = true;
+            // }
+        }
+        
+        virtual protected void EjectCasing()
+        {
+            // Instantiate(currentWeapon.casingPrefab, currentWeapon.casingEjectPoint.position, Quaternion.LookRotation(Vector3.forward, currentWeapon.casingEjectPoint.up));
+        }
+
+        virtual protected void DoJump()
+        {
+            if (mCanJump == false) return;
+            if (jumpCount >= jumpMax) return;
+
             SetState(CharacterState.JUMP);
 
             mCanDash = true;
             mCanJump = true;
             mCanEscape = false;
-            mCanAttack = false;
+            mCanAttack = true;
 
             bool wallJump = false;
             float jumpPower;
@@ -638,6 +687,34 @@ namespace druggedcode.engine
             AddTransition(TransitionJump_Fall);
 
             mStateLoop += Move;
+        }
+
+        protected void DoJumpBelow()
+        {
+            if (mCanJump == false) return;
+
+            if (controller.state.IsOnOneway)
+            {
+                PassOneway();
+                return;
+            }
+            else if (state == CharacterState.LADDER)
+            {
+                Fall();
+                return;
+            }
+            else
+            {
+                DoJump();
+            }
+        }
+
+        protected void PassOneway()
+        {
+            mTr.position = new Vector2(mTr.position.x, mTr.position.y - 0.1f);
+            controller.state.ClearPlatform();
+            controller.PassThroughOneway();
+            Fall();
         }
 
         virtual protected void Fall(bool useJumpCount = true)
@@ -779,14 +856,6 @@ namespace druggedcode.engine
             jumpCount = 0;
         }
 
-        protected void PassOneway()
-        {
-            mTr.position = new Vector2(mTr.position.x, mTr.position.y - 0.1f);
-            controller.state.ClearPlatform();
-            controller.PassThroughOneway();
-            Fall();
-        }
-
         //----------------------------------------------------------------------------------------------------------
         // interface
         //----------------------------------------------------------------------------------------------------------
@@ -890,6 +959,10 @@ namespace druggedcode.engine
             }
         }
 
+        protected TrackEntry GetCurrent(int trackIndex = 0)
+        {
+            return mSkeletonAnimation.state.GetCurrent(trackIndex);
+        }
 
         protected float currentAnimationDuration
         {
@@ -898,7 +971,7 @@ namespace druggedcode.engine
                 switch (bodyType)
                 {
                     case AnimationType.SPINE:
-                        return mSkeletonAnimation.state.GetCurrent(0).animation.Duration;
+                        return GetCurrent(0).animation.Duration;
                 }
 
                 return 0f;
@@ -910,7 +983,7 @@ namespace druggedcode.engine
             switch (bodyType)
             {
                 case AnimationType.SPINE:
-                    mSkeletonAnimation.state.GetCurrent(0).TimeScale = timeScale;
+                    GetCurrent(0).TimeScale = timeScale;
                     break;
             }
         }
@@ -923,6 +996,11 @@ namespace druggedcode.engine
                     mSkeletonAnimation.state.SetAnimation(trackIndex, animName, loop);
                     break;
             }
+        }
+
+        protected void PlayAnimation(Spine.Animation animation, bool loop = true, int trackIndex = 0)
+        {
+            mSkeletonAnimation.state.SetAnimation(trackIndex, animation, loop);
         }
 
         protected bool HasAnim(string animName)
@@ -987,6 +1065,14 @@ namespace druggedcode.engine
             if (dashElapsedTime < dashDuration) return false;
 
             Idle();
+            return true;
+        }
+
+        protected bool TransitionAttack_Idle()
+        {
+            if (mWaitNextAttack == false) return false;
+            if (Time.time < mWaitNextAttackEndTime) return false;
+            StopWaitNextAttack();
             return true;
         }
 

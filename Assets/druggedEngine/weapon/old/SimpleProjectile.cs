@@ -5,7 +5,7 @@ namespace druggedcode.engine
     /// <summary>
     /// 기본적은 간단한 탄환체
     /// </summary>
-    public class SimpleProjectile : Projectile
+    public class SimpleProjectile : ProjectileOld
     {
         ///데미지
         public int Damage;

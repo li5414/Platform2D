@@ -1,5 +1,5 @@
 {
-"skeleton": { "hash": "BoeB+AboALJCbGkZ0ctD6QZ98Es", "spine": "3.0.16", "width": 402.97, "height": 591.25, "images": "./images/" },
+"skeleton": { "hash": "/dGCxt+KsPew5E2goA2qQuC8yn4", "spine": "3.1.02", "width": 402.97, "height": 591.25, "images": "./images/" },
 "bones": [
 	{ "name": "root" },
 	{ "name": "Hip", "parent": "root", "y": 157.1, "color": "989c9aff" },
@@ -921,9 +921,6 @@
 					{ "time": 0.1333, "color": "ffffffff" },
 					{ "time": 0.1666, "color": "e00b24ff" },
 					{ "time": 0.2, "color": "ffffffff", "curve": "stepped" },
-					{ "time": 0.3666, "color": "ffffffff" },
-					{ "time": 0.4, "color": "e00b24ff" },
-					{ "time": 0.4333, "color": "ffffffff", "curve": "stepped" },
 					{ "time": 0.6333, "color": "ffffffff" },
 					{ "time": 0.6666, "color": "e00b24ff" },
 					{ "time": 0.7, "color": "ffffffff" }
@@ -938,6 +935,11 @@
 					{ "time": 0.4666, "name": "F_Hand_FistOut" },
 					{ "time": 0.5, "name": "F_Hand_FistIdle" },
 					{ "time": 1, "name": "F_Hand_FistOut" }
+				],
+				"color": [
+					{ "time": 0.3666, "color": "ffffffff" },
+					{ "time": 0.4, "color": "ff0001ff" },
+					{ "time": 0.4333, "color": "ffffffff" }
 				]
 			},
 			"Torso": {
@@ -1233,10 +1235,11 @@
 					{ "time": 0.4, "angle": -84.36, "curve": "stepped" },
 					{ "time": 0.4333, "angle": -84.36 },
 					{ "time": 0.5, "angle": 292.75 },
-					{ "time": 0.5333, "angle": 14.43 },
-					{ "time": 0.6, "angle": 71.74, "curve": "stepped" },
-					{ "time": 0.6666, "angle": 71.74, "curve": "stepped" },
-					{ "time": 0.7, "angle": 71.74 },
+					{ "time": 0.5333, "angle": 147.87 },
+					{ "time": 0.6, "angle": 101.47, "curve": "stepped" },
+					{ "time": 0.6333, "angle": 101.47 },
+					{ "time": 0.6666, "angle": 68.73 },
+					{ "time": 0.7, "angle": -4.75 },
 					{ "time": 0.7333, "angle": 23.79 },
 					{ "time": 0.7666, "angle": 277.57 },
 					{ "time": 1.1, "angle": 265.9 }
@@ -1280,11 +1283,11 @@
 					{ "time": 0.4, "angle": 129.43, "curve": "stepped" },
 					{ "time": 0.4333, "angle": 129.43 },
 					{ "time": 0.5, "angle": 135.18 },
-					{ "time": 0.5333, "angle": 68.03 },
-					{ "time": 0.6, "angle": 0.82 },
-					{ "time": 0.6333, "angle": 4.26 },
-					{ "time": 0.6666, "angle": 0.82, "curve": "stepped" },
-					{ "time": 0.7, "angle": 0.82 },
+					{ "time": 0.5333, "angle": -81.94 },
+					{ "time": 0.6, "angle": -42.85 },
+					{ "time": 0.6333, "angle": -58.47 },
+					{ "time": 0.6666, "angle": -60.57 },
+					{ "time": 0.7, "angle": 55.39 },
 					{ "time": 0.7333, "angle": 55.56 },
 					{ "time": 0.7666, "angle": 121.82 },
 					{ "time": 1.1, "angle": 116.45 }

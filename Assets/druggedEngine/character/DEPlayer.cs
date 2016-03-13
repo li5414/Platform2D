@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using Spine;
 
 namespace druggedcode.engine
 {
@@ -15,9 +17,22 @@ namespace druggedcode.engine
         [SpineAnimation]
         public string clearAttackAnim;
 
+        public List<Weapon> weapons;
+
         public LocationLinker currentManualLinker { get; set; }
         public DialogueZone currentDialogueZone { get; set; }
 
+        override protected void Start()
+        {
+            base.Start();
+
+            foreach (Weapon w in weapons)
+            {
+                w.CacheSpineAnimations( mSkeletonAnimation.skeleton.Data );
+            }
+            
+            if( weapons.Count > 0 ) EquipWeapon(weapons[0]);
+        }
 
         //--------------------------------------------------------------------
         // Order
@@ -25,39 +40,97 @@ namespace druggedcode.engine
 
         public void OrderEscape()
         {
-            if (mCanEscape) Escape();
+            DoEscape();
         }
 
         public void OrderDash()
         {
-            if ( mCanDash ) Dash();
+            DoDash();
         }
 
         public void OrderAttack()
         {
-            if (mCanAttack ) DoAttack();
+            DoAttack();
         }
 
         virtual public void OrderJump()
         {
-            if (mCanJump == false) return;
-            if (jumpCount == jumpMax) return;
-            if (verticalAxis < -0.1f)
+            if (verticalAxis < -0.1f) DoJumpBelow();
+            else DoJump();
+        }
+
+        protected Weapon currentWeapon;
+        void EquipWeapon(Weapon weapon)
+        {
+            Skeleton skeleton = mSkeletonAnimation.skeleton;
+            weapon.SetupAnim.Apply(skeleton, 0, 1, false, null);
+
+            PlayAnimation(weapon.idleAnim, true, 1);
+
+            currentWeapon = weapon;
+            currentWeapon.Setup();
+        }
+
+        void Shoot()
+        {
+            //조준하고,
+            if (currentWeapon.reloadLock == false &&
+                currentWeapon.clip > 0 &&
+                Time.time >= currentWeapon.nextFireTime)
             {
-                if (controller.state.IsOnOneway)
+                PlayAnimation(currentWeapon.fireAnim, false, 1);
+                currentWeapon.nextFireTime = Time.time + currentWeapon.refireRate;
+            }
+            else if (currentWeapon.reloadLock == false &&
+                    Time.time >= currentWeapon.nextFireTime)
+            {
+                if (currentWeapon.ammo > 0 && currentWeapon.clip < currentWeapon.clipSize)
                 {
-                    PassOneway();
-                    return;
-                }
-                if (state == CharacterState.LADDER)
-                {
-                    Fall();
-                    return;
+                    PlayAnimation(currentWeapon.reloadAnim, false, 1);
+                    currentWeapon.reloadLock = true;
                 }
             }
 
-            Jump();
+            TrackEntry entry = GetCurrent(1);
+            //리로드 가 아닌 경우 aiming 
+            if( currentWeapon.reloadLock == false )
+            {
+                if( entry == null ||
+                    entry.Animation != currentWeapon.FireAnim && entry.Animation != currentWeapon.AimAnim )
+                {
+                    PlayAnimation( currentWeapon.aimAnim,true,1);
+                }
+                
+                float angle = 45f;
+            }
+            //리로드 중인 경우
+            else
+            {
+                if( currentWeapon.reloadLock == false &&
+                ( entry == null || entry.Animation != currentWeapon.FireAnim && entry.Animation != currentWeapon.IdleAnim ))
+                {
+                    PlayAnimation( currentWeapon.idleAnim, true, 1 );
+                }
+            }
         }
+        
+        override protected void FireWeapon()
+        {
+            currentWeapon.Fire();
+            // if (this.state == ActionState.JETPACK)
+            // {
+            //     doRecoil = true;
+            // }
+        }
+        
+        override protected void EjectCasing()
+        {
+            // Instantiate(currentWeapon.casingPrefab, currentWeapon.casingEjectPoint.position, Quaternion.LookRotation(Vector3.forward, currentWeapon.casingEjectPoint.up));
+        }
+        
+        //--------------------------------------------------------------------
+        // Override
+        //--------------------------------------------------------------------
 
         override protected void Idle()
         {
@@ -102,9 +175,9 @@ namespace druggedcode.engine
             AddTransition(TransitionCrouch_Idle);
         }
 
-        override protected void Jump()
+        override protected void DoJump()
         {
-            base.Jump();
+            base.DoJump();
 
             AddTransition(TransitionAir_WallSLide);
             AddTransition(Transition_Climb);
