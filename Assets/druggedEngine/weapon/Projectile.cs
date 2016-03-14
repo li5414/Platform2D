@@ -6,7 +6,6 @@ namespace druggedcode.engine
     public class Projectile : MonoBehaviour
     {
         public Transform graphics;
-        public float initialSpeed;
         public float thrusterForce;
         public LayerMask targetMask;
         public GameObject impactPrefab;
@@ -20,37 +19,16 @@ namespace druggedcode.engine
         bool thrustActive = false;
         int bounces = 0;
 
+		//
+		public float speed = 1;
+		//
+
         // Use this for initialization
         void Start()
         {
             rb = GetComponent<Rigidbody2D>();
-            rb.velocity = transform.right * initialSpeed;
+			rb.velocity = transform.right * speed;
             StartCoroutine(Activate(0));
-        }
-
-        void OnDrawGizmos()
-        {
-            Gizmos.DrawWireSphere(transform.position, radius);
-        }
-
-
-        void OnCollisionEnter2D(Collision2D collision)
-        {
-
-            bool hitTarget = false;
-            bounces++;
-            foreach (var cp in collision.contacts)
-            {
-                if ((1 << cp.collider.gameObject.layer & targetMask) > 0)
-                {
-                    Impact(cp.point);
-                    hitTarget = true;
-                    break;
-                }
-            }
-
-            if (bounces > 3 && !hitTarget)
-                Impact(transform.position);
         }
 
         IEnumerator Activate(float delay)
@@ -93,6 +71,31 @@ namespace druggedcode.engine
 
             }*/
         }
+
+		void OnDrawGizmos()
+		{
+			Gizmos.DrawWireSphere(transform.position, radius);
+		}
+
+
+		void OnCollisionEnter2D(Collision2D collision)
+		{
+
+			bool hitTarget = false;
+			bounces++;
+			foreach (var cp in collision.contacts)
+			{
+				if ((1 << cp.collider.gameObject.layer & targetMask) > 0)
+				{
+					Impact(cp.point);
+					hitTarget = true;
+					break;
+				}
+			}
+
+			if (bounces > 3 && !hitTarget)
+				Impact(transform.position);
+		}
 
         void Impact(Vector2 point)
         {
