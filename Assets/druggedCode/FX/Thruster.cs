@@ -6,7 +6,6 @@ namespace druggedcode
 {
     public class Thruster : MonoBehaviour
     {
-
         public ParticleSystem pSys;
         public new AudioSource audio;
         [Range(0, 1)]
@@ -41,6 +40,7 @@ namespace druggedcode
                 mEM.enabled = false;
                 audio.mute = true;
             }
+
 
             ParticleSystem.MinMaxCurve mmc = new ParticleSystem.MinMaxCurve();
             mmc.constantMax = Mathf.Lerp(0, emissionRate, thrust);
