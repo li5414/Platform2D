@@ -17,22 +17,8 @@ namespace druggedcode.engine
         [SpineAnimation]
         public string clearAttackAnim;
 
-        public List<Weapon> weapons;
-
         public LocationLinker currentManualLinker { get; set; }
         public DialogueZone currentDialogueZone { get; set; }
-
-        override protected void Start()
-        {
-            base.Start();
-
-            foreach (Weapon w in weapons)
-            {
-                w.CacheSpineAnimations( mSkeletonAnimation.skeleton.Data );
-            }
-            
-            if( weapons.Count > 0 ) EquipWeapon(weapons[0]);
-        }
 
         //--------------------------------------------------------------------
         // Order
@@ -59,75 +45,6 @@ namespace druggedcode.engine
             else DoJump();
         }
 
-        protected Weapon currentWeapon;
-        void EquipWeapon(Weapon weapon)
-        {
-            Skeleton skeleton = mSkeletonAnimation.skeleton;
-            weapon.SetupAnim.Apply(skeleton, 0, 1, false, null);
-
-            PlayAnimation(weapon.idleAnim, true, 1);
-
-            currentWeapon = weapon;
-            currentWeapon.Setup();
-        }
-
-        void Shoot()
-        {
-            //조준하고,
-            if (currentWeapon.reloadLock == false &&
-                currentWeapon.clip > 0 &&
-                Time.time >= currentWeapon.nextFireTime)
-            {
-                PlayAnimation(currentWeapon.fireAnim, false, 1);
-                currentWeapon.nextFireTime = Time.time + currentWeapon.refireRate;
-            }
-            else if (currentWeapon.reloadLock == false &&
-                    Time.time >= currentWeapon.nextFireTime)
-            {
-                if (currentWeapon.ammo > 0 && currentWeapon.clip < currentWeapon.clipSize)
-                {
-                    PlayAnimation(currentWeapon.reloadAnim, false, 1);
-                    currentWeapon.reloadLock = true;
-                }
-            }
-
-            TrackEntry entry = GetCurrent(1);
-            //리로드 가 아닌 경우 aiming 
-            if( currentWeapon.reloadLock == false )
-            {
-                if( entry == null ||
-                    entry.Animation != currentWeapon.FireAnim && entry.Animation != currentWeapon.AimAnim )
-                {
-                    PlayAnimation( currentWeapon.aimAnim,true,1);
-                }
-                
-                float angle = 45f;
-            }
-            //리로드 중인 경우
-            else
-            {
-                if( currentWeapon.reloadLock == false &&
-                ( entry == null || entry.Animation != currentWeapon.FireAnim && entry.Animation != currentWeapon.IdleAnim ))
-                {
-                    PlayAnimation( currentWeapon.idleAnim, true, 1 );
-                }
-            }
-        }
-        
-        override protected void FireWeapon()
-        {
-            currentWeapon.Fire();
-            // if (this.state == ActionState.JETPACK)
-            // {
-            //     doRecoil = true;
-            // }
-        }
-        
-        override protected void EjectCasing()
-        {
-            // Instantiate(currentWeapon.casingPrefab, currentWeapon.casingEjectPoint.position, Quaternion.LookRotation(Vector3.forward, currentWeapon.casingEjectPoint.up));
-        }
-        
         //--------------------------------------------------------------------
         // Override
         //--------------------------------------------------------------------

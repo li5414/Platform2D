@@ -14,6 +14,7 @@ namespace druggedcode.engine
 
     public class DECharacter : MonoBehaviour, IDamageable
     {
+		#region static
         const string ANIM_EVENT_VX = "VX";
         const string ANIM_EVENT_VY = "VY";
         const string ANIM_EVENT_WAITATTACK = "WaitAttack";
@@ -35,10 +36,7 @@ namespace druggedcode.engine
         {
             if (All.Contains(ch)) All.Remove(ch);
         }
-
-        //----------------------------------------------------------------------------------------------------------
-        // Inspector
-        //----------------------------------------------------------------------------------------------------------
+		#endregion
 
         public Transform body;
         public AnimationType bodyType;
@@ -172,6 +170,11 @@ namespace druggedcode.engine
         protected SkeletonAnimation mSkeletonAnimation;
         protected SkeletonGhost mGhost;
 
+		//----------------------------------------------------------------------------------------------------------
+		// weapon
+		//----------------------------------------------------------------------------------------------------------
+		public List<Weapon> weapons;
+
         //----------------------------------------------------------------------------------------------------------
         // behaviour
         //----------------------------------------------------------------------------------------------------------
@@ -183,6 +186,8 @@ namespace druggedcode.engine
         protected UnityAction mStateLoop;
         protected UnityAction mStateExit;
 
+		#region initialize
+
         virtual protected void Awake()
         {
             mTr = transform;
@@ -191,17 +196,7 @@ namespace druggedcode.engine
 
             mStateLoop = delegate { };
             mStateExit = delegate { };
-        }
-
-        virtual protected void OnEnable()
-        {
-            Register(this);
-        }
-
-        virtual protected void OnDisable()
-        {
-            Unregister(this);
-        }
+        }        
 
         virtual protected void Start()
         {
@@ -218,124 +213,20 @@ namespace druggedcode.engine
                     break;
             }
 
+
+			foreach (Weapon w in weapons)
+			{
+				w.Init( this, mSkeletonAnimation.skeleton.Data );
+			}
+
+			if( weapons.Count > 0 ) EquipWeapon(weapons[0]);
+
             Idle();
         }
 
-        //----------------------------------------------------------------------------------------------------------
-        // event handler
-        //----------------------------------------------------------------------------------------------------------
+		#endregion
 
-        virtual protected void HandleComplete(Spine.AnimationState animState, int trackIndex, int loopCount)
-        {
-            var entry = animState.GetCurrent(trackIndex);
-            if (entry.Animation.Name.IndexOf("Attack") == 0)
-            {
-                Idle();
-            }
-        }
-
-        virtual protected void HandleEvent(Spine.AnimationState animState, int trackIndex, Spine.Event e)
-        {
-            switch (e.Data.name)
-            {
-                case ANIM_EVENT_VX:
-                    OnAnimVX(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_VY:
-                    OnAnimVY(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_WAITATTACK:
-                    OnAnimWaitAttack(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_FIRE:
-                    OnFire(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_EJECT_CASING:
-                    OnEjectCasing(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_GRAVITY:
-                    OnAnimGravity(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_GHOSTING:
-                    OnAnimGhosting(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_STEP:
-                    OnAnimStep(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_SOUND:
-                    OnAnimSound(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_EFFECT:
-                    OnAnimEffect(e.Int, e.Float, e.String);
-                    break;
-            }
-        }
-
-        virtual protected void OnAnimVX(int i, float f, string s)
-        {
-            controller.AddForceX(mFacing == Facing.RIGHT ? f : -f);
-        }
-
-        virtual protected void OnAnimVY(int i, float f, string s)
-        {
-            controller.AddForceY(f);
-        }
-
-        virtual protected void OnFire(int i, float f, string s)
-        {
-            FireWeapon();
-        }
-
-        virtual protected void OnEjectCasing(int i, float f, string s)
-        {
-            EjectCasing();
-        }
-        
-        virtual protected void OnAnimWaitAttack(int i, float f, string s)
-        {
-            WaitNextAttack();
-        }
-
-        virtual protected void OnAnimGravity(int i, float f, string s)
-        {
-            controller.Stop();
-            controller.gravityScale = f;
-        }
-
-        virtual protected void OnAnimGhosting(int i, float f, string s)
-        {
-            GhostMode(i == 1 ? true : false, s, f);
-        }
-
-        virtual protected void OnAnimStep(int i, float f, string s)
-        {
-            if (controller.state.IsGrounded) PlatformSoundPlay();
-        }
-
-        virtual protected void OnAnimSound(int i, float f, string s)
-        {
-            SoundManager.Instance.PlaySFX(s, 1f, 1, transform.position);
-        }
-
-        virtual protected void OnAnimEffect(int i, float f, string s)
-        {
-            //print("Effect : " + s);
-        }
-
-
-        //----------------------------------------------------------------------------------------------------------
-        // loop
-        //----------------------------------------------------------------------------------------------------------
-
+		#region loop
         void Update()
         {
             if (OnUpdateInput != null) OnUpdateInput(this);
@@ -353,10 +244,128 @@ namespace druggedcode.engine
             }
         }
 
-        //----------------------------------------------------------------------------------------------------------
-        // fsm
-        //----------------------------------------------------------------------------------------------------------
+		#endregion
 
+		#region ANIM HANDLE
+		virtual protected void HandleComplete(Spine.AnimationState animState, int trackIndex, int loopCount)
+		{
+			var entry = animState.GetCurrent(trackIndex);
+			if (entry.Animation.Name.IndexOf("Attack") == 0)
+			{
+				Idle();
+			}
+		}
+
+		virtual protected void HandleEvent(Spine.AnimationState animState, int trackIndex, Spine.Event e)
+		{
+			switch (e.Data.name)
+			{
+				case ANIM_EVENT_VX:
+					OnAnimVX(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_VY:
+					OnAnimVY(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_WAITATTACK:
+					OnAnimWaitAttack(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_FIRE:
+					OnFire(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_EJECT_CASING:
+					OnEjectCasing(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_GRAVITY:
+					OnAnimGravity(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_GHOSTING:
+					OnAnimGhosting(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_STEP:
+					OnAnimStep(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_SOUND:
+					OnAnimSound(e.Int, e.Float, e.String);
+					break;
+
+				case ANIM_EVENT_EFFECT:
+					OnAnimEffect(e.Int, e.Float, e.String);
+					break;
+			}
+		}
+
+		virtual protected void OnAnimVX(int i, float f, string s)
+		{
+			controller.AddForceX(mFacing == Facing.RIGHT ? f : -f);
+		}
+
+		virtual protected void OnAnimVY(int i, float f, string s)
+		{
+			controller.AddForceY(f);
+		}
+
+		virtual protected void OnFire(int i, float f, string s)
+		{
+			FireWeapon();
+		}
+
+		virtual protected void OnEjectCasing(int i, float f, string s)
+		{
+			EjectCasing();
+		}
+
+		virtual protected void OnAnimWaitAttack(int i, float f, string s)
+		{
+			WaitNextAttack();
+		}
+
+		virtual protected void OnAnimGravity(int i, float f, string s)
+		{
+			controller.Stop();
+			controller.gravityScale = f;
+		}
+
+		virtual protected void OnAnimGhosting(int i, float f, string s)
+		{
+			GhostMode(i == 1 ? true : false, s, f);
+		}
+
+		virtual protected void OnAnimStep(int i, float f, string s)
+		{
+			if (controller.state.IsGrounded) PlatformSoundPlay();
+		}
+
+		virtual protected void OnAnimSound(int i, float f, string s)
+		{
+			SoundManager.Instance.PlaySFX(s, 1f, 1, transform.position);
+		}
+
+		virtual protected void OnAnimEffect(int i, float f, string s)
+		{
+			//print("Effect : " + s);
+		}
+		#endregion
+
+		virtual protected void OnEnable()
+		{
+			Register(this);
+		}
+
+		virtual protected void OnDisable()
+		{
+			Unregister(this);
+		}
+
+
+		#region FSM
         protected void SetState(CharacterState next)
         {
             if (state == next)
@@ -447,182 +456,167 @@ namespace druggedcode.engine
             mStateLoop += Move;
         }
 
-        protected void DoDash()
-        {
-            if (mCanDash == false) return;
-            SetState(CharacterState.DASH);
+		#endregion
 
-            mCanDash = false;
-            mCanJump = false;
-            mCanEscape = false;
-            mCanAttack = true;
+		#region Action
+		protected void DoDash()
+		{
+			if (mCanDash == false) return;
+			SetState(CharacterState.DASH);
 
-            mDashStartTime = Time.time;
+			mCanDash = false;
+			mCanJump = false;
+			mCanEscape = false;
+			mCanAttack = true;
 
-            PlayAnimation(dashAnim);
-            GravityActive(false);
-            Stop();
-            controller.vx = mFacing == Facing.RIGHT ? dashSpeed : -dashSpeed;
+			mDashStartTime = Time.time;
 
-            AddTransition(TransitionDash_Idle);
+			PlayAnimation(dashAnim);
+			GravityActive(false);
+			Stop();
+			controller.vx = mFacing == Facing.RIGHT ? dashSpeed : -dashSpeed;
 
-            mStateExit += delegate
-            {
-                GravityActive(true);
-                Stop();
-            };
-        }
+			AddTransition(TransitionDash_Idle);
 
-        protected void DoEscape()
-        {
-            if (mCanEscape == false) return;
+			mStateExit += delegate
+			{
+				GravityActive(true);
+				Stop();
+			};
+		}
 
-            SetState(CharacterState.ESCAPE);
+		protected void DoEscape()
+		{
+			if (mCanEscape == false) return;
 
-            mCanDash = true;
-            mCanJump = true;
-            mCanEscape = false;
-            mCanAttack = false;
+			SetState(CharacterState.ESCAPE);
 
-            mEscapeStartTime = Time.time;
-            PlayAnimation(escapeAnim);
-            controller.UpdateColliderSize(1f, 0.5f);
-            Stop();
-            controller.vx = mFacing == Facing.RIGHT ? RunSpeed : -RunSpeed;
+			mCanDash = true;
+			mCanJump = true;
+			mCanEscape = false;
+			mCanAttack = false;
 
-            AddTransition(TransitionGround_Fall);
-            AddTransition(TransitionEscape_Idle);
+			mEscapeStartTime = Time.time;
+			PlayAnimation(escapeAnim);
+			controller.UpdateColliderSize(1f, 0.5f);
+			Stop();
+			controller.vx = mFacing == Facing.RIGHT ? RunSpeed : -RunSpeed;
 
-            mStateExit += delegate
-            {
-                controller.ResetColliderSize();
-                GhostMode(false);
-            };
-        }
+			AddTransition(TransitionGround_Fall);
+			AddTransition(TransitionEscape_Idle);
 
-        virtual protected void DoAttack()
-        {
-            if (mCanAttack == false) return;
+			mStateExit += delegate
+			{
+				controller.ResetColliderSize();
+				GhostMode(false);
+			};
+		}
 
-            print("<DoAttack>");
+		virtual protected void DoAttack()
+		{
+			if (mCanAttack == false) return;
 
-            SetState(CharacterState.ATTACK);
+			SetState(CharacterState.ATTACK);
 
-            mCanDash = false;
-            mCanJump = false;
-            mCanEscape = true;
-            mCanAttack = false;
+			mCanDash = false;
+			mCanJump = false;
+			mCanEscape = true;
+			mCanAttack = false;
 
-            if (mWaitNextAttack)
-            {
-                NextAttack();
-                return;
-            }
+			if (mWaitNextAttack)
+			{
+				NextAttack();
+				return;
+			}
 
-            if (controller.state.IsGrounded)
-            {
-                GroundAttack();
-            }
-            else
-            {
-                AirAttack();
-            }
+			if (controller.state.IsGrounded)
+			{
+				GroundAttack();
+			}
+			else
+			{
+				AirAttack();
+			}
 
-            mStateExit += delegate
-            {
-                mWaitNextAttack = false;
-            };
-        }
+			mStateExit += delegate
+			{
+				mWaitNextAttack = false;
+			};
+		}
 
-        virtual protected void GroundAttack()
-        {
-            print(" GroundAttack");
+		virtual protected void GroundAttack()
+		{
+			mAttackIndex = 0;
+			Stop();
 
-            mAttackIndex = 0;
-            Stop();
+			if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackUpAnim) == false)
+			{
+				PlayAnimation(attackUpAnim);
+			}
+			else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackDownAnim) == false)
+			{
+				PlayAnimation(attackDownAnim);
+			}
+			else if (string.IsNullOrEmpty(attackGroundAnim) == false)
+			{
+				PlayAnimation(attackGroundAnim);
+			}
 
-            if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackUpAnim) == false)
-            {
-                PlayAnimation(attackUpAnim);
-            }
-            else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackDownAnim) == false)
-            {
-                PlayAnimation(attackDownAnim);
-            }
-            else if (string.IsNullOrEmpty(attackGroundAnim) == false)
-            {
-                PlayAnimation(attackGroundAnim);
-            }
+			AddTransition(TransitionAttack_Idle);
+			AddTransition(TransitionGround_Fall);
+		}
 
-            AddTransition(TransitionAttack_Idle);
-            AddTransition(TransitionGround_Fall);
-        }
+		protected void NextAttack()
+		{
+			mWaitNextAttack = false;
+			mAttackIndex++;
 
-        protected void NextAttack()
-        {
-            mWaitNextAttack = false;
-            mAttackIndex++;
+			if (mAttackIndex == 3)
+			{
+				RemoveTransition(TransitionGround_Fall);
+			}
 
-            if (mAttackIndex == 3)
-            {
-                RemoveTransition(TransitionGround_Fall);
-            }
+			switch (bodyType)
+			{
+				case AnimationType.SPINE:
+					GetCurrent(0).TimeScale = 1;
+					break;
+			}
+		}
 
-            switch (bodyType)
-            {
-                case AnimationType.SPINE:
-                    GetCurrent(0).TimeScale = 1;
-                    break;
-            }
-        }
+		void WaitNextAttack()
+		{
+			mCanAttack = true;
+			mWaitNextAttack = true;
+			mWaitNextAttackEndTime = Time.time + waitAttackDuration;
+			currentAnimationTimeScale(0f);
+		}
 
-        void WaitNextAttack()
-        {
-            mCanAttack = true;
-            mWaitNextAttack = true;
-            mWaitNextAttackEndTime = Time.time + waitAttackDuration;
-            currentAnimationTimeScale(0f);
-        }
+		void StopWaitNextAttack()
+		{
+			mWaitNextAttack = false;
+			Idle();
+		}
 
-        void StopWaitNextAttack()
-        {
-            mWaitNextAttack = false;
-            Idle();
-        }
+		virtual protected void AirAttack()
+		{
+			if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackAirUpAnim) == false)
+			{
+				SetState(CharacterState.ATTACK);
+				PlayAnimation(attackAirUpAnim);
+			}
+			else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackAirDownAnim) == false)
+			{
+				SetState(CharacterState.ATTACK);
+				PlayAnimation(attackAirDownAnim);
+			}
+			else if (string.IsNullOrEmpty(attackAirAnim) == false)
+			{
+				SetState(CharacterState.ATTACK);
+				PlayAnimation(attackAirAnim);
+			}
 
-        virtual protected void AirAttack()
-        {
-            if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackAirUpAnim) == false)
-            {
-                SetState(CharacterState.ATTACK);
-                PlayAnimation(attackAirUpAnim);
-            }
-            else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackAirDownAnim) == false)
-            {
-                SetState(CharacterState.ATTACK);
-                PlayAnimation(attackAirDownAnim);
-            }
-            else if (string.IsNullOrEmpty(attackAirAnim) == false)
-            {
-                SetState(CharacterState.ATTACK);
-                PlayAnimation(attackAirAnim);
-            }
-
-        }
-        
-        virtual protected void FireWeapon()
-        {
-            // currentWeapon.Fire();
-            // if (this.state == ActionState.JETPACK)
-            // {
-            //     doRecoil = true;
-            // }
-        }
-        
-        virtual protected void EjectCasing()
-        {
-            // Instantiate(currentWeapon.casingPrefab, currentWeapon.casingEjectPoint.position, Quaternion.LookRotation(Vector3.forward, currentWeapon.casingEjectPoint.up));
-        }
+		}
 
         virtual protected void DoJump()
         {
@@ -708,6 +702,7 @@ namespace druggedcode.engine
                 DoJump();
             }
         }
+		#endregion
 
         protected void PassOneway()
         {
@@ -856,6 +851,77 @@ namespace druggedcode.engine
             jumpCount = 0;
         }
 
+		#region WEAPON
+
+		protected Weapon currentWeapon;
+		void EquipWeapon(Weapon weapon)
+		{
+			if( currentWeapon == weapon ) return;
+
+			currentWeapon = weapon;
+			currentWeapon.Setup();
+
+			PlayAnimation(weapon.idleAnim, true, 1);
+		}
+
+		virtual protected void FireWeapon()
+		{
+			// currentWeapon.Fire();
+			// if (this.state == ActionState.JETPACK)
+			// {
+			//     doRecoil = true;
+			// }
+		}
+
+		void Shoot()
+		{
+			//조준하고,
+			if (currentWeapon.reloadLock == false &&
+				currentWeapon.clip > 0 &&
+				Time.time >= currentWeapon.nextFireTime)
+			{
+				PlayAnimation(currentWeapon.fireAnim, false, 1);
+				currentWeapon.nextFireTime = Time.time + currentWeapon.refireRate;
+			}
+			else if (currentWeapon.reloadLock == false &&
+				Time.time >= currentWeapon.nextFireTime)
+			{
+				if (currentWeapon.ammo > 0 && currentWeapon.clip < currentWeapon.clipSize)
+				{
+					PlayAnimation(currentWeapon.reloadAnim, false, 1);
+					currentWeapon.reloadLock = true;
+				}
+			}
+
+			TrackEntry entry = GetCurrent(1);
+			//리로드 가 아닌 경우 aiming 
+			if( currentWeapon.reloadLock == false )
+			{
+				if( entry == null ||
+					entry.Animation != currentWeapon.FireAnim && entry.Animation != currentWeapon.AimAnim )
+				{
+					PlayAnimation( currentWeapon.aimAnim,true,1);
+				}
+
+				float angle = 45f;
+			}
+			//리로드 중인 경우
+			else
+			{
+				if( currentWeapon.reloadLock == false &&
+					( entry == null || entry.Animation != currentWeapon.FireAnim && entry.Animation != currentWeapon.IdleAnim ))
+				{
+					PlayAnimation( currentWeapon.idleAnim, true, 1 );
+				}
+			}
+		}
+
+		virtual protected void EjectCasing()
+		{
+			// Instantiate(currentWeapon.casingPrefab, currentWeapon.casingEjectPoint.position, Quaternion.LookRotation(Vector3.forward, currentWeapon.casingEjectPoint.up));
+		}
+
+		#endregion
         //----------------------------------------------------------------------------------------------------------
         // interface
         //----------------------------------------------------------------------------------------------------------

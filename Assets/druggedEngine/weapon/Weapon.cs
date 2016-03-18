@@ -31,7 +31,7 @@ namespace druggedcode.engine
         public int clip = 10;
         public int ammo = 50;
 
-        public Spine.Animation SetupAnim;
+        protected Spine.Animation mSetupAnim;
         public Spine.Animation IdleAnim;
         public Spine.Animation AimAnim;
         public Spine.Animation FireAnim;
@@ -41,9 +41,13 @@ namespace druggedcode.engine
         public bool reloadLock;
         public float nextFireTime = 0;
 
-        public void CacheSpineAnimations(SkeletonData data)
+		protected DECharacter mOwner;
+
+		public void Init( DECharacter owner, SkeletonData data)
         {
-            SetupAnim = data.FindAnimation(setupAnim);
+			mOwner = owner;
+
+            mSetupAnim = data.FindAnimation(setupAnim);
             IdleAnim = data.FindAnimation(idleAnim);
             AimAnim = data.FindAnimation(aimAnim);
             FireAnim = data.FindAnimation(fireAnim);
@@ -52,7 +56,8 @@ namespace druggedcode.engine
 
         public virtual void Setup()
         {
-
+			Skeleton skeleton = mSkeletonAnimation.skeleton;
+			weapon.SetupAnim.Apply(skeleton, 0, 1, false, null);
         }
 
         public virtual void Fire()
