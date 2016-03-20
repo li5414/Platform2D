@@ -63,7 +63,7 @@ namespace druggedcode.engine
 			float v = Input.GetAxisRaw("Vertical");
 
 			if( mPlayer.currentManualLinker != null &&
-				mPlayer.controller.state.IsGrounded &&
+				mPlayer.Controller.state.IsGrounded &&
 				v > 0.5f )
 			{
 				mPlayer.currentManualLinker.In( mPlayer );

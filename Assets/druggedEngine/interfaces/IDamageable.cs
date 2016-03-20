@@ -4,7 +4,8 @@ namespace druggedcode.engine
 {
     public interface IDamageable
     {
-        void TakeDamage(int damage, GameObject attacker);
+		void Hit( float Damage );
+		void Hit( HitData hitdata );
     }
 }
 

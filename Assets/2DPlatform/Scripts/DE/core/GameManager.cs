@@ -164,6 +164,7 @@ public class GameManager : MonoBehaviour
 		{
 			player.transform.SetParent( User.Instance.transform );
 			player.gameObject.SetActive( false );
+			player.OnDead -= OnPlayerDead;
 		}
 
 		yield return ServerCommunicator.Instance.Move( locationID, cpID );
@@ -203,6 +204,7 @@ public class GameManager : MonoBehaviour
 
 		player = User.Instance.GetCharacter();
 		player.transform.SetParent( transform.parent );
+		player.OnDead += OnPlayerDead;
 
 		if( location != loc )
 		{
@@ -300,14 +302,21 @@ public class GameManager : MonoBehaviour
 
 		if( player != null )
 		{
-			player.Active();
+			player.Resume();
 		}
     }
 
     public void PlayerKill()
     {
-        player.Kill();
+        player.Dead();
     }
+
+	void OnPlayerDead( DECharacter ch )
+	{
+		print("catch dead");
+//		gameCamera.Reset();
+		playerControllable = false;
+	}
 
     IEnumerator PlayerKillRoutine()
     {

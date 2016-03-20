@@ -8,59 +8,64 @@ namespace druggedcode
     public class HealthState
     {
         [SerializeField]
-        float _hp;
-        [SerializeField]
-        float _hpTotal;
+		float mHp;
 
-        public void Init(float hp, float total)
-        {
-            _hp = hp;
-            _hpTotal = total;
-        }
+		float mHpTotal;
+
+		public HealthState( float total )
+		{
+			mHpTotal = total;
+			mHp = mHpTotal;
+		}
 
         public float Damaged(float dmg)
         {
-            hp = _hp - dmg;
+            hp = mHp - dmg;
 			
-            return _hp;
+            return mHp;
         }
 
         public float Heal(float heal)
         {
-            hp = _hp + heal;
+            hp = mHp + heal;
 
-            return _hp;
+            return mHp;
         }
 
         public float hp
         {
-            get{ return _hp; }
+            get{ return mHp; }
             set
             {
-                if (_hp == value)
+                if (mHp == value)
                     return;
 				
-                _hp = value;
+                mHp = value;
 				
-                if (_hp < 0)
+                if (mHp < 0)
                 {
-                    _hp = 0;
+                    mHp = 0;
                 }
-                else if (_hp > _hpTotal)
+                else if (mHp > mHpTotal)
                 {
-                    _hp = _hpTotal;
+                    mHp = mHpTotal;
                 }
             }
         }
 
         public bool IsFull
         {
-            get{ return _hp == _hpTotal; }
+            get{ return mHp == mHpTotal; }
         }
 
         public bool IsDead
         {
-            get{ return _hp <= 0; }
+            get{ return mHp <= 0; }
         }
+
+		public string ToString()
+		{
+			return mHp + " / " + mHpTotal;
+		}
     }
 }

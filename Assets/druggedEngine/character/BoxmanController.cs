@@ -38,8 +38,6 @@ public class BoxmanController : MonoBehaviour {
 	bool flipped = false;
 
 	void Start () {
-
-
 		rb = GetComponent<Rigidbody2D>();
 
 		if (Random.value > 0.5f) {
@@ -73,14 +71,6 @@ public class BoxmanController : MonoBehaviour {
 
 	void PunchImpact (Collider2D collider, Vector2 offset, Vector2 direction) {
 		Instantiate(punchHitPrefab, collider.bounds.center + (Vector3)offset, Quaternion.FromToRotation(Vector3.right, direction));
-	}
-
-	void Hit (float damage) {
-		Hit((hp - damage <= 0) ? new Vector2(0, -12) : Vector2.zero, damage, 0);
-	}
-
-	void Hit (HitData data) {
-		Hit(data.velocity, data.damage, data.origin.x > data.point.x ? 1 : -1);
 	}
 
 	void Hit (Vector2 velocity, float damage, int fromSign) {

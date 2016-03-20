@@ -17,8 +17,9 @@ namespace druggedcode.engine
         {
             if( Application.isPlaying)
             {
-				EditorGUILayout.LabelField("state",mCharacter.state.ToString());
-                EditorGUILayout.ObjectField("ladder",mCharacter.currentLadder,typeof(Ladder),true);
+				EditorGUILayout.LabelField("state",mCharacter.State.ToString());
+				EditorGUILayout.LabelField("hp",mCharacter.Health.ToString());
+                EditorGUILayout.ObjectField("ladder",mCharacter.CurrentLadder,typeof(Ladder),true);
 				EditorGUILayout.LabelField ("axisX", mCharacter.horizontalAxis .ToString());
 
 				DrawDefaultInspector();

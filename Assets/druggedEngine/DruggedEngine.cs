@@ -35,11 +35,12 @@ public class DruggedEngine : MonoBehaviour
 	public LayerMask player;
 	public LayerMask enemy;
 	public LayerMask triggerAtPlayer;
-    public LayerMask ladder;
-
 	public LayerMask environment;
 	public LayerMask platform;
 	public LayerMask oneway;
+	public LayerMask ragdoll;
+	public LayerMask ladder;
+	public LayerMask damager;
 
 	void Awake ()
 	{

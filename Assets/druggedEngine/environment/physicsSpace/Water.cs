@@ -17,7 +17,7 @@ namespace druggedcode.engine
         {
             base.Out(ch);
 
-			ch.jumpCount = 1;
+			ch.JumpCount = 1;
 
             DEController controller = ch.GetComponent< DEController >();
             if (controller != null)

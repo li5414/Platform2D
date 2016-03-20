@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using druggedcode;
@@ -46,7 +47,7 @@ public class ALocation : MonoBehaviour
 			if( player.dts == null )Destroy( player.gameObject );
 		}
     }
-    
+
     void Start()
     {
         //IPlayerRespawnListener 를 구현하거나 상속한 모든 오브젝트를 찾는다.
@@ -75,17 +76,19 @@ public class ALocation : MonoBehaviour
 			currentCheckPoint.active = false;
         }
 
-		if( cp == null )
+		currentCheckPoint = cp;
+
+		Vector3 pos = Vector3.zero;
+
+		if( currentCheckPoint != null )
 		{
-			player.Spawn( Vector3.zero );
-		}
-		else
-		{
-			currentCheckPoint = cp;
 			currentCheckPoint.active = true;
 			currentCheckPoint.Spawn();
-			player.Spawn( currentCheckPoint.transform.position );
+
+			pos = currentCheckPoint.transform.position;
 		}
+
+		player.Spawn( pos );
     }
 
 	//현재 실행되어야 할 미션이 있을 경우 실행한다. 없다면기본실행을 한다.

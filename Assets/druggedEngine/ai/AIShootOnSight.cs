@@ -7,11 +7,10 @@ namespace druggedcode.engine
 	/// </summary>
 	public class AIShootOnSight : MonoBehaviour 
 	{
-		
 		/// 발사속도
 		public float FireRate = 1;
 		// 발사 할 탄환
-		public ProjectileOld Projectile;
+		public Projectile Projectile;
 	
 		/// 공격할 사거리
 		public float ShootDistance = 10f;

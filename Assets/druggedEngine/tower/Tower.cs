@@ -9,9 +9,9 @@ namespace druggedcode.engine
 		public Projectile projectile;
 		public GameObject fireEffect;
 
+		public LayerMask collisionMask;
 
 		[Header("Options")]
-		public Transform destination;
 		public bool activeAutomatically = true;
 		public Transform muzzle;
 		public float speed = 1f;
@@ -22,6 +22,11 @@ namespace druggedcode.engine
 
 		Coroutine mReloadRoutine;
 
+		Transform mTr;
+		void Awake()
+		{
+			mTr = transform;
+		}
 
 		void Start ()
 		{
@@ -58,23 +63,15 @@ namespace druggedcode.engine
 
 		void Fire()
 		{
-			if( projectile == null ) return;
-			Projectile pro = Instantiate(projectile, muzzle.position,muzzle.rotation) as Projectile;
-			pro.speed = speed;
-			pro.destination = destination;
+			Projectile pro = FXManager.Instance.SpawnFX<Projectile>( projectile, muzzle.position, muzzle.rotation );
+			if( pro == null ) return;
+
+			Vector2 direction = mTr.rotation * Vector2.right;
+
+			pro.collisionMask = collisionMask;
+			pro.Fire( gameObject, speed, direction ); 
 
 			FXManager.Instance.SpawnFX( fireEffect, muzzle.position, muzzle.rotation );
 		}
-
-		#if UNITY_EDITOR
-		public virtual void OnDrawGizmos()
-		{
-			if( destination != null )
-			{
-				Gizmos.color=Color.red;
-				Gizmos.DrawLine(muzzle.position, destination.position );
-			}
-		}
-		#endif
 	}
 }

@@ -54,19 +54,19 @@ namespace druggedcode.engine
 		{
 			mBounces++;
 
-			foreach (ContactPoint2D cp in collision.contacts)
-			{
-				if ((1 << cp.collider.gameObject.layer & targetMask) > 0)
-				{
-					Explode(cp.point);
-					return;
-				}
-			}
-
-			if( mBounces > maxBounce)
-			{
-				Explode(transform.position);
-			}
+//			foreach (ContactPoint2D cp in collision.contacts)
+//			{
+//				if ((1 << cp.collider.gameObject.layer & targetMask) > 0)
+//				{
+//					Explode(cp.point);
+//					return;
+//				}
+//			}
+//
+//			if( mBounces > maxBounce)
+//			{
+//				Explode(transform.position);
+//			}
 		}
 	}
 }

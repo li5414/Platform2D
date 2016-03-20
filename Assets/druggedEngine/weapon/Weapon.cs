@@ -13,70 +13,47 @@ namespace druggedcode.engine
         public string setupAnim;
         [SpineAnimation(startsWith: "Idle")]
         public string idleAnim;
-        [SpineAnimation(startsWith: "Aim")]
-        public string aimAnim;
-        [SpineAnimation(startsWith: "Fire")]
-        public string fireAnim;
-        [SpineAnimation(startsWith: "Reload")]
-        public string reloadAnim;
+        
+        [SpineAnimation(startsWith: "Attack")]
+        public string attackAnim;
 
-        [Header("Prefab")]
-        public GameObject casingPrefab;
-        public Transform casingEjectPoint;
+		public LayerMask CollisionMask;
+		public int weaponDamage = 1;
 
-        public float minAngle = -40;
-        public float maxAngle = 40;
-        public float refireRate = 0.5f;
-        public int clipSize = 10;
-        public int clip = 10;
-        public int ammo = 50;
-
-        protected Spine.Animation mSetupAnim;
-        public Spine.Animation IdleAnim;
-        public Spine.Animation AimAnim;
-        public Spine.Animation FireAnim;
-        public Spine.Animation ReloadAnim;
-
-        //states & locks
-        public bool reloadLock;
         public float nextFireTime = 0;
 
+		protected Spine.Animation mSetupAnim;
 		protected DECharacter mOwner;
+		protected Skeleton mSkeleton;
+		protected SkeletonData mData;
 
-		public void Init( DECharacter owner, SkeletonData data)
+		/// <summary>
+		/// Init from DECharacter's Start
+		/// </summary>
+		virtual public void Init( DECharacter owner, Skeleton skeleton )
         {
 			mOwner = owner;
+			mSkeleton = skeleton;
+			mData = skeleton.Data;
 
-            mSetupAnim = data.FindAnimation(setupAnim);
-            IdleAnim = data.FindAnimation(idleAnim);
-            AimAnim = data.FindAnimation(aimAnim);
-            FireAnim = data.FindAnimation(fireAnim);
-            ReloadAnim = data.FindAnimation(reloadAnim);
+			mSetupAnim = mData.FindAnimation(setupAnim);
         }
 
-        public virtual void Setup()
+		virtual public void Setup()
         {
-			Skeleton skeleton = mSkeletonAnimation.skeleton;
-			weapon.SetupAnim.Apply(skeleton, 0, 1, false, null);
+			if(mSetupAnim != null ) mSetupAnim.Apply( mSkeleton, 0, 1, false, null );
+
+			mOwner.PlayAnimation( idleAnim, true, 1);
         }
 
-        public virtual void Fire()
+		virtual public bool IsReady()
+		{
+			return false;
+		}
+
+		virtual public void Attack()
         {
             Debug.LogWarning("Not implemented!");
-        }
-
-        public virtual bool Reload()
-        {
-            if (ammo == 0)
-                return false;
-
-            int refill = clipSize;
-            if (refill > ammo)
-                refill = clipSize - ammo;
-            ammo -= refill;
-            clip = refill;
-
-            return true;
         }
         
         //발사 반동

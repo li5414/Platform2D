@@ -56,7 +56,7 @@ namespace druggedcode.engine
 
         void Hit(HitData data)
         {
-            Hit(data.velocity * 3);
+            Hit(data.force * 3);
         }
     }
 }

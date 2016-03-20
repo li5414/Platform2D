@@ -3,31 +3,15 @@ using UnityEngine;
 
 namespace druggedcode.engine
 {
-    public struct HitData
+    public class HitData
     {
         public float damage;
-        public Vector2 origin;
-        public Vector2 point;
-        public Vector2 velocity;
-        public string tag;
+		public Vector2 force;
 
-        public HitData(float damage, Vector2 origin, Vector2 point, Vector2 velocity)
+        public HitData(float damage, Vector2 force)
         {
             this.damage = damage;
-            this.origin = origin;
-            this.point = point;
-            this.velocity = velocity;
-            this.tag = "";
-        }
-
-        public HitData(float damage, Vector2 origin, Vector2 point, Vector2 velocity, string tag)
-        {
-            this.damage = damage;
-            this.origin = origin;
-            this.point = point;
-            this.velocity = velocity;
-            this.tag = tag;
+            this.force = force;
         }
     }
 }
-

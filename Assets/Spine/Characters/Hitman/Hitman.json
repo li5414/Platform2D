@@ -1,7 +1,7 @@
 {
-"skeleton": { "hash": "/dGCxt+KsPew5E2goA2qQuC8yn4", "spine": "3.1.02", "width": 402.97, "height": 591.25, "images": "./images/" },
+"skeleton": { "hash": "WIeTWBy6LtyJTmrTBzwevrwd5M4", "spine": "3.1.02", "width": 402.97, "height": 591.25, "images": "./images/" },
 "bones": [
-	{ "name": "root" },
+	{ "name": "root", "y": -10 },
 	{ "name": "Hip", "parent": "root", "y": 157.1, "color": "989c9aff" },
 	{ "name": "B_Leg_Goal", "parent": "root", "x": 19.26, "y": 2.83, "color": "ff3f00ff" },
 	{
@@ -2115,6 +2115,43 @@
 			}
 		}
 	},
+	"Dead": {
+		"bones": {
+			"Hip": {
+				"rotate": [
+					{ "time": 0, "angle": -82.41 }
+				],
+				"translate": [
+					{ "time": 0, "x": 79.73, "y": -107.64 }
+				]
+			},
+			"B_Leg_Goal": {
+				"translate": [
+					{ "time": 0, "x": -134.22, "y": 5.31 }
+				]
+			},
+			"F_Leg_Goal": {
+				"translate": [
+					{ "time": 0, "x": 13.28, "y": 21.26 }
+				]
+			},
+			"B_UpperArm": {
+				"rotate": [
+					{ "time": 0, "angle": 107.92 }
+				]
+			},
+			"B_Forearm": {
+				"rotate": [
+					{ "time": 0, "angle": -121.73 }
+				]
+			},
+			"F_UpperArm": {
+				"rotate": [
+					{ "time": 0, "angle": -309.2 }
+				]
+			}
+		}
+	},
 	"Fall": {
 		"slots": {
 			"B_Hand": {
@@ -2304,6 +2341,34 @@
 				"translate": [
 					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
 					{ "time": 0.2, "x": 0, "y": 0 }
+				]
+			}
+		}
+	},
+	"Hit": {
+		"bones": {
+			"Torso": {
+				"rotate": [
+					{ "time": 0, "angle": 27.47, "curve": "stepped" },
+					{ "time": 0.1666, "angle": 27.47 }
+				]
+			},
+			"F_UpperArm": {
+				"rotate": [
+					{ "time": 0, "angle": -288.53, "curve": "stepped" },
+					{ "time": 0.1666, "angle": -288.53 }
+				]
+			},
+			"B_UpperArm": {
+				"rotate": [
+					{ "time": 0, "angle": 56.92, "curve": "stepped" },
+					{ "time": 0.1666, "angle": 56.92 }
+				]
+			},
+			"Hip": {
+				"translate": [
+					{ "time": 0, "x": 0, "y": -20.92, "curve": "stepped" },
+					{ "time": 0.1666, "x": 0, "y": -20.92 }
 				]
 			}
 		}

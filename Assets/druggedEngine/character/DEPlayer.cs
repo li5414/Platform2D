@@ -79,7 +79,7 @@ namespace druggedcode.engine
 
             PlayAnimation(crouchAnim);
             CurrentSpeed = CrouchSpeed;
-            controller.UpdateColliderSize(1f, 0.5f);
+            Controller.UpdateColliderSize(1f, 0.5f);
 
             mStateLoop += Move;
             mStateLoop += delegate
@@ -118,7 +118,7 @@ namespace druggedcode.engine
             mCanEscape = false;
             mCanAttack = false;
 
-            controller.state.ClearPlatform();
+            Controller.state.ClearPlatform();
             PlayAnimation(ladderAnim);
             GravityActive(false);
             Stop();
@@ -130,7 +130,7 @@ namespace druggedcode.engine
             {
                 if (verticalAxis == 0f) currentAnimationTimeScale(0f);
                 else currentAnimationTimeScale(1f);
-                controller.vy = verticalAxis * ladderClimbSpeed;
+                Controller.vy = verticalAxis * ladderClimbSpeed;
             };
 
             mStateExit += delegate
@@ -151,7 +151,7 @@ namespace druggedcode.engine
 
             PlayAnimation(wallSlideAnim);
             AnimFilp = true;
-            controller.LockVY(wallSlideSpeed);
+            Controller.LockVY(wallSlideSpeed);
             BodyPosition(new Vector2(mFacing == Facing.LEFT ? -0.15f : 0.15f, 0f));
             Stop();
             ResetJump();
@@ -162,7 +162,7 @@ namespace druggedcode.engine
             mStateExit += delegate
             {
                 AnimFilp = false;
-                controller.UnLockVY();
+                Controller.UnLockVY();
                 BodyPosition(Vector2.zero);
             };
         }
@@ -211,14 +211,14 @@ namespace druggedcode.engine
 
         protected bool TransitionLadder_Idle()
         {
-            if (controller.state.IsGrounded || currentLadder == null)
+            if (Controller.state.IsGrounded || CurrentLadder == null)
             {
                 Idle();
                 return true;
             }
 
             // 캐릭터가 사다리의 정상 바닥보다 y 위치가 올라간 경우 등반을 멈춘다.
-            if (mTr.position.y > currentLadder.PlatformY)
+            if (mTr.position.y > CurrentLadder.PlatformY)
             {
                 Idle();
                 return true;
@@ -229,7 +229,7 @@ namespace druggedcode.engine
 
         protected bool TransitionCrouch_Idle()
         {
-            if (verticalAxis >= -0.1f && controller.IsCollidingHead == false)
+            if (verticalAxis >= -0.1f && Controller.IsCollidingHead == false)
             {
                 Idle();
                 return true;
@@ -239,19 +239,19 @@ namespace druggedcode.engine
 
         protected bool Transition_Climb()
         {
-            if (currentLadder == null) return false;
+            if (CurrentLadder == null) return false;
 
-            if (verticalAxis > 0.1f && currentLadder.PlatformY > mTr.position.y)
+            if (verticalAxis > 0.1f && CurrentLadder.PlatformY > mTr.position.y)
             {
                 //사다리를 등반하며 점프하자마자 다시 붙는현상을 피하기위해 약간의 버퍼타임을 둔다. 
-                if (controller.state.IsGrounded == false && jumpElapsedTime < 0.2f) return false;
-                mTr.position = new Vector2(currentLadder.transform.position.x, mTr.position.y + 0.1f);
+                if (Controller.state.IsGrounded == false && jumpElapsedTime < 0.2f) return false;
+                mTr.position = new Vector2(CurrentLadder.transform.position.x, mTr.position.y + 0.1f);
                 LadderClimb();
                 return true;
             }
-            else if (verticalAxis < -0.1f && currentLadder.PlatformY <= mTr.position.y)
+            else if (verticalAxis < -0.1f && CurrentLadder.PlatformY <= mTr.position.y)
             {
-                mTr.position = new Vector2(currentLadder.transform.position.x, currentLadder.PlatformY - 0.1f);
+                mTr.position = new Vector2(CurrentLadder.transform.position.x, CurrentLadder.PlatformY - 0.1f);
                 LadderClimb();
                 return true;
             }

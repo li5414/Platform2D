@@ -15,7 +15,7 @@ namespace druggedcode.engine
         {
             base.StateUpdate();
 
-            switch (state)
+            switch (State)
             {
                 case CharacterState.ATTACK:
                     //---
