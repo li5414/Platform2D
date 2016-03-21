@@ -540,7 +540,7 @@ namespace druggedcode.engine
 			StartCoroutine (DisableCollisionsWithOneWayPlatforms( 0.1f ));
 		}
 
-		public virtual IEnumerator DisableCollisionsWithOneWayPlatforms (float duration)
+		IEnumerator DisableCollisionsWithOneWayPlatforms (float duration)
 		{
 			mDefaultPlatformMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
 			yield return new WaitForSeconds (duration);
