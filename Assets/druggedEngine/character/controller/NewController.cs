@@ -3,131 +3,172 @@ using System.Collections;
 
 namespace druggedcode.engine
 {
-	#if UNITY_EDITOR
-	using UnityEditor;
-	#endif
-
 	public class NewController : MonoBehaviour
 	{
-		[Header("Input")]
-		public float deadZone = 0.05f;
-		public float runThreshhold = 0.5f;
+		const float CAST_GROUND_LENGTH = 0.15f;
 
+		#region inspector
+		[Header ("References")]
 		public PolygonCollider2D primaryCollider;
 
-		[Header("Raycasting")]
-		public LayerMask characterMask;//characters
-		public LayerMask groundMask;//environmnet,platform
-		public LayerMask passThroughMask;//environmnet
-		[HideInInspector]
-		public LayerMask currentMask;
+		[Header ("Physics")]
+		public float fallGravity = -4;
+		public float idleFriction = 20;
+		public float movingFriction = 0;
 
-		Rigidbody2D rb;
+		[Header ("Raycasting")]
+		public LayerMask characterMask;
+		//characters
+		public LayerMask groundMask;
+		//environmnet,platform
+		public LayerMask passThroughMask;
+		//environmnet
+
+		//[HideInInspector]
+		public LayerMask currentMask;
+		#endregion
+
+		#region getter setter
+		public Vector2 Velocity { get { return mRb.velocity; } set { mPassedVelocity = value; } }
+		public float vx { get { return mRb.velocity.x; } set { mPassedVelocity.x = value; } }
+		public float vy { get { return mRb.velocity.y; } set { mPassedVelocity.y = value; } }
+		public NewControllerState state { get; private set; }
+		#endregion
+
+		Rigidbody2D mRb;
 		Transform mTr;
 		PhysicsMaterial2D characterColliderMaterial;
+		protected Vector2 mPassedVelocity;
 
-		Vector3 backGroundCastOrigin;
-		Vector3 centerGroundCastOrigin;
-		Vector3 forwardGroundCastOrigin;
+		Vector3 mCastOriginCenter;
+		Vector3 mCastOriginBack;
+		Vector3 mCastOriginForward;
 		Vector3 wallCastOrigin;
 		float wallCastDistance;
 
-		bool onIncline = false;//경사면에 있나?
 		bool doPassthrough;
-		Platform passThroughPlatform;//oneway
-		Platform movingPlatform;//moving
+		Platform passThroughPlatform;
+		//oneway
+		Platform movingPlatform;
+		//moving
 
-		public float fallGravity = -4;
-		Vector2 moveStick;//input's xy axis
+		Vector2 mAxis;
+		//input's xy axis
 		float savedXVelocity;
 		bool velocityLock;
 
-		bool flipped;//handlePhysics 에서 flipped = skeletonAnimation.Skeleton.FlipX;
+		bool flipped;
+		//handlePhysics 에서 flipped = skeletonAnimation.Skeleton.FlipX;
 
-		virtual protected void Awake()
+		virtual protected void Awake ()
 		{
-			rb = GetComponent<Rigidbody2D>();
+			mRb = GetComponent<Rigidbody2D> ();
+			mRb.angularDrag = 1f;
+			mRb.drag = 1f;
+			mRb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
 			mTr = transform;
 
-			CalculateRayBounds( primaryCollider );
+			state = new NewControllerState ();
+
+			CalculateRayBounds (primaryCollider);
 
 			if (primaryCollider.sharedMaterial == null)
-				characterColliderMaterial = new PhysicsMaterial2D("CharacterColliderMaterial");
+				characterColliderMaterial = new PhysicsMaterial2D ("CharacterColliderMaterial");
 			else
-				characterColliderMaterial = Instantiate(primaryCollider.sharedMaterial);
+				characterColliderMaterial = Instantiate (primaryCollider.sharedMaterial);
 
 			primaryCollider.sharedMaterial = characterColliderMaterial;
+		}
 
-			currentMask = groundMask;
-			
+		virtual protected void Start ()
+		{
+			currentMask = DruggedEngine.MASK_ALL_GROUND;
 		}
 
 		void CalculateRayBounds (PolygonCollider2D coll)
 		{
 			Bounds b = coll.bounds;
-			Vector3 min = mTr.InverseTransformPoint(b.min);
-			Vector3 center = mTr.InverseTransformPoint(b.center);
-			Vector3 max = mTr.InverseTransformPoint(b.max);
+			Vector3 min = mTr.InverseTransformPoint (b.min);
+			Vector3 center = mTr.InverseTransformPoint (b.center);
+			Vector3 max = mTr.InverseTransformPoint (b.max);
 
-			backGroundCastOrigin.x = min.x;
-			backGroundCastOrigin.y = min.y + 0.1f;
+			mCastOriginBack.x = min.x;
+			mCastOriginBack.y = min.y + 0.1f;
 
-			centerGroundCastOrigin.x = center.x;
-			centerGroundCastOrigin.y = min.y + 0.1f;
+			mCastOriginCenter.x = center.x;
+			mCastOriginCenter.y = min.y + 0.1f;
 
-			forwardGroundCastOrigin.x = max.x;
-			forwardGroundCastOrigin.y = min.y + 0.1f;
+			mCastOriginForward.x = max.x;
+			mCastOriginForward.y = min.y + 0.1f;
 
 			wallCastOrigin = center;
 			wallCastDistance = b.extents.x + 0.1f;
 		}
 
-		void Update()
+		public void SetAxis (float axisX, float axisY)
 		{
-			//UpdateAnim
-			//input을 전달받자
+			mAxis.x = axisX;
+			mAxis.y = axisY;
 		}
 
-		void FixedUpdate()
+		void FixedUpdate ()
 		{
-			Move();
-			CheckCollisions();
+			Move ();
+			CheckCollisions ();
 		}
 
-		void Move()
+		void Move ()
 		{
 
 		}
 
 		void CheckCollisions ()
 		{
-			//state.SaveLastStateAndReset ();
+			state.SaveLastStateAndReset ();
 
-			//검사
+			CastRaysBelow ();
 
-			//지상에 막 닿은건지 아닌지를 판단한다.
+			//밀수 있는 것들은 민다.
+		}
+
+		void CastRaysBelow ()
+		{
+			GameObject nowStanding = GroundCast (mCastOriginCenter); //center
+			if (nowStanding == null) nowStanding = GroundCast (flipped ? mCastOriginForward : mCastOriginBack); //back
+			if (nowStanding == null) nowStanding = GroundCast (flipped ? mCastOriginBack : mCastOriginForward); //forward
+
+			state.StandingOn = nowStanding;
+		}
+
+		GameObject GroundCast (Vector3 origin)
+		{
+			RaycastHit2D hit = Physics2D.Raycast (mTr.TransformPoint (origin), Vector2.down, CAST_GROUND_LENGTH, currentMask);
+
+			if (hit.collider == null) return null;
+			if (hit.collider.isTrigger) return null;
+
+			state.SlopeAngle = Vector2.Angle (hit.normal, Vector2.up);
+			return hit.collider.gameObject;
 		}
 
 		//큰 충격(물리 페널티의 결과) 후 회복할 수 있도록 vx 를 캐싱한다.
 		void HandlePhysics ()
 		{
-			onIncline = false;
-
-			float x = moveStick.x;
-			float y = moveStick.y;
-			float absX = Mathf.Abs(x);
+			float absX = Mathf.Abs (mAxis.x);
 			float platformXVelocity = 0;
 			float platformYVelocity = 0;
-			Vector2 velocity = rb.velocity;
+			Vector2 velocity = mRb.velocity;
 
 			//aggressively find moving platform
-			movingPlatform = MovingPlatformCast(centerGroundCastOrigin);
-			if(movingPlatform == null)
-				movingPlatform = MovingPlatformCast(backGroundCastOrigin);
-			if(movingPlatform == null)
-				movingPlatform = MovingPlatformCast(forwardGroundCastOrigin);
+//			movingPlatform = MovingPlatformCast(centerGroundCastOrigin);
+//			if(movingPlatform == null)
+//				movingPlatform = MovingPlatformCast(backGroundCastOrigin);
+//			if(movingPlatform == null)
+//				movingPlatform = MovingPlatformCast(forwardGroundCastOrigin);
 
-			if (movingPlatform) {
+			if (movingPlatform)
+			{
 				platformXVelocity = movingPlatform.velocity.x;
 				platformYVelocity = movingPlatform.velocity.y;
 			}
@@ -137,7 +178,7 @@ namespace druggedcode.engine
 
 			//jump up
 			if (velocity.y > 0)
-				velocity.y = Mathf.MoveTowards(velocity.y, 0, Time.deltaTime * 30);
+				velocity.y = Mathf.MoveTowards (velocity.y, 0, Time.deltaTime * 30);
 			//jump down
 			velocity.y += fallGravity * Time.deltaTime;
 			//wallslide 면
@@ -147,54 +188,61 @@ namespace druggedcode.engine
 
 			if (velocityLock) velocity = Vector2.zero;
 
-			rb.velocity = velocity;
+			mRb.velocity = velocity;
 		}
 
 		//아래를 누르고 점프를 눌른 경우 PlatformCast(centerGroundCastOrigin); 를 통해 밟고있는 platform 을 찾아 내 판단했다
-		public void DoPassThrough ( Platform platform )
+		public void DoPassThrough (Platform platform)
 		{
-			StartCoroutine(PassthroughRoutine(platform));
+			StartCoroutine (PassthroughRoutine (platform));
 		}
 
-		IEnumerator PassthroughRoutine (Platform platform) {
-			currentMask = passThroughMask;
-			Physics2D.IgnoreCollision(primaryCollider, platform.collider, true);
-			passThroughPlatform = platform;
-			yield return new WaitForSeconds(0.5f);
-			Physics2D.IgnoreCollision(primaryCollider, platform.collider, false);
-			currentMask = groundMask;
-			passThroughPlatform = null;
+		IEnumerator PassthroughRoutine (Platform platform)
+		{
+			yield break;
+			// currentMask = passThroughMask;
+			// Physics2D.IgnoreCollision(primaryCollider, platform.collider, true);
+			// passThroughPlatform = platform;
+			// yield return new WaitForSeconds(0.5f);
+			// Physics2D.IgnoreCollision(primaryCollider, platform.collider, false);
+			// currentMask = groundMask;
+			// passThroughPlatform = null;
 		}
 
 
 		//Detect being on top of a characters's head
-		Rigidbody2D OnTopOfCharacter () {
-			Rigidbody2D character = GetRelevantCharacterCast(centerGroundCastOrigin, 0.15f);
+		Rigidbody2D OnTopOfCharacter ()
+		{
+			Rigidbody2D character = GetRelevantCharacterCast (mCastOriginCenter, 0.15f);
 			if (character == null)
-				character = GetRelevantCharacterCast(backGroundCastOrigin, 0.15f);
+				character = GetRelevantCharacterCast (mCastOriginBack, 0.15f);
 			if (character == null)
-				character = GetRelevantCharacterCast(forwardGroundCastOrigin, 0.15f);
+				character = GetRelevantCharacterCast (mCastOriginForward, 0.15f);
 
 			return character;
 		}
 
 		//Raycasting stuff
-		Rigidbody2D GetRelevantCharacterCast (Vector3 origin, float dist) {
-			RaycastHit2D[] hits = Physics2D.RaycastAll(transform.TransformPoint(origin), Vector2.down, dist, characterMask);
-			if (hits.Length > 0) {
+		Rigidbody2D GetRelevantCharacterCast (Vector3 origin, float dist)
+		{
+			RaycastHit2D[] hits = Physics2D.RaycastAll (transform.TransformPoint (origin), Vector2.down, dist, characterMask);
+			if (hits.Length > 0)
+			{
 				int index = 0;
 
-				if (hits[0].rigidbody == rb) {
+				if (hits [0].rigidbody == mRb)
+				{
 					if (hits.Length == 1)
 						return null;
 
 					index = 1;
 				}
-				if (hits[index].rigidbody == rb)
+				if (hits [index].rigidbody == mRb)
 					return null;
 
-				var hit = hits[index];
-				if (hit.collider != null && hit.collider.attachedRigidbody != null) {
+				var hit = hits [index];
+				if (hit.collider != null && hit.collider.attachedRigidbody != null)
+				{
 					return hit.collider.attachedRigidbody;
 				}
 			}
@@ -202,87 +250,27 @@ namespace druggedcode.engine
 			return null;
 		}
 
-		public bool OnGround {
-			get {
-				return CenterOnGround || BackOnGround || ForwardOnGround;
-			}
-		}
-
-		bool BackOnGround {
-			get {
-				return GroundCast(flipped ? forwardGroundCastOrigin : backGroundCastOrigin);
-			}
-		}
-
-		bool ForwardOnGround {
-			get {
-				return GroundCast(flipped ? backGroundCastOrigin : forwardGroundCastOrigin);
-			}
-		}
-
-		bool CenterOnGround {
-			get {
-				return GroundCast(centerGroundCastOrigin);
-			}
-		}
-
-		//see if character is on the ground
-		//throw onIncline flag
-		bool GroundCast (Vector3 origin) {
-			RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(origin), Vector2.down, 0.15f, currentMask);
-			if (hit.collider != null && !hit.collider.isTrigger) {
-				if (hit.normal.y < 0.4f)
-					return false;
-				else if (hit.normal.y < 0.95f)
-					onIncline = true;
-
-				return true;
-			}
-
-			return false;
-		}
-
-		//see if character is on a one-way platform
-		Platform PlatformCast (Vector3 origin) {
-			Platform platform = null;
-			RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(origin), Vector2.down, 0.5f, currentMask);
-			if (hit.collider != null && !hit.collider.isTrigger) {
-				platform = hit.collider.GetComponent<Platform>();
-			}
-
-			if( platform == null || platform.oneway == false ) return null;
-			else return platform;
-		}
-
-		//see if character is on a moving platform
-		Platform MovingPlatformCast (Vector3 origin) {
-			Platform platform = null;
-			RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(origin), Vector2.down, 0.5f, currentMask);
-			if (hit.collider != null && !hit.collider.isTrigger) {
-				platform = hit.collider.GetComponent<Platform>();
-			}
-
-			if( platform == null || platform.movable == false ) return null;
-			else return platform;
-		}
-
 		//check to see if pressing against a wall
 		public bool PressingAgainstWall {
 			get {
-				float x = rb.velocity.x;
+				float x = mRb.velocity.x;
 				bool usingVelocity = true;
-				if (Mathf.Abs(x) < 0.1f) {
-					x = moveStick.x;
-					if (Mathf.Abs(x) <= deadZone) {
+				if (Mathf.Abs (x) < 0.1f)
+				{
+					x = mAxis.x;
+					if (Mathf.Abs (x) == 0f)
+					{
 						return false;
-					} else {
+					} else
+					{
 						usingVelocity = false;
 					}
 				}
 
-				RaycastHit2D hit = Physics2D.Raycast(transform.TransformPoint(wallCastOrigin), new Vector2(x, 0).normalized, wallCastDistance + (usingVelocity ? x * Time.deltaTime : 0), currentMask);
-				if (hit.collider != null && !hit.collider.isTrigger) {
-					if (hit.collider.GetComponent<Platform>().oneway )
+				RaycastHit2D hit = Physics2D.Raycast (transform.TransformPoint (wallCastOrigin), new Vector2 (x, 0).normalized, wallCastDistance + (usingVelocity ? x * Time.deltaTime : 0), currentMask);
+				if (hit.collider != null && !hit.collider.isTrigger)
+				{
+					if (hit.collider.GetComponent<Platform> ().oneway)
 						return false;
 
 					return true;
@@ -293,102 +281,105 @@ namespace druggedcode.engine
 		}
 
 		//work-around for Box2D not updating friction values at runtime...
-		void SetFriction (float friction) {
-			if (friction != characterColliderMaterial.friction) {
+		void SetFriction (float friction)
+		{
+			if (friction != characterColliderMaterial.friction)
+			{
 				characterColliderMaterial.friction = friction;
-				primaryCollider.gameObject.SetActive(false);
-				primaryCollider.gameObject.SetActive(true);
+				primaryCollider.gameObject.SetActive (false);
+				primaryCollider.gameObject.SetActive (true);
 			}
 		}
 
 		//TODO:  deal with SetFriction workaround breaking ignore pairs.........
-		void IgnoreCharacterCollisions (bool ignore) {
-			foreach (GameCharacter gc in All)
-				if (gc == this)
-					continue;
-				else {
-					gc.IgnoreCollision(primaryCollider, ignore);
-				}
+		void IgnoreCharacterCollisions (bool ignore)
+		{
+			// foreach (GameCharacter gc in All)
+			// 	if (gc == this)
+			// 		continue;
+			// 	else {
+			// 		gc.IgnoreCollision(primaryCollider, ignore);
+			// 	}
 		}
 
 
 		#if UNITY_EDITOR
-		void OnDrawGizmos () {
-			Handles.Label(transform.position, state.ToString());
-			if (!Application.isPlaying)
+		void OnDrawGizmos ()
+		{
+			if (Application.isPlaying == false)
 				return;
 
-			if (OnGround)
+			if (state.IsOnGround)
 				Gizmos.color = Color.green;
 			else
 				Gizmos.color = Color.grey;
 
-			Gizmos.DrawWireCube(transform.position, new Vector3(0.5f, 0.5f, 0.5f));
+			Gizmos.DrawWireCube (transform.position, new Vector3 (0.25f, 0.25f, 0.25f));
 
-			Gizmos.DrawWireSphere(transform.TransformPoint(centerGroundCastOrigin), 0.07f);
-			Gizmos.DrawWireSphere(transform.TransformPoint(backGroundCastOrigin), 0.07f);
-			Gizmos.DrawWireSphere(transform.TransformPoint(forwardGroundCastOrigin), 0.07f);
+			Gizmos.DrawWireSphere (transform.TransformPoint (mCastOriginCenter), 0.05f);
+			Gizmos.DrawWireSphere (transform.TransformPoint (mCastOriginBack), 0.05f);
+			Gizmos.DrawWireSphere (transform.TransformPoint (mCastOriginForward), 0.05f);
 
-			Gizmos.DrawLine(transform.TransformPoint(centerGroundCastOrigin), transform.TransformPoint(centerGroundCastOrigin + new Vector3(0, -0.15f, 0)));
-			Gizmos.DrawLine(transform.TransformPoint(backGroundCastOrigin), transform.TransformPoint(backGroundCastOrigin + new Vector3(0, -0.15f, 0)));
-			Gizmos.DrawLine(transform.TransformPoint(forwardGroundCastOrigin), transform.TransformPoint(forwardGroundCastOrigin + new Vector3(0, -0.15f, 0)));
+			Gizmos.DrawLine (transform.TransformPoint (mCastOriginCenter), transform.TransformPoint (mCastOriginCenter + new Vector3 (0, -0.15f, 0)));
+			Gizmos.DrawLine (transform.TransformPoint (mCastOriginBack), transform.TransformPoint (mCastOriginBack + new Vector3 (0, -0.15f, 0)));
+			Gizmos.DrawLine (transform.TransformPoint (mCastOriginForward), transform.TransformPoint (mCastOriginForward + new Vector3 (0, -0.15f, 0)));
 		}
 		#endif
+	}
 
-		#region DEController API
-		public void AddForce( Vector2 force )
-		{
+	public class NewControllerState
+	{
+		public float SlopeAngle { get; set; }
 
+		public bool JustGotGrounded { get; private set; }
+
+		public bool WasColldingBelowLastFrame { get; private set; }
+
+		public bool WasColldingAdoveLastFrame { get; private set; }
+
+		public bool IsCollidingAbove { get; set; }
+
+		public bool IsOnGround{ get; private set; }
+
+		public Platform StandingPlatform { get; private set; }
+
+		public Vector2 PlatformVelocity { get; private set; }
+
+		GameObject mStandingOn;
+
+		public GameObject StandingOn {
+			get{ return mStandingOn; }
+			set {
+				if (mStandingOn == value) return;
+
+				mStandingOn = value;
+
+				if (mStandingOn == null)
+				{
+					IsOnGround = false;
+					PlatformVelocity = Vector2.zero;
+				}
+				else
+				{
+					IsOnGround = true;
+
+					if (WasColldingBelowLastFrame == false) JustGotGrounded = true;
+
+					StandingPlatform = mStandingOn.GetComponent<Platform> ();
+					if (StandingPlatform == null) PlatformVelocity = Vector2.zero;
+					else PlatformVelocity = StandingPlatform.velocity;
+				}
+			}
 		}
 
-		public void AddForceX( float x )
+		public void SaveLastStateAndReset ()
 		{
+			WasColldingBelowLastFrame = IsOnGround;
+			WasColldingAdoveLastFrame = IsCollidingAbove;
+
+			SlopeAngle = 0f;
+			JustGotGrounded = false;
 		}
-
-		public void AddForceY( float y )
-		{
-			
-		}
-
-		//월 점프 등 x이동을 잠시 제한
-		public void LockMove (float duration)
-		{
-		}
-
-		public void Stop ()
-		{
-
-		}
-		//벽 탈 때 y 낙하 속도 제한
-		public void LockVY (float lockvy)
-		{
-		}
-
-		public void UnLockVY ()
-		{
-		}
-
-		public void UpdateColliderSize (float xScale, float yScale)
-		{
-
-		}
-
-		public void ResetColliderSize ()
-		{
-
-		}
-
-		public void SetPhysicsSpace (PhysicInfo physicInfo)
-		{
-
-		}
-
-		public void ResetPhysicInfo ()
-		{
-			
-		}
-		public bool IsCollidingHead { get;}
-		#endregion
 	}
 }
 

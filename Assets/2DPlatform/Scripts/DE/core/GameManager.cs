@@ -28,14 +28,13 @@ public class GameManager : MonoBehaviour
 	public static void InitializeManager()
 	{
 		if( Instance != null ) return;
-
+        
 		string startSceneName = SceneManager.GetActiveScene().name;
 
 		if( string.IsNullOrEmpty( startSceneName )) return;
 
 		GameManager prefab = Resources.Load<GameManager>("GameManager");
 		GameObject.Instantiate<GameManager>( prefab );
-
 	}
 
     void Awake()
@@ -64,10 +63,13 @@ public class GameManager : MonoBehaviour
 		UI.Init();
 		Config.Init();
 
+		yield break;
+
 		mCurrentScene = SceneManager.GetActiveScene();
 
 		print("[GM] Start At: " + mCurrentScene.name );
      
+
 		if( mCurrentScene.name == Config.SC_TITLE )
 		{
 			StartCoroutine( StartedAtTitle());
