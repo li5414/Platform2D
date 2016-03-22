@@ -118,11 +118,6 @@ namespace druggedcode.engine
 			CheckCollisions ();
 		}
 
-		void Move ()
-		{
-
-		}
-
 		void CheckCollisions ()
 		{
 			state.SaveLastStateAndReset ();
@@ -150,6 +145,18 @@ namespace druggedcode.engine
 
 			state.SlopeAngle = Vector2.Angle (hit.normal, Vector2.up);
 			return hit.collider.gameObject;
+		}
+
+		void Move ()
+		{
+			Vector2 nextVelocity = mRb.velocity;
+
+			mPassedVelocity;
+
+			nextVelocity.x += state.PlatformVelocity.x;
+			nextVelocity.y += state.PlatformVelocity.y;
+
+			mRb.velocity = nextVelocity;
 		}
 
 		//큰 충격(물리 페널티의 결과) 후 회복할 수 있도록 vx 를 캐싱한다.
