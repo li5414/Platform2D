@@ -29,9 +29,6 @@ namespace druggedcode.engine
 		#endregion
 
 		#region getter setter
-		public Vector2 Velocity { get { return mRb.velocity; } set { mPassedVelocity = value; } }
-		public float vx { get { return mRb.velocity.x; } set { mPassedVelocity.x = value; } }
-		public float vy { get { return mRb.velocity.y; } set { mPassedVelocity.y = value; } }
 		public NewControllerState state { get; private set; }
 		#endregion
 
@@ -53,12 +50,11 @@ namespace druggedcode.engine
 		//moving
 
 		Vector2 mAxis;
-		//input's xy axis
-		float savedXVelocity;
-		bool velocityLock;
+		int mFacing;
 
-		bool flipped;
-		//handlePhysics 에서 flipped = skeletonAnimation.Skeleton.FlipX;
+		bool airControllLock;
+		float mLockedVY;
+		float mTargetSpeed;
 
 		virtual protected void Awake ()
 		{
@@ -112,12 +108,114 @@ namespace druggedcode.engine
 			mAxis.y = axisY;
 		}
 
+		public void SetFacing( int facing )
+		{
+			mFacing = facing;
+		}
+
+		public void SetSpeed( float speed )
+		{
+			mTargetSpeed = speed;
+		}
+
+		#region controll Velocity
+		public void SetVelocity( Vector2 v )
+		{
+			mRb.velocity = v;
+		}
+
+		public void SetVX( float vx )
+		{
+			mRb.velocity.x = vx;
+		}
+
+		public void SetVY( float vy )
+		{
+			mRb.velocity.y = vy;
+		}
+
+		public void AddForce (Vector2 force)
+		{
+			mRb.velocity = mRb.velocity + force;
+		}
+
+		public void AddForceX( float x )
+		{
+			mRb.velocity.x += x;
+		}
+
+		public void AddForceY( float y )
+		{
+			mRb.velocity.y += y;
+		}
+		#endregion
+
 		void FixedUpdate ()
 		{
-			Move ();
+			MoveX();
+			MoveY();
 			CheckCollisions ();
 		}
 
+		void MoveX()
+		{
+			mTargetSpeed = runSpeed * Mathf.Sign( mAxis.x );
+			mTargetSpeed = walkSpeed * Mathf.Sign( mAxis.x );
+			float absAxisX = Mathf.Abs(mAxis.x);
+
+			float currentX = mRb.velocity.x;
+
+			if( state.IsOnGround )
+			{
+				if( absAxisX > 0.1f )
+				{
+					currentX = Mathf.MoveTowards(currentX, mTargetSpeed + state.PlatformVelocity.x, Time.deltaTime * 15);
+					//if slide > nextVelocity.x = savedXVelocity + platformXVelocity;
+					//if attack >  nextVelocity.x = Mathf.MoveTowards(nextVelocity.x, platformXVelocity, Time.deltaTime * 8);
+				}
+				else
+				{
+					if( state.PlatformVelocity.x > 0f ) currentX = state.PlatformVelocity.x;
+					else currentX = Mathf.MoveTowards(currentX, 0, Time.deltaTime * 10);
+				}
+			}
+			else
+			{
+				if( airControllLock )
+				{
+					currentX = Mathf.MoveTowards(currentX, mTargetSpeed, Time.deltaTime * 8);
+				}
+				else
+				{
+					currentX = Mathf.MoveTowards(currentX, mTargetSpeed, Time.deltaTime * 8);
+				}
+			}
+
+			mRb.velocity.x = currentX;
+		}
+
+		void MoveY()
+		{
+			float currentY =  mRb.velocity.y;
+
+			if( state.IsOnGround )
+			{
+				currentY = state.PlatformVelocity.y;
+			}
+			else if( currentY > 0 )
+			{
+				
+			}
+			else
+			{
+				if (mLockedVY != 0f) currentY = mLockedVY;
+				else currentY += fallGravity * Time.deltaTime;
+			}
+
+			mRb.velocity = currentY;
+		}
+
+		#region Collision
 		void CheckCollisions ()
 		{
 			state.SaveLastStateAndReset ();
@@ -130,8 +228,8 @@ namespace druggedcode.engine
 		void CastRaysBelow ()
 		{
 			GameObject nowStanding = GroundCast (mCastOriginCenter); //center
-			if (nowStanding == null) nowStanding = GroundCast (flipped ? mCastOriginForward : mCastOriginBack); //back
-			if (nowStanding == null) nowStanding = GroundCast (flipped ? mCastOriginBack : mCastOriginForward); //forward
+			if (nowStanding == null) nowStanding = GroundCast (mFacing ? mCastOriginForward : mCastOriginBack); //back
+			if (nowStanding == null) nowStanding = GroundCast (mFacing ? mCastOriginBack : mCastOriginForward); //forward
 
 			state.StandingOn = nowStanding;
 		}
@@ -146,57 +244,7 @@ namespace druggedcode.engine
 			state.SlopeAngle = Vector2.Angle (hit.normal, Vector2.up);
 			return hit.collider.gameObject;
 		}
-
-		void Move ()
-		{
-			Vector2 nextVelocity = mRb.velocity;
-
-			mPassedVelocity;
-
-			nextVelocity.x += state.PlatformVelocity.x;
-			nextVelocity.y += state.PlatformVelocity.y;
-
-			mRb.velocity = nextVelocity;
-		}
-
-		//큰 충격(물리 페널티의 결과) 후 회복할 수 있도록 vx 를 캐싱한다.
-		void HandlePhysics ()
-		{
-			float absX = Mathf.Abs (mAxis.x);
-			float platformXVelocity = 0;
-			float platformYVelocity = 0;
-			Vector2 velocity = mRb.velocity;
-
-			//aggressively find moving platform
-//			movingPlatform = MovingPlatformCast(centerGroundCastOrigin);
-//			if(movingPlatform == null)
-//				movingPlatform = MovingPlatformCast(backGroundCastOrigin);
-//			if(movingPlatform == null)
-//				movingPlatform = MovingPlatformCast(forwardGroundCastOrigin);
-
-			if (movingPlatform)
-			{
-				platformXVelocity = movingPlatform.velocity.x;
-				platformYVelocity = movingPlatform.velocity.y;
-			}
-
-			float xVelocity = 0;//character 에서 전달된 move 속도.
-			//character 에 전달받은 힘에서 platformXVelocity, platformYVelocity 를 추가한걸 velocity 에 설정한다
-
-			//jump up
-			if (velocity.y > 0)
-				velocity.y = Mathf.MoveTowards (velocity.y, 0, Time.deltaTime * 30);
-			//jump down
-			velocity.y += fallGravity * Time.deltaTime;
-			//wallslide 면
-			//velocity.y = Mathf.Clamp(velocity.y, wallSlideSpeed, 0);
-			//아래밟은거 체크
-			savedXVelocity = velocity.x;
-
-			if (velocityLock) velocity = Vector2.zero;
-
-			mRb.velocity = velocity;
-		}
+		#endregion
 
 		//아래를 누르고 점프를 눌른 경우 PlatformCast(centerGroundCastOrigin); 를 통해 밟고있는 platform 을 찾아 내 판단했다
 		public void DoPassThrough (Platform platform)

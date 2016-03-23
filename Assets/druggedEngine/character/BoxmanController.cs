@@ -584,27 +584,13 @@ public class HitmanController : GameCharacter {
 	void HandlePhysics () {
 		onIncline = false;
 
-		float x = moveStick.x;
-		float y = moveStick.y;
+		float axisX = moveStick.x;
+		float axisY = moveStick.y;
+		float absAxisX = Mathf.Abs(axisX);
 
-		float absX = Mathf.Abs(x);
-		float xVelocity = 0;
-		float platformXVelocity = 0;
-		float platformYVelocity = 0;
-		Vector2 velocity = rb.velocity;
+		float xSpeed = 0;
+		Vector2 nextVelocity = rb.velocity;
 
-		//aggressively find moving platform
-		movingPlatform = MovingPlatformCast(centerGroundCastOrigin);
-		if(movingPlatform == null)
-			movingPlatform = MovingPlatformCast(backGroundCastOrigin);
-		if(movingPlatform == null)
-			movingPlatform = MovingPlatformCast(forwardGroundCastOrigin);
-
-		if (movingPlatform) {
-			platformXVelocity = movingPlatform.Velocity.x;
-			platformYVelocity = movingPlatform.Velocity.y;
-		}
-        
 		if ("점프가 아닌데 점프를 눌렀어")
         {
 			if ("벽타는 중이면" )
@@ -612,300 +598,139 @@ public class HitmanController : GameCharacter {
 				if ( PressingAgainstWall == false ) 
                 {
                      //벽을 미는 상태가 아닌 경우만 공중 조작 제한을 건다.
-					velocity.x = wallJumpXSpeed * (flipped ? -1 : 1) * 2;
+					nextVelocity.x = wallJumpXSpeed * (flipped ? -1 : 1) * 2;
 				} else {
-					velocity.x = wallJumpXSpeed * (flipped ? -1 : 1);
+					nextVelocity.x = wallJumpXSpeed * (flipped ? -1 : 1);
 				}
 			}
-                        
-			velocity.y = 점프력 + 플랫폼Y;
+
+			float jumpPower = 1f;
+			nextVelocity.y = jumpPower + state.PlatformVelocity.y;
 			
 		} else if ("슬라이딩 시작하면")
         {
-			//SetFriction(movingFriction);
-            //첫 시작한번 슬라이딩 속도 설정.
-            //설정 한 속도 저장
-            //+ 플랫폼X
+			nextVelocity.x = flipped ? -slideVelocity : slideVelocity;
+			savedXVelocity = nextVelocity.x;
+			nextVelocity.x += state.PlatformVelocity.x;
 		}
 
 		//ground logic
 		if ("땅")
         {
-			if ("여전히 땅")
-            {
-				if ("움직일때(axisX 가 0이 아닐때)")
-                {
-					xVelocity = runSpeed * Mathf.Sign(x);
-					velocity.x = Mathf.MoveTowards(velocity.x, xVelocity + platformXVelocity, Time.deltaTime * 15);
-					velocity.y = platformYVelocity;
-					SetFriction(movingFriction);
-				} 
-				else if("움직이지 않을때( axisX가 0 )")
-                {
-                    if( "밟은 땅이 움직이고 있는 경우")
-                    {
-                        velocity.x = platformXVelocity;
-                        SetFriction( movingFriction );
-                    }
-                    else if("걍 땅임")
-                    {
-                         velocity.x = Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 10);
-                         SetFriction( movingFriction );
-                    }
-                    
-                    velocity.y = platformYVelocity;
-				}
-			} 
-		} else if ("하늘")
-        {
-			savedXVelocity = velocity.x;
-			if ( jumpPressed ==false || //점프버튼 누른걸 땠거나 
-                jumpTime >= jumpDuration ||
-                downAttackRecovery ) //하늘이긴 한대 낙하공격 회복중인 경우
-            {
-				jumpStartTime -= jumpDuration;
-                
-                //상승중이였다면 y를 0으로 얼른 변화시키자
-				if (velocity.y > 0)	velocity.y = Mathf.MoveTowards(velocity.y, 0, Time.deltaTime * 30);
-			}
-			//fall logic
-		} else if (state == ActionState.FALL) {
-
-			if (OnGround) {
-				SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-				if (absX > runThreshhold) {
-					velocity.x = savedXVelocity;
-					state = ActionState.RUN;
-				} else if (absX > deadZone) {
-					velocity.x = savedXVelocity;
-					state = ActionState.WALK;
-				} else {
-					velocity.x = savedXVelocity;
-					state = ActionState.IDLE;
-				}
-			} else {
-				EnemyBounceCheck(ref velocity);
-				savedXVelocity = velocity.x;
-
-			}
-			//wall slide logic
-		} else if (state == ActionState.WALLSLIDE) {
-			jumpCount = 0;
-			if (OnGround && Mathf.Abs(velocity.x) < 0.1f && Time.time > (wallSlideStartTime + 0.2f)) {
-				SoundPalette.PlaySound(landSound, 1, 1, transform.position);
-				state = ActionState.IDLE;
-			} else if (!PressingAgainstWall) {
-				if (!EnemyBounceCheck(ref velocity)) {
-					if (y > -0.5f) {
-						wallSlideWatchdog -= Time.deltaTime;
-						if (wallSlideWatchdog <= 0) {
-							SetFallState(true);
-						}
-					} else {
-						SetFallState(true);
-					}
-				}
-			} else {
-				EnemyBounceCheck(ref velocity);
-				wallSlideWatchdog = wallSlideWatchdogDuration;
-				skeletonAnimation.Skeleton.FlipX = wallSlideFlip;
-			}
-		}
-
-		//air control
-		if (state == ActionState.JUMP || state == ActionState.FALL) {
-			if (Time.time > airControlLockoutTime) {
-				if (absX > runThreshhold) {
-					velocity.x = Mathf.MoveTowards(velocity.x, runSpeed * Mathf.Sign(x), Time.deltaTime * 8);
-				} else if (absX > deadZone) {
-					velocity.x = Mathf.MoveTowards(velocity.x, walkSpeed * Mathf.Sign(x), Time.deltaTime * 8);
-				} else {
-					velocity.x = Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 8);
-				}
-
-
-
-			} else {
-				if (wasWallJump) {
-					//cancel air control lockout if reverse joystick
-					if (absX > deadZone) {
-						airControlLockoutTime = Time.time - 1;
-					}
-				}
-			}
-
-			if (attackWasPressed && moveStick.y < -0.5f) {
-				velocity.x = 0;
-				velocity.y = 0;
-				state = ActionState.DOWNATTACK;
-				upAttackUsed = true;
-				skeletonAnimation.AnimationName = downAttackAnim;
-			} else if (attackWasPressed && moveStick.y > 0.5f) {
-				if (!upAttackUsed) {
-					state = ActionState.UPATTACK;
-					skeletonAnimation.AnimationName = upAttackAnim;
-					upAttackUsed = true;
-					velocity.y = 1;
-				}
-			}
-
-			if (state == ActionState.JUMP || state == ActionState.FALL) {
-				if (Time.time != jumpStartTime && PressingAgainstWall) {
-					if (Mathf.Abs(rb.velocity.x) > 0.1f || (state == ActionState.FALL && absX > deadZone)) {
-						if (!wasWallJump && state == ActionState.JUMP) {
-							//dont do anything if still going up
-						} else {
-							//start wall slide
-							state = ActionState.WALLSLIDE;
-							jumpCount = 0;
-							wallSlideWatchdog = wallSlideWatchdogDuration;
-							wallSlideStartTime = Time.time;
-							upAttackUsed = false;
-							if (Mathf.Abs(rb.velocity.x) > 0.1) {
-								wallSlideFlip = rb.velocity.x > 0;
-							} else {
-								wallSlideFlip = x > 0;
-							}
-						}
-
-
-					}
-
-				}
-			}
-		}
-
-		//falling and wallslide
-		if (state == ActionState.FALL)
-			velocity.y += fallGravity * Time.deltaTime;
-		else if (state == ActionState.WALLSLIDE) {
-			velocity.y = Mathf.Clamp(velocity.y, wallSlideSpeed, 0);
-		}
-
-		//slide control
-		if (state == ActionState.SLIDE) {
-			float slideTime = Time.time - slideStartTime;
-
-			if (slideTime > slideDuration) {
-				primaryCollider.transform.localScale = Vector3.one;
-				IgnoreCharacterCollisions(false);
-				if (skeletonGhost != null)
-					skeletonGhost.ghostingEnabled = false;
-				state = ActionState.IDLE;
-			} else {
-				x = Mathf.Sign(savedXVelocity);
-				velocity.x = savedXVelocity + platformXVelocity;
-				if (movingPlatform)
-					velocity.y = platformYVelocity;
-			}
-
-			if (!OnGround) {
-				//Fell off edge while sliding
-				primaryCollider.transform.localScale = Vector3.one;
-				IgnoreCharacterCollisions(false);
-				if (skeletonGhost != null)
-					skeletonGhost.ghostingEnabled = false;
-				SetFallState(true);
-			}
-		}
-
-		//attack control
-		if (state == ActionState.ATTACK) {
-			if (attackWasPressed) {
-				attackWasPressed = false;
-
-				//check if animation allows input now
-				if (waitingForAttackInput) {
-					waitingForAttackInput = false;
-					skeletonAnimation.state.GetCurrent(0).TimeScale = 1;
-				}
-			}
-
-			//apply some of the moving platform velocity
-			velocity.x = Mathf.MoveTowards(velocity.x, platformXVelocity, Time.deltaTime * 8);
-			if (movingPlatform)
-				velocity.y = Mathf.MoveTowards(velocity.y, platformYVelocity, Time.deltaTime * 15);
-
-			//combo is paused, set idle mode and run watchdog
-			if (waitingForAttackInput) {
-				SetFriction(idleFriction);
-				attackWatchdog -= Time.deltaTime;
-				//cancel combo
-				if (attackWatchdog < 0)
-					state = ActionState.IDLE;
-			} else {
-				//attacking, set moving mode
+			if ("움직일때(axisX 가 0이 아닐때)")
+			{
+				xSpeed = runSpeed * Mathf.Sign(axisX);
+				nextVelocity.x = Mathf.MoveTowards(nextVelocity.x, xSpeed + platformXVelocity, Time.deltaTime * 15);
+				nextVelocity.y = platformYVelocity;
 				SetFriction(movingFriction);
+			} 
+			else if("움직이지 않을때( axisX가 0 )")
+			{
+				if( "밟은 땅이 움직이고 있는 경우")
+				{
+					nextVelocity.x = platformXVelocity;
+					SetFriction( movingFriction );
+				}
+				else if("걍 땅임")
+				{
+					nextVelocity.x = Mathf.MoveTowards(nextVelocity.x, 0, Time.deltaTime * 10);
+					SetFriction( movingFriction );
+				}
+
+				nextVelocity.y = platformYVelocity;
+			}
+
+			if ("슬라이딩중")
+			{
+				axisX = Mathf.Sign(savedXVelocity);
+				nextVelocity.x = savedXVelocity + platformXVelocity;
+				if (movingPlatform)	nextVelocity.y = platformYVelocity;
+			}
+
+			if ("공격")
+			{
+				nextVelocity.x = Mathf.MoveTowards(nextVelocity.x, platformXVelocity, Time.deltaTime * 8);
+				if (movingPlatform)	nextVelocity.y = Mathf.MoveTowards(nextVelocity.y, platformYVelocity, Time.deltaTime * 15);
 			}
 		}
-
-		//generic motion flipping control
-		if (state < ActionState.ATTACK && state != ActionState.WALLSLIDE) {
-			if (Time.time > airControlLockoutTime) {
-				if (x > deadZone)
-					skeletonAnimation.Skeleton.FlipX = false;
-				else if (x < -deadZone)
-					skeletonAnimation.Skeleton.FlipX = true;
+		else if ("점프 혹은 낙하 중이라면")
+		{
+			if( "공중 조작 제한")
+			{
+				//키 조작을 한다면 공중 조작 제한 풀자. 속도는 변하지 않게( 변경 해야 할 수도 ?)
 			} else {
-				if (velocity.x > deadZone)
-					skeletonAnimation.Skeleton.FlipX = false;
-				else if (velocity.x < deadZone)
-					skeletonAnimation.Skeleton.FlipX = true;
+				nextVelocity.x = Mathf.MoveTowards(nextVelocity.x, walkSpeed * Mathf.Sign(axisX), Time.deltaTime * 8);
 			}
 
-		}
+			if ("점프라면")
+			{
+				savedXVelocity = nextVelocity.x;
+				if ( jumpPressed ==false || //점프버튼 누른걸 땠거나 
+					jumpTime >= jumpDuration ||
+					downAttackRecovery ) //하늘이긴 한대 낙하공격 회복중인 경우
+				{
+					jumpStartTime -= jumpDuration;
 
-		//down attack
-		if (state == ActionState.DOWNATTACK) {
-			//recovering from down attack
-			if (downAttackRecovery) {
-				//time elapsed, jump back to feet using JUMP state
-				if (downAttackRecoveryTime <= 0) {
-					SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-					velocity.y = jumpSpeed + (platformYVelocity >= 0 ? platformYVelocity : 0);
-					jumpStartTime = Time.time;
-					state = ActionState.JUMP;
-					doJump = false;
-					jumpPressed = false;
+					//상승중이였다면 y를 0으로 얼른 변화시키자
+					if (nextVelocity.y > 0)	nextVelocity.y = Mathf.MoveTowards(nextVelocity.y, 0, Time.deltaTime * 30);
 				}
-				//wait for a bit
-				else {
-					downAttackRecoveryTime -= Time.deltaTime;
-					velocity = Vector2.zero;
-					if (movingPlatform)
-						velocity = movingPlatform.Velocity;
+			} else if ("낙하중이라면")
+			{
+				if ("땅에 닿았다")
+				{
+					nextVelocity.x = savedXVelocity;//낙하 도중의 기억시킨 X 를 설정
 				}
-			} else {
-				//Has impacted the ground, advance sub-state and recover
-				if (OnGround) {
-					SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-					downAttackRecoveryTime = 2f;  //hard coded value to add drama to recovery
-					downAttackRecovery = true;
+				{
+					EnemyBounceCheck(ref nextVelocity);//무엇인가를 밟았는지 검사(velocity 변화됨 )
+					savedXVelocity = nextVelocity.x;
+				}
 
-					//TODO: use set value
-					skeletonAnimation.skeleton.Data.FindAnimation(clearAttackAnim).Apply(skeletonAnimation.skeleton, 0, 1, false, null);
-					skeletonAnimation.state.GetCurrent(0).Time = (downAttackFrameSkip / 30f);
-
-					//spawn effect
-					if (downAttackPrefab)
-						Instantiate(downAttackPrefab, transform.position + new Vector3(0, 0.25f, 0), Quaternion.identity);
-
-					//adhere to moving platform
-					if (movingPlatform)
-						velocity = movingPlatform.Velocity;
-
-				} else {
-					//TODO:  Watchdog and error case check
+				//falling and wallslide
+				if ("낙하중" )
+				{
+					nextVelocity.y += fallGravity * Time.deltaTime;
+				}
+				else if ("벽타기")
+				{
+					nextVelocity.y = Mathf.Clamp(nextVelocity.y, wallSlideSpeed, 0);
 				}
 			}
-
-			//pause all movement, set by Pause event in animation for great dramatic posing.
-			if (velocityLock)
-				velocity = Vector2.zero;
 		}
 
+		if ("IDLE, WALK, RUN, JUMP, FALL,SLIDE")
+        {
+			if (Time.time > airControlLockoutTime)
+            {
+				if (axisX > 0.1f) skeletonAnimation.Skeleton.FlipX = false;
+				else if (axisX < -0.1f)	skeletonAnimation.Skeleton.FlipX = true;
+			} else
+            {
+				if (nextVelocity.x > 0.1f) skeletonAnimation.Skeleton.FlipX = false;
+				else if (nextVelocity.x < -0.1f) skeletonAnimation.Skeleton.FlipX = true;
+			}
+		}
+        
+        //down attack
+		if (state == ActionState.DOWNATTACK)
+        {
+			if ("다운어택 회복중이였다면")
+            {
+				if ("일정 시간이 흐른 후")
+                {
+					nextVelocity.y = jumpSpeed + (platformYVelocity >= 0 ? platformYVelocity : 0);// > jump
+				}
+				else
+                {
+					nextVelocity = Vector2.zero;
+					if (movingPlatform) nextVelocity = movingPlatform.Velocity;
+				}
+			} else if("땅에 닿앗다" )
+            {
+				if (movingPlatform)	nextVelocity = movingPlatform.Velocity;
+			}
+		}
 		flipped = skeletonAnimation.Skeleton.FlipX;
-		rb.velocity = velocity;
+		rb.velocity = nextVelocity;
 	}
 
 	//Bounce off a player in an angry way
