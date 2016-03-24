@@ -204,7 +204,6 @@ namespace druggedcode.engine
 				mVelocity.x = mTargetVX;
 			}
 
-
 			//y speed
 			if (mLockedVY != 0f)
 			{

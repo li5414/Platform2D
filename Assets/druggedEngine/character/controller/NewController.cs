@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 using System.Collections;
 
 namespace druggedcode.engine
@@ -35,6 +36,8 @@ namespace druggedcode.engine
 		public int Facing{get;set;}
 		#endregion
 
+		public UnityAction OnJustGotGrounded;
+
 		Rigidbody2D mRb;
 		Transform mTr;
 		PhysicsMaterial2D characterColliderMaterial;
@@ -60,8 +63,8 @@ namespace druggedcode.engine
 		virtual protected void Awake ()
 		{
 			mRb = GetComponent<Rigidbody2D> ();
-			mRb.angularDrag = 1f;
-			mRb.drag = 1f;
+			mRb.angularDrag = 0f;
+			mRb.drag = 0f;
 			mRb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
 			mTr = transform;
@@ -173,7 +176,7 @@ namespace druggedcode.engine
 		void MoveX (ref Vector2 velocity)
 		{
 			float absAxisX = Mathf.Abs(Axis.x);
-			if( State.IsOnGround )
+			if( State.IsGrounded )
 			{
 				if( absAxisX > 0.1f )
 				{
@@ -202,9 +205,9 @@ namespace druggedcode.engine
 
 		void MoveY(ref Vector2 velocity)
 		{
-			if( State.IsOnGround )
+			if( State.IsGrounded )
 			{
-				velocity.y = State.PlatformVelocity.y;
+				velocity.y += State.PlatformVelocity.y;
 			}
 			else
 			{
@@ -228,6 +231,11 @@ namespace druggedcode.engine
 			CastRaysBelow ();
 
 			//밀수 있는 것들은 민다.
+
+			if( State.JustGotGrounded )
+			{
+				if( OnJustGotGrounded != null )OnJustGotGrounded();
+			}
 		}
 
 		void CastRaysBelow ()
@@ -369,7 +377,7 @@ namespace druggedcode.engine
 			if (Application.isPlaying == false)
 				return;
 
-			if (State.IsOnGround)
+			if (State.IsGrounded)
 				Gizmos.color = Color.green;
 			else
 				Gizmos.color = Color.grey;
@@ -399,7 +407,7 @@ namespace druggedcode.engine
 
 		public bool IsCollidingAbove { get; set; }
 
-		public bool IsOnGround{ get; private set; }
+		public bool IsGrounded{ get; private set; }
 
 		public Platform StandingPlatform { get; private set; }
 
@@ -416,12 +424,12 @@ namespace druggedcode.engine
 
 				if (mStandingOn == null)
 				{
-					IsOnGround = false;
+					IsGrounded = false;
 					PlatformVelocity = Vector2.zero;
 				}
 				else
 				{
-					IsOnGround = true;
+					IsGrounded = true;
 
 					if (WasColldingBelowLastFrame == false) JustGotGrounded = true;
 
@@ -434,7 +442,7 @@ namespace druggedcode.engine
 
 		public void SaveLastStateAndReset ()
 		{
-			WasColldingBelowLastFrame = IsOnGround;
+			WasColldingBelowLastFrame = IsGrounded;
 			WasColldingAdoveLastFrame = IsCollidingAbove;
 
 			SlopeAngle = 0f;

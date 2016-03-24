@@ -25,7 +25,7 @@ namespace druggedcode.engine
 			{
 				EditorGUILayout.Vector2Field ("velocity", mController.Velocity);
 
-				EditorGUILayout.LabelField ("Grounded", mState.IsOnGround + "( slope: " + mState.SlopeAngle + " )");
+				EditorGUILayout.LabelField ("Grounded", mState.IsGrounded + "( slope: " + mState.SlopeAngle + " )");
 				EditorGUILayout.ObjectField ("StandingPlatform", mState.StandingOn, typeof(GameObject), true);
 
 				EditorGUILayout.Space ();

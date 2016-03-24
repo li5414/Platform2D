@@ -39,7 +39,7 @@ namespace druggedcode.engine
 
 		#endregion
 
-		public Transform body;
+		public Transform graphic;
 		public AnimationType bodyType;
 
 		[Header ("Stats")]
@@ -166,9 +166,8 @@ namespace druggedcode.engine
 
 		protected Transform mTr;
 
-		protected float jumpStartTime;
-
-		protected float jumpElapsedTime { get { return Time.time - jumpStartTime; } }
+		protected float mJumpStartTime;
+		protected float jumpElapsedTime { get { return Time.time - mJumpStartTime; } }
 
 		protected float mDashStartTime;
 
@@ -686,7 +685,7 @@ namespace druggedcode.engine
 
 			CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
 			Controller.vy = jumpPower;
-			jumpStartTime = Time.time;
+			mJumpStartTime = Time.time;
 			JumpCount++;
 
 			if (wallJump)
@@ -735,7 +734,7 @@ namespace druggedcode.engine
 
 		virtual protected void Fall (bool useJumpCount = true)
 		{
-			SetState (CharacterState.ESCAPE);
+			SetState (CharacterState.FALL);
 
 			mCanDash = true;
 			mCanJump = true;
@@ -770,7 +769,7 @@ namespace druggedcode.engine
 			if (footEffectBone != null)
 			{
 				Bone bone = mSkeletonAnimation.Skeleton.FindBone (footEffectBone);
-				if (bone != null) pos = body.transform.TransformPoint (bone.WorldX, bone.WorldY, 0f);
+				if (bone != null) pos = graphic.transform.TransformPoint (bone.WorldX, bone.WorldY, 0f);
 			}
 
 			FXManager.Instance.SpawnFX (prefab, pos, rotation, scale);
@@ -1156,7 +1155,7 @@ namespace druggedcode.engine
 
 		public void BodyPosition (Vector2 translate)
 		{
-			body.transform.localPosition = translate;
+			graphic.transform.localPosition = translate;
 		}
 
 		void SetFacing (Facing facing)
@@ -1166,11 +1165,11 @@ namespace druggedcode.engine
 			switch (mFacing)
 			{
 				case Facing.RIGHT:
-					body.localRotation = Quaternion.Euler( 0f,0f,0f );
+					graphic.localRotation = Quaternion.Euler( 0f,0f,0f );
 					break;
 
 				case Facing.LEFT:
-					body.localRotation = Quaternion.Euler( 0f,180f,0f );
+					graphic.localRotation = Quaternion.Euler( 0f,180f,0f );
 					break;
 			}
 		}

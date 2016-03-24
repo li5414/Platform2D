@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Events;
+using Spine;
+
 namespace druggedcode.engine
 {
 	public delegate bool StateTransition ();
@@ -32,6 +34,12 @@ namespace druggedcode.engine
 		}
 		#endregion
 
+		public Transform graphic;
+
+		[Header ("Bone")]
+		[SpineBone (dataField: "skeletonAnimation")]
+		public string footEffectBone;
+
 		//inspector
 		[Header ("Idle")]
 		[SpineAnimation]
@@ -47,16 +55,28 @@ namespace druggedcode.engine
 		public string runAnim;
 		public float RunSpeed = 10f;
 
+		[Header ("Jump")]
+		[SpineAnimation]
+		public string jumpAnim;
+		[SpineAnimation]
+		public string fallAnim;
+		public float jumpSpeed = 3f;
+		public float airJumpSpeed = 2f;
+		public int jumpMax = 3;
+
         //----------------------------------------------------------------------------------------------------------
 		// input
 		//----------------------------------------------------------------------------------------------------------
 		public Vector2 axis{ get;set; }
 		public bool isRun { get; set; }
 
+
+		//GET,SET
 		public CharacterState State { get; protected set; }
 		public NewController Controller {get; private set;}
 		public HealthState Health{ get; set; }
 		public float CurrentSpeed { get; set; }
+		public int JumpCount { get; set; }
 
         public UnityAction<NewCharacter> OnUpdateInput;
         
@@ -76,6 +96,10 @@ namespace druggedcode.engine
 		protected bool mCanMove;
 		protected bool mCanFacing;
 
+		//
+		protected float mJumpStartTime;
+		protected float jumpElapsedTime { get { return Time.time - mJumpStartTime; } }
+
 		//anim
 		protected SkeletonAnimation mSkeletonAnimation;
 		protected SkeletonGhost mGhost;
@@ -90,7 +114,7 @@ namespace druggedcode.engine
 		{
 			mTr = transform;
 			Controller = GetComponent<NewController>();
-
+			Controller.OnJustGotGrounded += OnJustGotGrounded;
 			Health = new HealthState (100);
 
 			mStateTransitions = new List<StateTransition>();
@@ -251,12 +275,13 @@ namespace druggedcode.engine
 
 		void FixedUpdate ()
 		{
-			if (Controller.State.JustGotGrounded)
-			{
-//				ResetJump ();
-//				PlatformSoundPlay ();
-//				PlatformEffectSpawn ();
-			}
+		}
+
+		void OnJustGotGrounded()
+		{
+			ResetJump ();
+			PlatformSoundPlay ();
+			PlatformEffectSpawn ();
 		}
 		#endregion
 
@@ -297,7 +322,7 @@ namespace druggedcode.engine
 				return;
 			}
 
-			//Debug.Log (state + " > " + next);
+			//Debug.Log (State + " > " + next);
 
 			mStateExit();
 			mStateExit = delegate{};
@@ -335,6 +360,16 @@ namespace druggedcode.engine
 		{
 			mStateTransitions.Remove (transition);
 		}
+
+		virtual protected void SetRestrict( bool move, bool facing, bool jump, bool attack, bool dash, bool escape )
+		{
+			mCanMove = move;
+			mCanFacing = facing;
+			mCanJump = jump;
+			mCanAttack = attack;
+			mCanDash = dash;
+			mCanEscape = escape;
+		}
 		#endregion
 
 		#region DEFAULT BEHAVIOUR
@@ -342,12 +377,7 @@ namespace druggedcode.engine
 		{
 			SetState (CharacterState.IDLE);
 
-			mCanEscape = true;
-			mCanDash = true;
-			mCanJump = true;
-			mCanAttack = true;
-			mCanMove = true;
-			mCanFacing = true;
+			SetRestrict( true,true,true,true,true,true );
 
 			PlayAnimation (idleAnim);
 			CurrentSpeed = 0f;
@@ -378,17 +408,11 @@ namespace druggedcode.engine
 			AddTransition (TransitionRun_IdleOrWalk);
 		}
 
-
 		virtual protected void Fall (bool useJumpCount = true)
 		{
-			SetState (CharacterState.ESCAPE);
+			SetState (CharacterState.FALL);
 
-			mCanDash = true;
-			mCanJump = true;
-			mCanEscape = false;
-			mCanAttack = true;
-			mCanMove = true;
-			mCanFacing = true;
+			SetRestrict( true,true,true,true,true,false );
 
 			if (useJumpCount) JumpCount++;
 			PlayAnimation (fallAnim);
@@ -400,11 +424,79 @@ namespace druggedcode.engine
 
 		#endregion
 
+		#region Action
+		virtual public void DoJump ()
+		{
+			if (mCanJump == false) return;
+			if (JumpCount >= jumpMax) return;
+
+			print("jump");
+
+			SetState (CharacterState.JUMP);
+
+			SetRestrict( true, true,true,true,true, false );
+
+			bool wallJump = false;
+			float jumpPower = 0f;
+			GameObject jumpEffect = null;
+
+			if (JumpCount == 0)
+			{
+				PlatformSoundPlay ();
+				PlatformEffectSpawn ();
+
+				if (State == CharacterState.WALLSLIDE)
+				{
+//					Controller.vx = mFacing == Facing.LEFT ? 4 : -4;
+//					Controller.LockMove (0.5f);
+//					wallJump = true;
+				}
+				else if (Controller.State.IsGrounded)
+				{
+
+				}
+
+				PlayAnimation (jumpAnim);
+
+				jumpPower = jumpSpeed;
+				//jumpPower = Mathf.Sqrt (2f * JumpHeight * Mathf.Abs (Controller.Gravity));
+				//jumpEffect = jumpEffectPrefab;
+			}
+			//airJump
+			else
+			{
+				PlayAnimation (jumpAnim);
+
+				jumpPower = airJumpSpeed;
+				//jumpPower = Mathf.Sqrt (2f * JumpHeightOnAir * Mathf.Abs (Controller.Gravity));
+				//jumpEffect = airJumpEffectPrefab;
+			}
+
+			CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
+			Controller.Vy = jumpPower + Controller.State.PlatformVelocity.y;
+
+			print( "jumpPower: "+ jumpPower + ", vy : " + Controller.Vy );
+
+			mJumpStartTime = Time.time;
+			JumpCount++;
+
+			if (wallJump)
+			{
+				SpawnAtFoot (jumpEffect, Quaternion.Euler (0, 0, mFacing * 90 ), new Vector3 (mFacing * 1f , 1f, 1f));
+			}
+			else
+			{
+				FXManager.Instance.SpawnFX (jumpEffect, mTr.position, new Vector3 ( mFacing * 1f, 1f, 1f));
+			}
+
+			AddTransition (TransitionJump_Fall);
+		}
+
+		#endregion
+
 		#region STATE TRANSITION
 		protected bool TransitionIdle_Move ()
 		{
-			print( axis.x );
-
 			if (axis.x == 0f) return false;
 
 			if (isRun) Run ();
@@ -438,6 +530,53 @@ namespace druggedcode.engine
 			}
 
 			return false;
+		}
+
+		protected bool TransitionAir_Idle ()
+		{
+			if (Controller.State.IsGrounded == false) return false;
+			Idle ();
+			return true;
+		}
+
+		protected bool TransitionJump_Fall ()
+		{
+			if (Controller.Vy > 0) return false;
+			Fall (false);
+			return true;
+		}
+		#endregion
+
+		#region ETC
+		public void ResetJump ()
+		{
+			JumpCount = 0;
+		}
+
+		protected void SpawnAtFoot (GameObject prefab, Quaternion rotation, Vector3 scale)
+		{
+			if (prefab == null) return;
+
+			Vector3 pos = mTr.position;
+			if (footEffectBone != null)
+			{
+				Bone bone = mSkeletonAnimation.Skeleton.FindBone (footEffectBone);
+				if (bone != null) pos = graphic.TransformPoint (bone.WorldX, bone.WorldY, 0f);
+			}
+
+			FXManager.Instance.SpawnFX (prefab, pos, rotation, scale);
+		}
+
+		protected void PlatformSoundPlay ()
+		{
+			Platform platform = Controller.State.StandingPlatform;
+			if (platform != null) platform.PlaySound (mTr.position, 1f, 1f);
+		}
+
+		protected void PlatformEffectSpawn ()
+		{
+			Platform platform = Controller.State.StandingPlatform;
+			if (platform != null) platform.ShowEffect (mTr.position, new Vector3 (mFacing * 1f, 1f, 1f));
 		}
 		#endregion
 

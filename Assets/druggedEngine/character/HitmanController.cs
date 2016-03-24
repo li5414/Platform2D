@@ -636,6 +636,7 @@ public class HitmanController : GameCharacter {
 			}
 
 			float jumpPower = 1f;
+			//velocity.y = (jumpCount > 0 ? airJumpSpeed : jumpSpeed) + (platformYVelocity >= 0 ? platformYVelocity : 0);
 			nextVelocity.y = jumpPower + PlatformVelocity.y;
 			
 		} else if ("슬라이딩 시작하면"== strCondition )

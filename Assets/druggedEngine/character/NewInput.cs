@@ -36,7 +36,7 @@ namespace druggedcode.engine
 			mPlayer.axis = new Vector2(axisX,axisY);
 			mPlayer.isRun = Input.GetKey (runKey);
 
-			// if( Input.GetKeyDown (jumpKey)) mPlayer.OrderJump();
+			if( Input.GetKeyDown (jumpKey)) mPlayer.DoJump();
 			// if( Input.GetKeyDown (escapeKey)) mPlayer.OrderEscape();
 			// if( Input.GetKeyDown (dashKey)) mPlayer.OrderDash();
 			// if (Input.GetButtonDown( attackKey )) mPlayer.OrderAttack();
