@@ -13,6 +13,7 @@ namespace druggedcode.engine
 
 		[Header ("Physics")]
 		public float fallGravity = -4;
+
 		public float idleFriction = 20;
 		public float movingFriction = 0;
 
@@ -29,7 +30,9 @@ namespace druggedcode.engine
 		#endregion
 
 		#region getter setter
-		public NewControllerState state { get; private set; }
+		public NewControllerState State { get; private set; }
+		public Vector2 Axis {get;set;}
+		public int Facing{get;set;}
 		#endregion
 
 		Rigidbody2D mRb;
@@ -49,8 +52,6 @@ namespace druggedcode.engine
 		Platform movingPlatform;
 		//moving
 
-		Vector2 mAxis;
-		int mFacing;
 
 		bool airControllLock;
 		float mLockedVY;
@@ -65,7 +66,7 @@ namespace druggedcode.engine
 
 			mTr = transform;
 
-			state = new NewControllerState ();
+			State = new NewControllerState ();
 
 			CalculateRayBounds (primaryCollider);
 
@@ -102,15 +103,9 @@ namespace druggedcode.engine
 			wallCastDistance = b.extents.x + 0.1f;
 		}
 
-		public void SetAxis (float axisX, float axisY)
-		{
-			mAxis.x = axisX;
-			mAxis.y = axisY;
-		}
-
 		public void SetFacing( int facing )
 		{
-			mFacing = facing;
+			facing = facing;
 		}
 
 		public void SetSpeed( float speed )
@@ -119,19 +114,28 @@ namespace druggedcode.engine
 		}
 
 		#region controll Velocity
-		public void SetVelocity( Vector2 v )
+		public Vector2 Velocity
 		{
-			mRb.velocity = v;
+			get{ return mRb.velocity; }
+			set{ mRb.velocity = value; }
 		}
 
-		public void SetVX( float vx )
+		public float Vx
 		{
-			mRb.velocity.x = vx;
+			get{ return mRb.velocity.x; }
+			set{ mRb.velocity = new Vector2( value, mRb.velocity.y); }
 		}
 
-		public void SetVY( float vy )
+		public float Vy
 		{
-			mRb.velocity.y = vy;
+			get{ return mRb.velocity.y; }
+			set{ mRb.velocity = new Vector2( mRb.velocity.x, value); }
+		}
+
+		public void Stop()
+		{
+			mRb.velocity = Vector2.zero;
+			mTargetSpeed = 0f;
 		}
 
 		public void AddForce (Vector2 force)
@@ -141,84 +145,85 @@ namespace druggedcode.engine
 
 		public void AddForceX( float x )
 		{
-			mRb.velocity.x += x;
+			mRb.velocity = new Vector2( mRb.velocity.x + x, mRb.velocity.y );
 		}
 
 		public void AddForceY( float y )
 		{
-			mRb.velocity.y += y;
+			mRb.velocity = new Vector2( mRb.velocity.x, mRb.velocity.y + y );
 		}
 		#endregion
 
 		void FixedUpdate ()
 		{
-			MoveX();
-			MoveY();
+			Move();
 			CheckCollisions ();
 		}
 
-		void MoveX()
+		void Move()
 		{
-			mTargetSpeed = runSpeed * Mathf.Sign( mAxis.x );
-			mTargetSpeed = walkSpeed * Mathf.Sign( mAxis.x );
-			float absAxisX = Mathf.Abs(mAxis.x);
+			Vector2 currentVelocity = mRb.velocity;
 
-			float currentX = mRb.velocity.x;
+			MoveX( ref currentVelocity );
+			MoveY( ref currentVelocity );
 
-			if( state.IsOnGround )
+			mRb.velocity = currentVelocity;
+		}
+
+		void MoveX (ref Vector2 velocity)
+		{
+			float absAxisX = Mathf.Abs(Axis.x);
+			if( State.IsOnGround )
 			{
 				if( absAxisX > 0.1f )
 				{
-					currentX = Mathf.MoveTowards(currentX, mTargetSpeed + state.PlatformVelocity.x, Time.deltaTime * 15);
+					velocity.x = Mathf.MoveTowards(velocity.x, mTargetSpeed + State.PlatformVelocity.x, Time.deltaTime * 15);
 					//if slide > nextVelocity.x = savedXVelocity + platformXVelocity;
 					//if attack >  nextVelocity.x = Mathf.MoveTowards(nextVelocity.x, platformXVelocity, Time.deltaTime * 8);
 				}
 				else
 				{
-					if( state.PlatformVelocity.x > 0f ) currentX = state.PlatformVelocity.x;
-					else currentX = Mathf.MoveTowards(currentX, 0, Time.deltaTime * 10);
+					if( State.PlatformVelocity.x > 0f ) velocity.x = State.PlatformVelocity.x;
+					else velocity.x = Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 10);
 				}
 			}
 			else
 			{
 				if( airControllLock )
 				{
-					currentX = Mathf.MoveTowards(currentX, mTargetSpeed, Time.deltaTime * 8);
+					//currentX = Mathf.MoveTowards(currentX, mTargetSpeed, Time.deltaTime * 8);
 				}
 				else
 				{
-					currentX = Mathf.MoveTowards(currentX, mTargetSpeed, Time.deltaTime * 8);
+					velocity.x = Mathf.MoveTowards(velocity.x, mTargetSpeed, Time.deltaTime * 8);
 				}
 			}
-
-			mRb.velocity.x = currentX;
 		}
 
-		void MoveY()
+		void MoveY(ref Vector2 velocity)
 		{
-			float currentY =  mRb.velocity.y;
-
-			if( state.IsOnGround )
+			if( State.IsOnGround )
 			{
-				currentY = state.PlatformVelocity.y;
-			}
-			else if( currentY > 0 )
-			{
-				
+				velocity.y = State.PlatformVelocity.y;
 			}
 			else
 			{
-				if (mLockedVY != 0f) currentY = mLockedVY;
-				else currentY += fallGravity * Time.deltaTime;
-			}
+				if( velocity.y > 0 )
+				{
 
-			mRb.velocity = currentY;
+				}
+				else
+				{
+					if (mLockedVY != 0f) velocity.y = mLockedVY;
+					else velocity.y += fallGravity * Time.deltaTime;
+				}
+			}
 		}
 
 		#region Collision
 		void CheckCollisions ()
 		{
-			state.SaveLastStateAndReset ();
+			State.SaveLastStateAndReset ();
 
 			CastRaysBelow ();
 
@@ -228,10 +233,10 @@ namespace druggedcode.engine
 		void CastRaysBelow ()
 		{
 			GameObject nowStanding = GroundCast (mCastOriginCenter); //center
-			if (nowStanding == null) nowStanding = GroundCast (mFacing ? mCastOriginForward : mCastOriginBack); //back
-			if (nowStanding == null) nowStanding = GroundCast (mFacing ? mCastOriginBack : mCastOriginForward); //forward
+			if (nowStanding == null) nowStanding = GroundCast (Facing == -1 ? mCastOriginForward : mCastOriginBack); //back
+			if (nowStanding == null) nowStanding = GroundCast (Facing == 1 ? mCastOriginBack : mCastOriginForward); //forward
 
-			state.StandingOn = nowStanding;
+			State.StandingOn = nowStanding;
 		}
 
 		GameObject GroundCast (Vector3 origin)
@@ -241,7 +246,7 @@ namespace druggedcode.engine
 			if (hit.collider == null) return null;
 			if (hit.collider.isTrigger) return null;
 
-			state.SlopeAngle = Vector2.Angle (hit.normal, Vector2.up);
+			State.SlopeAngle = Vector2.Angle (hit.normal, Vector2.up);
 			return hit.collider.gameObject;
 		}
 		#endregion
@@ -312,7 +317,7 @@ namespace druggedcode.engine
 				bool usingVelocity = true;
 				if (Mathf.Abs (x) < 0.1f)
 				{
-					x = mAxis.x;
+					x = Axis.x;
 					if (Mathf.Abs (x) == 0f)
 					{
 						return false;
@@ -364,7 +369,7 @@ namespace druggedcode.engine
 			if (Application.isPlaying == false)
 				return;
 
-			if (state.IsOnGround)
+			if (State.IsOnGround)
 				Gizmos.color = Color.green;
 			else
 				Gizmos.color = Color.grey;

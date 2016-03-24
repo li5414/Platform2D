@@ -10,8 +10,6 @@ using UnityEditor;
 
 namespace druggedcode.engine
 {
-	public delegate bool StateTransition ();
-
 	public class DECharacter : MonoBehaviour, IDamageable
 	{
 		#region static
@@ -489,7 +487,7 @@ namespace druggedcode.engine
 			CurrentSpeed = RunSpeed;
 
 			AddTransition (TransitionGround_Fall);
-			AddTransition (TransitionRun_StopOrWalk);
+			AddTransition (TransitionRun_IdleOrWalk);
 
 			mStateLoop += Move;
 		}
@@ -531,7 +529,7 @@ namespace druggedcode.engine
 			return true;
 		}
 
-		protected bool TransitionRun_StopOrWalk ()
+		protected bool TransitionRun_IdleOrWalk ()
 		{
 			if (horizontalAxis == 0f || isRun == false )
 			{

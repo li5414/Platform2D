@@ -28,10 +28,12 @@ namespace druggedcode.engine
 
 		void OnUpdateInput ( NewCharacter ch )
 		{
-			if( GameManager.Instance.playerControllable == false ) return;
+			//if( GameManager.Instance.playerControllable == false ) return;
 
-			mPlayer.horizontalAxis = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));
-			mPlayer.verticalAxis = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
+			var axisX = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));
+			var axisY = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
+
+			mPlayer.axis = new Vector2(axisX,axisY);
 			mPlayer.isRun = Input.GetKey (runKey);
 
 			// if( Input.GetKeyDown (jumpKey)) mPlayer.OrderJump();

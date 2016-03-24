@@ -15,16 +15,14 @@ namespace druggedcode.engine
 		void OnEnable()
 		{
 			mController = (NewController) target;
-			mState = mController.state;
+			mState = mController.State;
 		}
 
 		#if UNITY_EDITOR
 		public override void OnInspectorGUI ()
 		{
-			if (Application.isPlaying)
+			if (Application.isPlaying && mController.gameObject.activeInHierarchy )
 			{
-				if (mController.gameObject.activeInHierarchy == false) return;
-
 				EditorGUILayout.Vector2Field ("velocity", mController.Velocity);
 
 				EditorGUILayout.LabelField ("Grounded", mState.IsOnGround + "( slope: " + mState.SlopeAngle + " )");

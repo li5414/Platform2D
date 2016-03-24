@@ -15,7 +15,7 @@ namespace druggedcode.engine
         #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
-            if( Application.isPlaying)
+			if( Application.isPlaying && mCharacter.gameObject.activeInHierarchy )
             {
 				EditorGUILayout.LabelField("state",mCharacter.State.ToString());
 				EditorGUILayout.LabelField("hp",mCharacter.Health.ToString());
