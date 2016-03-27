@@ -12,11 +12,18 @@ namespace druggedcode.engine
 		[Header ("References")]
 		public PolygonCollider2D primaryCollider;
 
-		[Header ("Physics")]
-		public float fallGravity = -4;
+		[Header("Move")]
+		public float accelOnGround = 30f;
+		public float accelOnAir = 10f;
 
-		public float idleFriction = 20;
-		public float movingFriction = 0;
+		[Header("Jump")]
+		public float jumpHeight = 3f;
+		public float jumpHeightOnAir = 2f;
+
+		[Header ("Physics")]
+		public float ownGravity = -8;
+		public float defaultFriction = 4;
+		public float defaultBounce = 0;
 
 		[Header ("Raycasting")]
 		public LayerMask characterMask;
@@ -34,13 +41,14 @@ namespace druggedcode.engine
 		public NewControllerState State { get; private set; }
 		public Vector2 Axis {get;set;}
 		public int Facing{get;set;}
+		public float Friction{ get{ return mPhysicMaterial.friction; }}
 		#endregion
 
 		public UnityAction OnJustGotGrounded;
 
 		Rigidbody2D mRb;
 		Transform mTr;
-		PhysicsMaterial2D characterColliderMaterial;
+		PhysicsMaterial2D mPhysicMaterial;
 		protected Vector2 mPassedVelocity;
 
 		Vector3 mCastOriginCenter;
@@ -58,7 +66,7 @@ namespace druggedcode.engine
 
 		bool airControllLock;
 		float mLockedVY;
-		float mTargetSpeed;
+		public float TargetVX{get;set;}
 
 		virtual protected void Awake ()
 		{
@@ -74,11 +82,17 @@ namespace druggedcode.engine
 			CalculateRayBounds (primaryCollider);
 
 			if (primaryCollider.sharedMaterial == null)
-				characterColliderMaterial = new PhysicsMaterial2D ("CharacterColliderMaterial");
+			{
+				mPhysicMaterial = new PhysicsMaterial2D ("ControllerColliderMaterial");
+				SetFriction( defaultFriction );
+				SetFriction( defaultBounce );
+			}
 			else
-				characterColliderMaterial = Instantiate (primaryCollider.sharedMaterial);
+			{
+				mPhysicMaterial = Instantiate (primaryCollider.sharedMaterial);
+			}
 
-			primaryCollider.sharedMaterial = characterColliderMaterial;
+			primaryCollider.sharedMaterial = mPhysicMaterial;
 		}
 
 		virtual protected void Start ()
@@ -111,11 +125,6 @@ namespace druggedcode.engine
 			facing = facing;
 		}
 
-		public void SetSpeed( float speed )
-		{
-			mTargetSpeed = speed;
-		}
-
 		#region controll Velocity
 		public Vector2 Velocity
 		{
@@ -123,13 +132,13 @@ namespace druggedcode.engine
 			set{ mRb.velocity = value; }
 		}
 
-		public float Vx
+		public float vx
 		{
 			get{ return mRb.velocity.x; }
 			set{ mRb.velocity = new Vector2( value, mRb.velocity.y); }
 		}
 
-		public float Vy
+		public float vy
 		{
 			get{ return mRb.velocity.y; }
 			set{ mRb.velocity = new Vector2( mRb.velocity.x, value); }
@@ -138,7 +147,7 @@ namespace druggedcode.engine
 		public void Stop()
 		{
 			mRb.velocity = Vector2.zero;
-			mTargetSpeed = 0f;
+			TargetVX = 0f;
 		}
 
 		public void AddForce (Vector2 force)
@@ -155,14 +164,24 @@ namespace druggedcode.engine
 		{
 			mRb.velocity = new Vector2( mRb.velocity.x, mRb.velocity.y + y );
 		}
+
+		public void Jump()
+		{
+			float jumpPower = State.IsGrounded ? jumpHeight : jumpHeightOnAir;
+			jumpPower = Mathf.Sqrt (2.05f * jumpPower * Mathf.Abs (DruggedEngine.Gravity + ownGravity ));
+			jumpPower += State.PlatformVelocity.y;
+			vy = jumpPower;
+			if( State.IsGrounded ) State.ClearPlatform();
+		}
 		#endregion
 
 		void FixedUpdate ()
 		{
-			Move();
 			CheckCollisions ();
+			Move();
 		}
 
+		#region Move
 		void Move()
 		{
 			Vector2 currentVelocity = mRb.velocity;
@@ -176,19 +195,22 @@ namespace druggedcode.engine
 		void MoveX (ref Vector2 velocity)
 		{
 			float absAxisX = Mathf.Abs(Axis.x);
+			float currentX = velocity.x;
 			if( State.IsGrounded )
 			{
+				TargetVX += State.PlatformVelocity.x;
 				if( absAxisX > 0.1f )
 				{
-					velocity.x = Mathf.MoveTowards(velocity.x, mTargetSpeed + State.PlatformVelocity.x, Time.deltaTime * 15);
+					currentX = Mathf.MoveTowards( currentX, TargetVX, Time.deltaTime * accelOnGround);
 					//if slide > nextVelocity.x = savedXVelocity + platformXVelocity;
 					//if attack >  nextVelocity.x = Mathf.MoveTowards(nextVelocity.x, platformXVelocity, Time.deltaTime * 8);
 				}
 				else
 				{
-					if( State.PlatformVelocity.x > 0f ) velocity.x = State.PlatformVelocity.x;
-					else velocity.x = Mathf.MoveTowards(velocity.x, 0, Time.deltaTime * 10);
+					currentX = Mathf.MoveTowards(currentX, TargetVX, Time.deltaTime * accelOnGround);
 				}
+
+//				currentX += State.PlatformVelocity.x;
 			}
 			else
 			{
@@ -198,30 +220,60 @@ namespace druggedcode.engine
 				}
 				else
 				{
-					velocity.x = Mathf.MoveTowards(velocity.x, mTargetSpeed, Time.deltaTime * 8);
+					currentX = Mathf.MoveTowards( currentX, TargetVX, Time.deltaTime * accelOnAir );
 				}
 			}
+
+			velocity.x = currentX;
 		}
 
 		void MoveY(ref Vector2 velocity)
 		{
+			float currentY = velocity.y;
+
 			if( State.IsGrounded )
 			{
-				velocity.y += State.PlatformVelocity.y;
+				currentY = State.PlatformVelocity.y;
 			}
 			else
 			{
 				if( velocity.y > 0 )
 				{
-
+					currentY += ownGravity * Time.deltaTime;
 				}
 				else
 				{
-					if (mLockedVY != 0f) velocity.y = mLockedVY;
-					else velocity.y += fallGravity * Time.deltaTime;
+					currentY+= ownGravity * Time.deltaTime;
 				}
+
+				if (mLockedVY != 0f) currentY = Mathf.Clamp( currentY, mLockedVY, 0f );
+			}
+
+			velocity.y = currentY;
+		}
+		#endregion
+
+		#region Physics
+		public void SetFriction (float friction )
+		{
+			if( friction != mPhysicMaterial.friction )
+			{
+				mPhysicMaterial.friction = friction;
+				primaryCollider.gameObject.SetActive (false);
+				primaryCollider.gameObject.SetActive (true);
 			}
 		}
+
+		public void SetBounce( float bounce )
+		{
+			if( bounce != mPhysicMaterial.bounciness )
+			{
+				mPhysicMaterial.bounciness = bounce;
+				primaryCollider.gameObject.SetActive (false);
+				primaryCollider.gameObject.SetActive (true);
+			}
+		}
+		#endregion
 
 		#region Collision
 		void CheckCollisions ()
@@ -234,20 +286,25 @@ namespace druggedcode.engine
 
 			if( State.JustGotGrounded )
 			{
-				if( OnJustGotGrounded != null )OnJustGotGrounded();
+				if( OnJustGotGrounded != null ) OnJustGotGrounded();
 			}
 		}
 
 		void CastRaysBelow ()
 		{
-			GameObject nowStanding = GroundCast (mCastOriginCenter); //center
-			if (nowStanding == null) nowStanding = GroundCast (Facing == -1 ? mCastOriginForward : mCastOriginBack); //back
-			if (nowStanding == null) nowStanding = GroundCast (Facing == 1 ? mCastOriginBack : mCastOriginForward); //forward
+			if( State.IsGrounded == false && vy > 0f ) return;
+
+			GameObject nowStanding = GroundCast( mCastOriginCenter ); //center
+
+			if (nowStanding == null) nowStanding = GroundCast( Facing == 1 ? mCastOriginBack : mCastOriginForward ); //back
+			if (nowStanding == null) nowStanding = GroundCast( Facing == 1 ? mCastOriginForward : mCastOriginBack ); //forward
 
 			State.StandingOn = nowStanding;
+
+			if( State.IsGrounded ) State.UpdatePlatformVelocity();
 		}
 
-		GameObject GroundCast (Vector3 origin)
+		GameObject GroundCast (Vector3 origin )
 		{
 			RaycastHit2D hit = Physics2D.Raycast (mTr.TransformPoint (origin), Vector2.down, CAST_GROUND_LENGTH, currentMask);
 
@@ -290,7 +347,6 @@ namespace druggedcode.engine
 			return character;
 		}
 
-		//Raycasting stuff
 		Rigidbody2D GetRelevantCharacterCast (Vector3 origin, float dist)
 		{
 			RaycastHit2D[] hits = Physics2D.RaycastAll (transform.TransformPoint (origin), Vector2.down, dist, characterMask);
@@ -335,7 +391,10 @@ namespace druggedcode.engine
 					}
 				}
 
-				RaycastHit2D hit = Physics2D.Raycast (transform.TransformPoint (wallCastOrigin), new Vector2 (x, 0).normalized, wallCastDistance + (usingVelocity ? x * Time.deltaTime : 0), currentMask);
+				Vector2 origin = mTr.TransformPoint (wallCastOrigin);
+				Vector2 direction = new Vector2 (x, 0).normalized;
+				float distance = wallCastDistance + (usingVelocity ? x * Time.deltaTime : 0);
+				RaycastHit2D hit = Physics2D.Raycast( origin, direction, distance, currentMask);
 				if (hit.collider != null && !hit.collider.isTrigger)
 				{
 					if (hit.collider.GetComponent<Platform> ().oneway)
@@ -343,19 +402,7 @@ namespace druggedcode.engine
 
 					return true;
 				}
-
 				return false;
-			}
-		}
-
-		//work-around for Box2D not updating friction values at runtime...
-		void SetFriction (float friction)
-		{
-			if (friction != characterColliderMaterial.friction)
-			{
-				characterColliderMaterial.friction = friction;
-				primaryCollider.gameObject.SetActive (false);
-				primaryCollider.gameObject.SetActive (true);
 			}
 		}
 
@@ -374,27 +421,23 @@ namespace druggedcode.engine
 		#if UNITY_EDITOR
 		void OnDrawGizmos ()
 		{
-			if (Application.isPlaying == false)
-				return;
+			if (Application.isPlaying == false) return;
 
-			if (State.IsGrounded)
-				Gizmos.color = Color.green;
-			else
-				Gizmos.color = Color.grey;
+			if (State.IsGrounded) Gizmos.color = Color.green;
+			else Gizmos.color = Color.grey;
 
-			Gizmos.DrawWireCube (transform.position, new Vector3 (0.25f, 0.25f, 0.25f));
+			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginCenter), 0.05f);
+			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginBack), 0.05f);
+			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginForward), 0.05f);
 
-			Gizmos.DrawWireSphere (transform.TransformPoint (mCastOriginCenter), 0.05f);
-			Gizmos.DrawWireSphere (transform.TransformPoint (mCastOriginBack), 0.05f);
-			Gizmos.DrawWireSphere (transform.TransformPoint (mCastOriginForward), 0.05f);
-
-			Gizmos.DrawLine (transform.TransformPoint (mCastOriginCenter), transform.TransformPoint (mCastOriginCenter + new Vector3 (0, -0.15f, 0)));
-			Gizmos.DrawLine (transform.TransformPoint (mCastOriginBack), transform.TransformPoint (mCastOriginBack + new Vector3 (0, -0.15f, 0)));
-			Gizmos.DrawLine (transform.TransformPoint (mCastOriginForward), transform.TransformPoint (mCastOriginForward + new Vector3 (0, -0.15f, 0)));
+			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginCenter), mTr.TransformPoint (mCastOriginCenter + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
+			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginBack), mTr.TransformPoint (mCastOriginBack + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
+			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginForward), mTr.TransformPoint (mCastOriginForward + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
 		}
 		#endif
 	}
 
+	#region ControllerState
 	public class NewControllerState
 	{
 		public float SlopeAngle { get; set; }
@@ -415,8 +458,9 @@ namespace druggedcode.engine
 
 		GameObject mStandingOn;
 
-		public GameObject StandingOn {
-			get{ return mStandingOn; }
+		public GameObject StandingOn
+		{
+			get { return mStandingOn; }
 			set {
 				if (mStandingOn == value) return;
 
@@ -426,6 +470,7 @@ namespace druggedcode.engine
 				{
 					IsGrounded = false;
 					PlatformVelocity = Vector2.zero;
+					StandingPlatform = null;
 				}
 				else
 				{
@@ -434,10 +479,22 @@ namespace druggedcode.engine
 					if (WasColldingBelowLastFrame == false) JustGotGrounded = true;
 
 					StandingPlatform = mStandingOn.GetComponent<Platform> ();
-					if (StandingPlatform == null) PlatformVelocity = Vector2.zero;
-					else PlatformVelocity = StandingPlatform.velocity;
+
 				}
 			}
+		}
+
+		public void UpdatePlatformVelocity()
+		{
+			if (StandingPlatform == null) PlatformVelocity = Vector2.zero;
+			else PlatformVelocity = StandingPlatform.velocity;
+		}
+
+		public void ClearPlatform()
+		{
+			StandingOn = null;
+			SlopeAngle = 0f;
+			JustGotGrounded = false;
 		}
 
 		public void SaveLastStateAndReset ()
@@ -449,5 +506,6 @@ namespace druggedcode.engine
 			JustGotGrounded = false;
 		}
 	}
+	#endregion
 }
 

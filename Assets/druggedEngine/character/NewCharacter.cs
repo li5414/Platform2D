@@ -36,6 +36,9 @@ namespace druggedcode.engine
 
 		public Transform graphic;
 
+		public float idleFriction = 20;
+		public float movingFriction = 0;
+
 		[Header ("Bone")]
 		[SpineBone (dataField: "skeletonAnimation")]
 		public string footEffectBone;
@@ -60,16 +63,14 @@ namespace druggedcode.engine
 		public string jumpAnim;
 		[SpineAnimation]
 		public string fallAnim;
-		public float jumpSpeed = 3f;
-		public float airJumpSpeed = 2f;
 		public int jumpMax = 3;
 
         //----------------------------------------------------------------------------------------------------------
 		// input
 		//----------------------------------------------------------------------------------------------------------
 		public Vector2 axis{ get;set; }
+		public bool isJumpPressed{ get;set; }
 		public bool isRun { get; set; }
-
 
 		//GET,SET
 		public CharacterState State { get; protected set; }
@@ -306,10 +307,9 @@ namespace druggedcode.engine
 
 		protected void Move ()
 		{
-			float speed = CurrentSpeed * Mathf.Sign( axis.x );
-
+			float speed = CurrentSpeed * axis.x;
 			Controller.Axis = axis;
-			Controller.SetSpeed( speed );
+			Controller.TargetVX = speed;
 		}
 		#endregion
 
@@ -381,8 +381,9 @@ namespace druggedcode.engine
 
 			PlayAnimation (idleAnim);
 			CurrentSpeed = 0f;
+			Controller.SetFriction( idleFriction );
 
-//			AddTransition (TransitionGround_Fall);
+			AddTransition (TransitionGround_Fall);
 			AddTransition (TransitionIdle_Move);
 		}
 
@@ -392,8 +393,9 @@ namespace druggedcode.engine
 
 			PlayAnimation (walkAnim);
 			CurrentSpeed = WalkSpeed;
+			Controller.SetFriction( movingFriction );
 
-			//AddTransition (TransitionGround_Fall);
+			AddTransition (TransitionGround_Fall);
 			AddTransition (TransitionWalk_IdleOrRun);
 		}
 
@@ -403,8 +405,9 @@ namespace druggedcode.engine
 
 			PlayAnimation (runAnim);
 			CurrentSpeed = RunSpeed;
+			Controller.SetFriction( movingFriction );
 
-			//AddTransition (TransitionGround_Fall);
+			AddTransition (TransitionGround_Fall);
 			AddTransition (TransitionRun_IdleOrWalk);
 		}
 
@@ -417,24 +420,32 @@ namespace druggedcode.engine
 			if (useJumpCount) JumpCount++;
 			PlayAnimation (fallAnim);
 
-			mStateLoop += Move;
-
 			AddTransition (TransitionAir_Idle);
 		}
 
 		#endregion
 
 		#region Action
+
+		void CheckJumpCancle()
+		{
+			if( isJumpPressed == false )
+			{
+				float vy = Controller.vy;
+				if( vy > 0 ) Controller.vy = Mathf.MoveTowards( vy, 0f, Time.deltaTime * 50f );
+			}
+		}
+
 		virtual public void DoJump ()
 		{
 			if (mCanJump == false) return;
 			if (JumpCount >= jumpMax) return;
 
-			print("jump");
-
 			SetState (CharacterState.JUMP);
 
 			SetRestrict( true, true,true,true,true, false );
+
+			mStateLoop += CheckJumpCancle;
 
 			bool wallJump = false;
 			float jumpPower = 0f;
@@ -457,25 +468,17 @@ namespace druggedcode.engine
 				}
 
 				PlayAnimation (jumpAnim);
-
-				jumpPower = jumpSpeed;
-				//jumpPower = Mathf.Sqrt (2f * JumpHeight * Mathf.Abs (Controller.Gravity));
 				//jumpEffect = jumpEffectPrefab;
 			}
 			//airJump
 			else
 			{
 				PlayAnimation (jumpAnim);
-
-				jumpPower = airJumpSpeed;
-				//jumpPower = Mathf.Sqrt (2f * JumpHeightOnAir * Mathf.Abs (Controller.Gravity));
 				//jumpEffect = airJumpEffectPrefab;
 			}
 
 			CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
-			Controller.Vy = jumpPower + Controller.State.PlatformVelocity.y;
-
-			print( "jumpPower: "+ jumpPower + ", vy : " + Controller.Vy );
+			Controller.Jump();
 
 			mJumpStartTime = Time.time;
 			JumpCount++;
@@ -532,6 +535,14 @@ namespace druggedcode.engine
 			return false;
 		}
 
+		protected bool TransitionGround_Fall ()
+		{
+			if (Controller.State.IsGrounded ) return false;
+
+			Fall();
+			return true;
+		}
+
 		protected bool TransitionAir_Idle ()
 		{
 			if (Controller.State.IsGrounded == false) return false;
@@ -541,8 +552,8 @@ namespace druggedcode.engine
 
 		protected bool TransitionJump_Fall ()
 		{
-			if (Controller.Vy > 0) return false;
-			Fall (false);
+			if (Controller.vy > 0) return false;
+			Fall(false);
 			return true;
 		}
 		#endregion

@@ -134,9 +134,13 @@ public class SkeletonGhost : MonoBehaviour {
 	}
 
 	void OnDestroy () {
-		for (int i = 0; i < maximumGhosts; i++) {
-			if (pool[i] != null)
-				pool[i].Cleanup();
+		var count = pool == null ? 0 : pool.Length;
+		if( pool != null )
+		{
+			for (int i = 0; i < count; i++) {
+				if (pool[i] != null)
+					pool[i].Cleanup();
+			}
 		}
 
 		foreach (var mat in materialTable.Values)

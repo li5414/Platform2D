@@ -9,8 +9,9 @@ namespace druggedcode.engine
     {
         [Range(0f, 1f)]
 		public float friction = 1f;
+		public Vector2 treadmill;
 
-		public bool oneway;
+		public bool oneway{get;private set;}
         
         [Header("Sound")]
         public AudioClip footStep;
@@ -80,11 +81,11 @@ namespace druggedcode.engine
             {
                 if (mPathFollow == null)
                 {
-                    return Vector2.zero;
+					return Vector2.zero + treadmill;
                 }
                 else
                 {
-                    return mPathFollow.velocity;
+					return mPathFollow.velocity + treadmill;
                 }
             }
         }

@@ -63,12 +63,9 @@ public class GameManager : MonoBehaviour
 		UI.Init();
 		Config.Init();
 
-		yield break;
-
 		mCurrentScene = SceneManager.GetActiveScene();
 
 		print("[GM] Start At: " + mCurrentScene.name );
-     
 
 		if( mCurrentScene.name == Config.SC_TITLE )
 		{
@@ -111,6 +108,16 @@ public class GameManager : MonoBehaviour
 		yield return StartCoroutine( LoginRoutine() );
 
 		ALocation loc = FindLocationInCurrentScene();
+
+		//test new chara
+		gameCamera.SetPosition( loc.defaultCheckPoint.transform.position );
+		gameCamera.AddTransform( GameObject.Find("NewChara").transform );
+		gameCamera.Run();
+		//test new chara end;
+
+		yield return UI.FadeIn();
+		yield break;
+
 
 		if( loc == null )
 		{

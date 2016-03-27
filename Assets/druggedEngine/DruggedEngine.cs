@@ -26,7 +26,8 @@ public class DruggedEngine : MonoBehaviour
 
 	public static int LAYER_ONEWAY;
 
-	public static float Gravity;
+	public static float Gravity = -9.81f * 2f;
+//	public static float Gravity = 0f;
     
 	//----------------------------------------------------------------------------------------------
 	// instance
@@ -44,6 +45,8 @@ public class DruggedEngine : MonoBehaviour
 
 	void Awake ()
 	{
+		Physics2D.gravity = new Vector2(0f, Gravity );
+
 		MASK_PLAYER = player;
 		MASK_ENEMY = enemy;
 		MASK_TRIGGER_AT_PLAYER = triggerAtPlayer;
@@ -57,7 +60,5 @@ public class DruggedEngine : MonoBehaviour
 		MASK_EXCEPT_ONEWAY_GROUND = MASK_ENVIRONMENT + MASK_PLATFORM;
 
 		LAYER_ONEWAY = LayerUtil.GetLayerIdFromLayerMask( MASK_ONEWAY );
-
-		Gravity = -30f;///70
 	}
 }

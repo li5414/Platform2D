@@ -16,10 +16,10 @@ namespace druggedcode
 		public float Speed = 1;
 		public float MaxDistanceToGoal = .1f;
 		public bool initOnFirstPath;
+		public Vector2 velocity;
 
 		public Transform[] paths;
 
-		public Vector2 velocity{ get; private set; }
 
 		public Vector2 deltaVector{ get; private set; }
 

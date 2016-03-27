@@ -16,7 +16,9 @@ namespace druggedcode
             LayerMask mask,
             Color color )
         {
-            if( Application.isEditor ) Debug.DrawRay( rayOriginPoint, rayDirection*rayDistance, color );
+			#if UNITY_EDITOR
+			if( Application.isPlaying ) Debug.DrawRay( rayOriginPoint, rayDirection*rayDistance, color );
+			#endif
 
             return Physics2D.Raycast(rayOriginPoint,rayDirection,rayDistance,mask);
         }

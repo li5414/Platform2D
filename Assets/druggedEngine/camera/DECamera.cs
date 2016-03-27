@@ -31,6 +31,11 @@ namespace druggedcode.engine
 			mPro.AddCameraTarget( player.transform ).TargetOffset = new Vector2( 0f, 2f );
         }
 
+		public void AddTransform( Transform tg )
+		{
+			mPro.AddCameraTarget( tg ).TargetOffset = new Vector2( 0f, 2f );
+		}
+
         public void SetBound( BoundariesInfo info )
         {
             if( info == null )
@@ -74,9 +79,15 @@ namespace druggedcode.engine
         {
             mPro.Reset( true );
         }
+
+		public void SetPosition( Vector3 pos )
+		{
+			mTr.position = new Vector3( pos.x, pos.y, mTr.position.z );
+		}
         
         public void Reset()
         {
+			mBoundaries.UseNumericBoundaries = false;
 			mPro.RemoveAllCameraTargets();
 			mPro.Reset( false );
             mPro.enabled = false;

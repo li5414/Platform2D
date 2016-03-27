@@ -28,7 +28,7 @@ namespace druggedcode.engine
         static void ColliderGizmoDraw(GameObject go, GizmoType gt)
         {
             return;
-            
+            /*
             if (UseDrawCollider == false && UseDrawOriginRect == false)
             {
                 return;
@@ -59,8 +59,8 @@ namespace druggedcode.engine
                 // {
                 //     DrawCollider(go, Color.yellow);
                 // }
-                    
             }
+            */
         }
 
         static void DrawCollider(GameObject go, Color color)
