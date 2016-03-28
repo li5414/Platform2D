@@ -29,7 +29,7 @@ namespace druggedcode.engine
 				EditorGUILayout.LabelField ("targetVX", mController.TargetVX.ToString());
 
 				EditorGUILayout.LabelField ("Friction", mController.Friction.ToString());
-				EditorGUILayout.ObjectField ("StandingPlatform", mState.StandingOn, typeof(GameObject), true);
+				EditorGUILayout.ObjectField ("StandingPlatform", mState.StandingGameObject, typeof(GameObject), true);
 
 				EditorGUILayout.Space ();
 				DrawDefaultInspector ();

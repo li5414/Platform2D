@@ -37,7 +37,11 @@ namespace druggedcode.engine
 			mPlayer.isRun = Input.GetKey (runKey);
 			mPlayer.isJumpPressed = Input.GetKey( jumpKey );
 
-			if( Input.GetKeyDown (jumpKey)) mPlayer.DoJump();
+			if( Input.GetKeyDown (jumpKey))
+			{
+				if( axisY < -0.1f ) mPlayer.DoJumpBelow();
+				else mPlayer.DoJump();
+			}
 			// if( Input.GetKeyDown (escapeKey)) mPlayer.OrderEscape();
 			// if( Input.GetKeyDown (dashKey)) mPlayer.OrderDash();
 			// if (Input.GetButtonDown( attackKey )) mPlayer.OrderAttack();

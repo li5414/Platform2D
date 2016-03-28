@@ -27,11 +27,6 @@ namespace druggedcode.engine
 
 		[Header ("Raycasting")]
 		public LayerMask characterMask;
-		//characters
-		public LayerMask groundMask;
-		//environmnet,platform
-		public LayerMask passThroughMask;
-		//environmnet
 
 		//[HideInInspector]
 		public LayerMask currentMask;
@@ -299,7 +294,7 @@ namespace druggedcode.engine
 			if (nowStanding == null) nowStanding = GroundCast( Facing == 1 ? mCastOriginBack : mCastOriginForward ); //back
 			if (nowStanding == null) nowStanding = GroundCast( Facing == 1 ? mCastOriginForward : mCastOriginBack ); //forward
 
-			State.StandingOn = nowStanding;
+			State.StandingGameObject = nowStanding;
 
 			if( State.IsGrounded ) State.UpdatePlatformVelocity();
 		}
@@ -317,21 +312,46 @@ namespace druggedcode.engine
 		#endregion
 
 		//아래를 누르고 점프를 눌른 경우 PlatformCast(centerGroundCastOrigin); 를 통해 밟고있는 platform 을 찾아 내 판단했다
-		public void DoPassThrough (Platform platform)
+		public void DoPassThrough()
 		{
-			StartCoroutine (PassthroughRoutine (platform));
+			if( State.IsOnOneway == false ) return;
+
+//			Platform platform
+//			mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
+//			Controller.state.ClearPlatform ();
+//			Controller.PassThroughOneway ();
+
+			StartCoroutine (PassthroughRoutine (0.1f));
 		}
 
-		IEnumerator PassthroughRoutine (Platform platform)
+		public void ExceptOneway( Platform oneway )
 		{
+			print("ExceptOneway");
+			currentMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
+			Physics2D.IgnoreCollision(primaryCollider, oneway.GetCollider(), true);
+		}
+
+		IEnumerator PassthroughRoutine ( float duration )
+		{
+			ExceptOneway( State.StandingPlatform );
 			yield break;
-			// currentMask = passThroughMask;
-			// Physics2D.IgnoreCollision(primaryCollider, platform.collider, true);
-			// passThroughPlatform = platform;
-			// yield return new WaitForSeconds(0.5f);
-			// Physics2D.IgnoreCollision(primaryCollider, platform.collider, false);
-			// currentMask = groundMask;
-			// passThroughPlatform = null;
+
+			yield return new WaitForSeconds( duration );
+
+//			currentMask = DruggedEngine.MASK_ALL_GROUND;
+//			Physics2D.IgnoreCollision(primaryCollider, oneway.GetCollider(), false);
+		}
+
+
+		//TODO:  deal with SetFriction workaround breaking ignore pairs.........
+		void IgnoreCharacterCollisions (bool ignore)
+		{
+			// foreach (GameCharacter gc in All)
+			// 	if (gc == this)
+			// 		continue;
+			// 	else {
+			// 		gc.IgnoreCollision(primaryCollider, ignore);
+			// 	}
 		}
 
 
@@ -406,18 +426,6 @@ namespace druggedcode.engine
 			}
 		}
 
-		//TODO:  deal with SetFriction workaround breaking ignore pairs.........
-		void IgnoreCharacterCollisions (bool ignore)
-		{
-			// foreach (GameCharacter gc in All)
-			// 	if (gc == this)
-			// 		continue;
-			// 	else {
-			// 		gc.IgnoreCollision(primaryCollider, ignore);
-			// 	}
-		}
-
-
 		#if UNITY_EDITOR
 		void OnDrawGizmos ()
 		{
@@ -440,6 +448,8 @@ namespace druggedcode.engine
 	#region ControllerState
 	public class NewControllerState
 	{
+		GameObject mStandingOn;
+
 		public float SlopeAngle { get; set; }
 
 		public bool JustGotGrounded { get; private set; }
@@ -456,9 +466,14 @@ namespace druggedcode.engine
 
 		public Vector2 PlatformVelocity { get; private set; }
 
-		GameObject mStandingOn;
+		public bool IsOnOneway {
+			get {
+				if (IsGrounded == false || StandingPlatform == null ) return false;
+				return StandingPlatform.oneway;
+			}
+		}
 
-		public GameObject StandingOn
+		public GameObject StandingGameObject
 		{
 			get { return mStandingOn; }
 			set {
@@ -492,7 +507,7 @@ namespace druggedcode.engine
 
 		public void ClearPlatform()
 		{
-			StandingOn = null;
+			StandingGameObject = null;
 			SlopeAngle = 0f;
 			JustGotGrounded = false;
 		}

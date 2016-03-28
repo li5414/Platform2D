@@ -495,6 +495,32 @@ namespace druggedcode.engine
 			AddTransition (TransitionJump_Fall);
 		}
 
+		virtual public void DoJumpBelow ()
+		{
+			if (mCanJump == false) return;
+
+			if (Controller.State.IsOnOneway )
+			{
+				PassOneway ();
+				return;
+			}
+			else if (State == CharacterState.LADDER)
+			{
+				Fall ();
+				return;
+			}
+			else
+			{
+				DoJump ();
+			}
+		}
+
+		protected void PassOneway ()
+		{
+			Controller.DoPassThrough();
+			Fall ();
+		}
+
 		#endregion
 
 		#region STATE TRANSITION

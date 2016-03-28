@@ -10,8 +10,6 @@ namespace druggedcode.engine
         [Range(0f, 1f)]
 		public float friction = 1f;
 		public Vector2 treadmill;
-
-		public bool oneway{get;private set;}
         
         [Header("Sound")]
         public AudioClip footStep;
@@ -19,16 +17,8 @@ namespace druggedcode.engine
 		[Header("Prefab")]
 		public GameObject jumpPrefab;
         
-        
-        public bool movable { get; set; }
-        
         protected Collider2D mCollider;
 		protected PathFollow mPathFollow;
-
-        public Collider2D GetCollider()
-        {
-            return mCollider;
-        }
 
         virtual protected void Awake()
         {
@@ -59,6 +49,47 @@ namespace druggedcode.engine
 			if( jumpPrefab == null ) return;
 			((GameObject)Instantiate ( jumpPrefab, pos, Quaternion.identity)).transform.localScale = scale;
 		}
+
+		public Collider2D GetCollider()
+		{
+			return mCollider;
+		}
+
+		void OnTriggerEnter2D( Collider2D other )
+		{
+			print("oneway Enter: " + name + " in " + other.name );
+
+			if( oneway == false ) return;
+			print("1" );
+
+			NewController controller = other.GetComponent< NewController>();
+			if( controller == null ) return;
+			print("2" );
+
+			controller.ExceptOneway( this );
+
+//			if (other.attachedRigidbody.velocity.y > -1)
+//			{
+//				Physics2D.IgnoreCollision(mCollider, other, true);
+//			}
+		}
+
+		void OnTriggerExit2D( Collider2D other )
+		{
+			if( oneway == false ) return;
+
+			print("oneway Exit: " + name + " out " + other.name );
+			StartCoroutine(DelayedCollision(other));
+		}
+
+		IEnumerator DelayedCollision (Collider2D other) {
+			yield return new WaitForSeconds(0.1f);
+			Physics2D.IgnoreCollision( mCollider, other, false);
+		}
+
+
+		public bool oneway{ get; private set; }
+		public bool movable{ get; set; }
 
         public Vector2 translateVector
         {

@@ -2,81 +2,93 @@
 using System.Collections;
 using druggedcode.engine;
 
-public class MovingPlatformAgent : MonoBehaviour
+namespace druggedcode.engine
 {
-
-	public LayerMask platformMask;
-	public float castDistance = 1;
-	public float castRadius = 1;
-	public bool useCircleMode = false;
-
-	public Platform platform;
-
-	Rigidbody2D rb;
-
-	// Use this for initialization
-	void Start ()
+	public class MovingPlatformAgent : MonoBehaviour
 	{
-		rb = GetComponent<Rigidbody2D> ();
-	}
+		public LayerMask platformMask;
+		public float castDistance = 1;
+		public float castRadius = 1;
+		public bool useCircleMode = false;
 
-	void Update ()
-	{
+		public Platform platform;
 
-	}
+		Rigidbody2D mRB;
+		Transform mTr;
 
-
-	void FixedUpdate ()
-	{
-		if (useCircleMode)
-			CircleCheck ();
-		else
-			RayCheck ();
-
-		if (platform != null)
+		// Use this for initialization
+		void Start ()
 		{
-			Vector3 velocity = Vector3.zero;
-			velocity.x = platform.velocity.x;
-			velocity.y = platform.velocity.y;
-
-			if (rb != null)
-				rb.velocity = velocity;
-			else
-				transform.position += velocity * Time.deltaTime;
+			mRB = GetComponent<Rigidbody2D> ();
+			mTr = transform;
 		}
-	}
 
-	void RayCheck ()
-	{
-		RaycastHit2D hit = Physics2D.Raycast (transform.position, new Vector2 (0, -1), castDistance, platformMask);
-		platform = null;
-		if (hit.transform != null)
+		void Update ()
 		{
-			if (!hit.collider.isTrigger)
-				platform = hit.collider.GetComponent<Platform> ();
+
 		}
-	}
 
-	void CircleCheck ()
-	{
-		var colliders = Physics2D.OverlapCircleAll (transform.position, castRadius, platformMask);
 
-		platform = null;
-
-		for (int i = 0; i < colliders.Length; i++)
+		void FixedUpdate ()
 		{
-			var collider = colliders [i];
-			if (collider != null)
+			if (useCircleMode) CircleCheck ();
+			else RayCheck ();
+
+			if (platform != null)
 			{
-				//only care about stuff beneath
-				if (!collider.isTrigger && collider.bounds.center.y < transform.position.y)
-				{
-					platform = collider.GetComponent<Platform> ();
-					break;
-				}
+				Vector3 velocity = Vector3.zero;
+				velocity.x = platform.velocity.x;
+				velocity.y = platform.velocity.y;
 
+				if (mRB != null) mRB.velocity = velocity;
+				else mTr.position += velocity * Time.deltaTime;
 			}
 		}
 
+		void RayCheck ()
+		{
+			RaycastHit2D hit = Physics2D.Raycast (mTr.position, new Vector2 (0, -1), castDistance, platformMask);
+
+			platform = null;
+			if (hit.transform != null)
+			{
+				if ( hit.collider.isTrigger == false ) platform = hit.collider.GetComponent<Platform> ();
+			}
+		}
+
+		void CircleCheck ()
+		{
+			var colliders = Physics2D.OverlapCircleAll (mTr.position, castRadius, platformMask);
+			platform = null;
+
+			for (int i = 0; i < colliders.Length; i++)
+			{
+				var collider = colliders [i];
+				if (collider != null)
+				{
+					if (collider.isTrigger == false && collider.bounds.center.y < mTr.position.y)
+					{
+						platform = collider.GetComponent<Platform> ();
+						break;
+					}
+
+				}
+			}
+		}
+
+		#if UNITY_EDITOR
+		void OnDrawGizmos()
+		{
+			if( useCircleMode )
+			{
+				Gizmos.DrawWireSphere( transform.position, castRadius );
+			}
+			else
+			{
+				Gizmos.DrawLine( transform.position, transform.TransformPoint( Vector2.down * castDistance ));
+			}
+		}
+		#endif
 	}
+
 }
