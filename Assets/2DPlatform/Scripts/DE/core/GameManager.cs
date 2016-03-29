@@ -109,11 +109,11 @@ public class GameManager : MonoBehaviour
 
 		ALocation loc = FindLocationInCurrentScene();
 
-		//test new chara
+//		//test new chara
 		gameCamera.SetPosition( loc.defaultCheckPoint.transform.position );
 		gameCamera.AddTransform( GameObject.Find("NewChara").transform );
 		gameCamera.Run();
-		//test new chara end;
+//		//test new chara end;
 
 		yield return UI.FadeIn();
 		yield break;

@@ -7,26 +7,52 @@ namespace druggedcode.engine
     [ExecuteInEditMode]
     public class Platform : MonoBehaviour
     {
+		[Header("Option")]
         [Range(0f, 1f)]
 		public float friction = 1f;
 		public Vector2 treadmill;
-        
+
         [Header("Sound")]
         public AudioClip footStep;
 
 		[Header("Prefab")]
 		public GameObject jumpPrefab;
-        
-        protected Collider2D mCollider;
+
+		public bool oneway{ get; private set; }
+		public bool movable{ get; set; }
+		public Collider2D platformCollider{ get{ return mCollider; }}
+
 		protected PathFollow mPathFollow;
+		protected Collider2D mCollider;
+		protected Collider2D mOnewayTriggerCollider;
 
         virtual protected void Awake()
         {
-            mCollider = GetComponent<Collider2D>();
-            mPathFollow = GetComponent<PathFollow>();
+			mPathFollow = GetComponent<PathFollow>();
 
-			if( mCollider is EdgeCollider2D ) oneway = true;
-            else oneway = false;
+			Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+			int colliderCount = colliders.Length;
+
+			if( colliderCount == 1 )
+			{
+				mCollider = colliders[0];
+
+				oneway = false;
+			}
+			else if( colliderCount == 2 )
+			{
+				foreach( Collider2D col in colliders )
+				{
+					if( col.isTrigger ) mOnewayTriggerCollider = col;
+					else mCollider = col;
+				}
+
+				oneway = true;
+			}
+			else
+			{
+				Debug.LogError("Platform must have 1 or 2 collider.");
+			}
         }
 
         virtual protected void Start()
@@ -50,35 +76,25 @@ namespace druggedcode.engine
 			((GameObject)Instantiate ( jumpPrefab, pos, Quaternion.identity)).transform.localScale = scale;
 		}
 
-		public Collider2D GetCollider()
-		{
-			return mCollider;
-		}
-
 		void OnTriggerEnter2D( Collider2D other )
 		{
 			print("oneway Enter: " + name + " in " + other.name );
 
 			if( oneway == false ) return;
-			print("1" );
 
-			NewController controller = other.GetComponent< NewController>();
+			NewController controller = other.GetComponentInParent< NewController>();
 			if( controller == null ) return;
-			print("2" );
-
-			controller.ExceptOneway( this );
-
-//			if (other.attachedRigidbody.velocity.y > -1)
-//			{
-//				Physics2D.IgnoreCollision(mCollider, other, true);
-//			}
+			if( controller.vy > -1 )
+			{
+				controller.ExceptOneway( this );
+			}
 		}
 
 		void OnTriggerExit2D( Collider2D other )
 		{
 			if( oneway == false ) return;
 
-			print("oneway Exit: " + name + " out " + other.name );
+			//print("oneway Exit: " + name + " out " + other.name );
 			StartCoroutine(DelayedCollision(other));
 		}
 
@@ -87,9 +103,17 @@ namespace druggedcode.engine
 			Physics2D.IgnoreCollision( mCollider, other, false);
 		}
 
+		#if UNITY_EDITOR
+		void OnDrawGizmos()
+		{
+			if (Application.isPlaying == false) return;
 
-		public bool oneway{ get; private set; }
-		public bool movable{ get; set; }
+			if( mOnewayTriggerCollider != null )
+			{
+				GizmoUtil.DrawCollider( mOnewayTriggerCollider,Color.yellow);
+			}
+		}
+		#endif
 
         public Vector2 translateVector
         {
@@ -121,5 +145,4 @@ namespace druggedcode.engine
             }
         }
     }
-
 }

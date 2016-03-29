@@ -42,7 +42,7 @@ namespace druggedcode.engine
 
             if (_remainTime < 0)
             {
-				mCollider.enabled = false;
+				//mCollider.enabled = false;
                 _characterOn = false;
                 UpdateAnimator();
 
@@ -64,7 +64,7 @@ namespace druggedcode.engine
         public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint )
         {
             gameObject.SetActive(true);
-			mCollider.enabled = true;
+			//mCollider.enabled = true;
         }
 
         void OnCollisionEnter2D(Collision2D coll)

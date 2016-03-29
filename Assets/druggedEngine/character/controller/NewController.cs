@@ -6,8 +6,9 @@ namespace druggedcode.engine
 {
 	public class NewController : MonoBehaviour
 	{
-		const float CAST_GROUND_LENGTH = 0.15f;
-
+		const float CAST_GROUND_LENGTH = 0.1f;
+		const float CAST_GROUND_START_Y_OFFSET = 0.05f;
+		//CAST_GROUND_LENGTH - CAST_GROUND_START_Y_OFFSET 가 실제 position 에서 아래로 쏜 길이가 된다.
 		#region inspector
 		[Header ("References")]
 		public PolygonCollider2D primaryCollider;
@@ -103,16 +104,16 @@ namespace druggedcode.engine
 			Vector3 max = mTr.InverseTransformPoint (b.max);
 
 			mCastOriginBack.x = min.x;
-			mCastOriginBack.y = min.y + 0.1f;
+			mCastOriginBack.y = min.y + CAST_GROUND_START_Y_OFFSET;
 
 			mCastOriginCenter.x = center.x;
-			mCastOriginCenter.y = min.y + 0.1f;
+			mCastOriginCenter.y = min.y + CAST_GROUND_START_Y_OFFSET;
 
 			mCastOriginForward.x = max.x;
-			mCastOriginForward.y = min.y + 0.1f;
+			mCastOriginForward.y = min.y + CAST_GROUND_START_Y_OFFSET;
 
 			wallCastOrigin = center;
-			wallCastDistance = b.extents.x + 0.1f;
+			wallCastDistance = b.extents.x + CAST_GROUND_START_Y_OFFSET;
 		}
 
 		public void SetFacing( int facing )
@@ -327,8 +328,8 @@ namespace druggedcode.engine
 		public void ExceptOneway( Platform oneway )
 		{
 			print("ExceptOneway");
+			Physics2D.IgnoreCollision(primaryCollider, oneway.platformCollider, true);
 			currentMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
-			Physics2D.IgnoreCollision(primaryCollider, oneway.GetCollider(), true);
 		}
 
 		IEnumerator PassthroughRoutine ( float duration )
