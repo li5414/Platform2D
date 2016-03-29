@@ -29,12 +29,20 @@ public class GameManager : MonoBehaviour
 	{
 		if( Instance != null ) return;
         
+     	print("[GM] Initialize");
+         
 		string startSceneName = SceneManager.GetActiveScene().name;
 
 		if( string.IsNullOrEmpty( startSceneName )) return;
 
 		GameManager prefab = Resources.Load<GameManager>("GameManager");
 		GameObject.Instantiate<GameManager>( prefab );
+        
+        DEActor[] actors = GameObject.FindObjectsOfType<DEActor>();
+		foreach( DEActor ac in actors )
+		{
+			if( ac.dts == null ) Destroy( ac.gameObject );
+		}
 	}
 
     void Awake()
@@ -55,7 +63,7 @@ public class GameManager : MonoBehaviour
 		ServerCommunicator.SetParent( transform );
 		User.SetParent( transform );
 		ResourceManager.SetParent( transform);
-//        SoundManager.SetParent(sInstance.transform);
+		SoundManager.SetParent( transform );
     }
 
     IEnumerator Start()
@@ -101,23 +109,13 @@ public class GameManager : MonoBehaviour
 
 	IEnumerator StartedAtLocation()
 	{
-		print("[GM] DevRoute");
+		print("[GM] DevRoute");//Title 을 통한 접근이 아닌 Location Scene으로 바로 접근 한 상태
 
 		yield return UI.FadeOut(0f);
 		yield return StartCoroutine(ServerCommunicator.Instance.LoadDTS());
 		yield return StartCoroutine( LoginRoutine() );
 
 		ALocation loc = FindLocationInCurrentScene();
-
-//		//test new chara
-		gameCamera.SetPosition( loc.defaultCheckPoint.transform.position );
-		gameCamera.AddTransform( GameObject.Find("NewChara").transform );
-		gameCamera.Run();
-//		//test new chara end;
-
-		yield return UI.FadeIn();
-		yield break;
-
 
 		if( loc == null )
 		{
@@ -311,7 +309,7 @@ public class GameManager : MonoBehaviour
 
 		if( player != null )
 		{
-			player.Resume();
+			player.Pause( false );
 		}
     }
 
@@ -320,7 +318,7 @@ public class GameManager : MonoBehaviour
         player.Dead();
     }
 
-	void OnPlayerDead( DECharacter ch )
+	void OnPlayerDead( DEActor ch )
 	{
 		print("catch dead");
 //		gameCamera.Reset();

@@ -27,7 +27,7 @@ namespace druggedcode.engine
 		public Spine.Animation AimAnim;
 		public Spine.Animation ReloadAnim;
 
-		override public void Init( DECharacter owner, Skeleton skeleton )
+		override public void Init( DEActor owner, Skeleton skeleton )
 		{
 			base.Init( owner, skeleton );
 			AimAnim = mData.FindAnimation(aimAnim);

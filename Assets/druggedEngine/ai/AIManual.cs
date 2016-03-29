@@ -5,11 +5,11 @@ namespace druggedcode.engine
 	public class AIManual : AI
     {
 		static bool Controllable;
-        DEPlayer mPlayer;
+        DEPlayerOld mPlayer;
 
         void Awake()
         {
-            mPlayer = GetComponent<DEPlayer>();
+            mPlayer = GetComponent<DEPlayerOld>();
         }
         
         void Update()

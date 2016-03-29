@@ -23,14 +23,14 @@ namespace druggedcode.engine
         public float nextFireTime = 0;
 
 		protected Spine.Animation mSetupAnim;
-		protected DECharacter mOwner;
+		protected DEActor mOwner;
 		protected Skeleton mSkeleton;
 		protected SkeletonData mData;
 
 		/// <summary>
 		/// Init from DECharacter's Start
 		/// </summary>
-		virtual public void Init( DECharacter owner, Skeleton skeleton )
+		virtual public void Init( DEActor owner, Skeleton skeleton )
         {
 			mOwner = owner;
 			mSkeleton = skeleton;

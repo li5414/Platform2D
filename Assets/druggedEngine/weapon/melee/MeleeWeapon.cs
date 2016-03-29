@@ -11,7 +11,7 @@ namespace druggedcode.engine
 
 		Dictionary<string, MeleeData> mHitDataDic;
 
-		override public void Init( DECharacter owner, Skeleton skeleton )
+		override public void Init( DEActor owner, Skeleton skeleton )
 		{
 			base.Init( owner, skeleton );
 

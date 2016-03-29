@@ -33,7 +33,7 @@ namespace druggedcode.engine
         public void OnTriggerEnter2D (Collider2D collider) 
         {
             // 충돌한 객체가 캐릭터가 아니라면 리턴
-            var player = collider.GetComponent<DECharacter>();
+            var player = collider.GetComponent<DEPlayer>();
 
             if (player == null)
                 return;
@@ -46,7 +46,7 @@ namespace druggedcode.engine
             Getted();
         }
 
-        public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint, DECharacter player)
+        public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint, DEPlayer player)
         {
             Create();
         }

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace druggedcode.engine
 {
@@ -53,6 +54,11 @@ namespace druggedcode.engine
 			{
 				Debug.LogError("Platform must have 1 or 2 collider.");
 			}
+
+			if( name == "onewayChild" )
+			{
+				print( "name : " + name + ", count :" + colliderCount + ", oneway : " + oneway );
+			}
         }
 
         virtual protected void Start()
@@ -78,14 +84,14 @@ namespace druggedcode.engine
 
 		void OnTriggerEnter2D( Collider2D other )
 		{
-			print("oneway Enter: " + name + " in " + other.name );
-
 			if( oneway == false ) return;
 
-			NewController controller = other.GetComponentInParent< NewController>();
+			DEController controller = other.GetComponentInParent< DEController>();
 			if( controller == null ) return;
-			if( controller.vy > -1 )
+
+			if( controller.vy > -1f )
 			{
+				print(">  oneway Enter: " + name + " in " + other.name );
 				controller.ExceptOneway( this );
 			}
 		}
@@ -94,13 +100,12 @@ namespace druggedcode.engine
 		{
 			if( oneway == false ) return;
 
-			//print("oneway Exit: " + name + " out " + other.name );
-			StartCoroutine(DelayedCollision(other));
-		}
+			DEController controller = other.GetComponentInParent< DEController>();
+			if( controller == null ) return;
 
-		IEnumerator DelayedCollision (Collider2D other) {
-			yield return new WaitForSeconds(0.1f);
-			Physics2D.IgnoreCollision( mCollider, other, false);
+			print("    <  oneway Exit: " + name + " out " + other.name );
+
+			controller.IncludeOneway( this );
 		}
 
 		#if UNITY_EDITOR

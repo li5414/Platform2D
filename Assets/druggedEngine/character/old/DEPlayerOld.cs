@@ -1,27 +1,54 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using Spine;
 
 namespace druggedcode.engine
 {
-    public class Hitman : DEActor
+    public class DEPlayerOld : DECharacterOld
     {
-        [Header("-- Hitman --")]
-        
-        [Header ("Crounch")]
-		[SpineAnimation]
-		public string crouchAnim;
-		public float CrouchSpeed = 1f;
-        
+        [Header("-- Player --")]
         [Header("WallSlide")]
         [SpineAnimation]
         public string wallSlideAnim;
         public float wallSlideSpeed = -1f;
-        
+
         [Header("ClearAttackCollider")]
         [SpineAnimation]
         public string clearAttackAnim;
-        
-        
+
+        public LocationLinker currentManualLinker { get; set; }
+        public DialogueZone currentDialogueZone { get; set; }
+
+        //--------------------------------------------------------------------
+        // Order
+        //--------------------------------------------------------------------
+
+        public void OrderEscape()
+        {
+            DoEscape();
+        }
+
+        public void OrderDash()
+        {
+            DoDash();
+        }
+
+        public void OrderAttack()
+        {
+            DoAttack();
+        }
+
+        virtual public void OrderJump()
+        {
+            if (verticalAxis < -0.1f) DoJumpBelow();
+            else DoJump();
+        }
+
+        //--------------------------------------------------------------------
+        // Override
+        //--------------------------------------------------------------------
+
         override protected void Idle()
         {
             base.Idle();
@@ -29,7 +56,7 @@ namespace druggedcode.engine
             AddTransition(Transition_Climb);
             AddTransition(TransitionGround_Crouch);
         }
-        
+
         override protected void Walk()
         {
             base.Walk();
@@ -45,16 +72,8 @@ namespace druggedcode.engine
             AddTransition(Transition_Climb);
             AddTransition(TransitionGround_Crouch);
         }
-        
-        override protected void Fall(bool useJumpCount = true)
-        {
-            base.Fall(useJumpCount);
 
-            AddTransition(TransitionAir_WallSLide);
-            AddTransition(Transition_Climb);
-        }
-        
-        void Chrouch()
+        protected void Chrouch()
         {
             SetState(CharacterState.CROUCH);
 
@@ -72,17 +91,24 @@ namespace druggedcode.engine
             AddTransition(TransitionGround_Fall);
             AddTransition(TransitionCrouch_Idle);
         }
-        
-        #region Action
-        override public void DoJump()
+
+        override protected void DoJump()
         {
             base.DoJump();
 
             AddTransition(TransitionAir_WallSLide);
             AddTransition(Transition_Climb);
         }
-        
-        
+
+        override protected void Fall(bool useJumpCount = true)
+        {
+            base.Fall(useJumpCount);
+
+            AddTransition(TransitionAir_WallSLide);
+            AddTransition(Transition_Climb);
+        }
+
+
         protected void LadderClimb()
         {
             SetState(CharacterState.LADDER);
@@ -140,8 +166,7 @@ namespace druggedcode.engine
                 BodyPosition(Vector2.zero);
             };
         }
-        #endregion
-        
+
         protected virtual IEnumerator Dive()
         {
             yield break;
@@ -160,8 +185,14 @@ namespace druggedcode.engine
             //			BehaviorState.Diving=false;
 
         }
-        
-        #region Transition
+
+        protected void LookUp()
+        {
+            //			_character.GravityActive(true);
+            //			_character.SetAnimation("lookup");
+            //_sceneCamera.LookUp();
+        }
+
         bool TransitionAir_WallSLide()
         {
             if (jumpElapsedTime < 0.3f) return false;
@@ -177,8 +208,36 @@ namespace druggedcode.engine
             Fall();
             return true;
         }
-        
-        bool Transition_Climb()
+
+        protected bool TransitionLadder_Idle()
+        {
+            if (Controller.state.IsGrounded || CurrentLadder == null)
+            {
+                Idle();
+                return true;
+            }
+
+            // 캐릭터가 사다리의 정상 바닥보다 y 위치가 올라간 경우 등반을 멈춘다.
+            if (mTr.position.y > CurrentLadder.PlatformY)
+            {
+                Idle();
+                return true;
+            }
+
+            return false;
+        }
+
+        protected bool TransitionCrouch_Idle()
+        {
+            if (verticalAxis >= -0.1f && Controller.IsCollidingHead == false)
+            {
+                Idle();
+                return true;
+            }
+            return false;
+        }
+
+        protected bool Transition_Climb()
         {
             if (CurrentLadder == null) return false;
 
@@ -199,18 +258,8 @@ namespace druggedcode.engine
 
             return false;
         }
-        
-        bool TransitionCrouch_Idle()
-        {
-            if (verticalAxis >= -0.1f && Controller.IsCollidingHead == false)
-            {
-                Idle();
-                return true;
-            }
-            return false;
-        }
-        
-        bool TransitionGround_Crouch()
+
+        protected bool TransitionGround_Crouch()
         {
             if (verticalAxis < -0.1f)
             {
@@ -220,92 +269,5 @@ namespace druggedcode.engine
 
             return false;
         }
-        #endregion
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        //입력하지 않고 계산으로 알수있지 않을까
-        public float downAttackFrameSkip;
-
-        protected void StateLoopLogic()
-        {
-            base.StateUpdate();
-
-            switch (State)
-            {
-                case CharacterState.ATTACK:
-                    //---
-                    /*
-                    //recovering from down attack
-                    if (downAttackRecovery)
-                    {
-                        //time elapsed, jump back to feet using JUMP state
-                        if (downAttackRecoveryTime <= 0)
-                        {
-                            SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-                            velocity.y = jumpSpeed + (platformYVelocity >= 0 ? platformYVelocity : 0);
-                            jumpStartTime = Time.time;
-                            state = ActionState.JUMP;
-                            doJump = false;
-                            jumpPressed = false;
-                        }
-                        //wait for a bit
-                        else
-                        {
-                            downAttackRecoveryTime -= Time.deltaTime;
-                            velocity = Vector2.zero;
-                            if (movingPlatform)
-                                velocity = movingPlatform.Velocity;
-                        }
-                    }
-                    else
-                    {
-                        //Has impacted the ground, advance sub-state and recover
-                        if (OnGround)
-                        {
-                            SoundPalette.PlaySound(jumpSound, 1, 1, transform.position);
-                            downAttackRecoveryTime = 2f;  //hard coded value to add drama to recovery
-                            downAttackRecovery = true;
-
-                            //TODO: use set value
-                            skeletonAnimation.skeleton.Data.FindAnimation(clearAttackAnim).Apply(skeletonAnimation.skeleton, 0, 1, false, null);
-                            skeletonAnimation.state.GetCurrent(0).Time = (downAttackFrameSkip / 30f);
-
-                            //spawn effect
-                            if (downAttackPrefab)
-                                Instantiate(downAttackPrefab, transform.position + new Vector3(0, 0.25f, 0), Quaternion.identity);
-
-                            //adhere to moving platform
-                            if (movingPlatform)
-                                velocity = movingPlatform.Velocity;
-
-                        }
-                        else
-                        {
-                            //TODO:  Watchdog and error case check
-                        }
-                        */
-                    //--
-                    break;
-            }
-        }
     }
 }
-

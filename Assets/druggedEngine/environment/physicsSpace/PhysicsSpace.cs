@@ -11,48 +11,48 @@ namespace druggedcode.engine
         public float RelativeGravity = 0f;
         public float MoveFactor = 1f;
 
-        PhysicInfo physicInfo;
+        PhysicsData physicInfo;
 
         void Awake()
         {
             Collider2D col = GetComponent<Collider2D>();
             col.isTrigger = true;
 
-            physicInfo = new PhysicInfo( -DruggedEngine.Gravity + RelativeGravity, MoveFactor );
+            physicInfo = new PhysicsData( -DruggedEngine.Gravity + RelativeGravity, MoveFactor );
         }
 
         void OnTriggerEnter2D(Collider2D collider)
         {
-            DECharacter character = collider.GetComponent<DECharacter>();
+            DEController controller = collider.GetComponent<DEController>();
 
-            if ( character == null )
+            if ( controller == null )
                 return;
 
-            In( character );
+            In( controller );
 
-            ShowInOutEffect( character.transform.position );
+            ShowInOutEffect( controller.transform.position );
         }
 
         void OnTriggerExit2D(Collider2D collider)
         {
-            DECharacter character = collider.GetComponent<DECharacter>();
+            DEController controller = collider.GetComponent<DEController>();
             
-            if ( character == null )
+            if ( controller == null )
                 return;
 
-            Out( character );
+            Out( controller );
 
-            ShowInOutEffect( character.transform.position );
+            ShowInOutEffect( controller.transform.position );
         }
 
-        virtual protected void In( DECharacter ch )
+        virtual protected void In( DEController controller )
         {
-            ch.UpdatePhysicInfo( physicInfo );
+            controller.SetExternalPhysics( physicInfo );
         }
         
-        virtual protected void Out( DECharacter ch )
+        virtual protected void Out( DEController controller )
         {
-            ch.ResetPhysicInfo();
+            controller.ResetExternalPhysics();
         }
         
         virtual protected void ShowInOutEffect( Vector3 pos )
@@ -64,12 +64,12 @@ namespace druggedcode.engine
         }
     }
     
-    public struct PhysicInfo
+    public struct PhysicsData
     {
         public float Gravity;
         public float MoveFactor;
         
-        public PhysicInfo( float gravity = 0, float moveFactor = 1 )
+        public PhysicsData( float gravity = 0, float moveFactor = 1 )
         {
             this.Gravity = gravity;
             this.MoveFactor = moveFactor;

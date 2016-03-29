@@ -79,6 +79,7 @@ namespace druggedcode.engine
 		#if UNITY_EDITOR
 		void OnDrawGizmos()
 		{
+			Gizmos.color = Color.yellow;
 			if( useCircleMode )
 			{
 				Gizmos.DrawWireSphere( transform.position, castRadius );

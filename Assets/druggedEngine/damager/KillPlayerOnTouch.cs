@@ -19,7 +19,7 @@ namespace druggedcode.engine
 
         public void OnTriggerEnter2D(Collider2D collider)
         {
-            var player = collider.GetComponent<DECharacter>();
+            var player = collider.GetComponent<DEPlayer>();
             if (player == null) return;
 			
 			player.Dead();

@@ -51,7 +51,7 @@ namespace druggedcode.engine
 
         DialogueBox _dialogueBox;
         int mCurrentIndex;
-		DEPlayer mPlayer;
+		DEPlayerOld mPlayer;
 
         GameObject mIndicator;
         Renderer mIndicatorRenderer;
@@ -77,7 +77,7 @@ namespace druggedcode.engine
 
         void OnTriggerEnter2D(Collider2D collider)
         {
-            DEPlayer player = collider.GetComponent<DEPlayer>();
+            DEPlayerOld player = collider.GetComponent<DEPlayerOld>();
             if (player==null) return;
 
             mPlayer = player;
@@ -99,7 +99,7 @@ namespace druggedcode.engine
         {
             if( mPlayer == null ) return;
 
-            DEPlayer exitedPlayer = collider.GetComponent<DEPlayer>();
+            DEPlayerOld exitedPlayer = collider.GetComponent<DEPlayerOld>();
             if ( exitedPlayer == null ) return;
 
             if( type == DialogueType.MANUAL )

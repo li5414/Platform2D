@@ -4,17 +4,17 @@ using System.Collections;
 
 namespace druggedcode.engine
 {
-	[CustomEditor (typeof(DEController))]
+	[CustomEditor (typeof(DEControllerOld))]
 	[CanEditMultipleObjects]
 
 	public class DEControllerEditor : Editor
 	{
-		DEController controller;
+		DEControllerOld controller;
 		DEControllerState state;
 
 		void OnEnable ()
 		{
-			controller = (DEController)target;
+			controller = (DEControllerOld)target;
 			state = controller.state;
 		}
 

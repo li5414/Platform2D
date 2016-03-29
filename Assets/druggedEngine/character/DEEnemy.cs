@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace druggedcode.engine
 {
-	public class DEEnemy : DECharacter
+	public class DEEnemy : DEActor
 	{
 	}
 }

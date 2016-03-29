@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 namespace druggedcode.engine
 {
@@ -8,21 +7,20 @@ namespace druggedcode.engine
         /// 물밖으로 캐릭터가 나올 때 캐릭터에게 전달할 힘
         public float WaterExitForce = 8f;
 
-        override protected void In(DECharacter ch)
+        override protected void In(DEController controller)
         {
-            base.In(ch);
+            base.In(controller);
         }
 
-        override protected void Out(DECharacter ch)
+        override protected void Out(DEController controller)
         {
-            base.Out(ch);
-
-			ch.JumpCount = 1;
-
-            DEController controller = ch.GetComponent< DEController >();
-            if (controller != null)
+            base.Out(controller);
+            
+            controller.vy = Mathf.Abs(WaterExitForce);
+            DEPlayer player = controller.GetComponent<DEPlayer>();
+            if( player != null )
             {
-                controller.vy = Mathf.Abs(WaterExitForce);
+                player.JumpCount = 1;
             }
         }
     }

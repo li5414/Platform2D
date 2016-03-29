@@ -69,7 +69,7 @@ namespace druggedcode.engine
 
         void OnCollisionEnter2D(Collision2D coll)
         {
-            DECharacter controller = coll.gameObject.GetComponent<DECharacter>();
+            DEController controller = coll.gameObject.GetComponent<DEController>();
             if (controller == null)
                 return;
 
@@ -80,7 +80,7 @@ namespace druggedcode.engine
 
         public void OnCollisionExit2D(Collision2D coll)
         {
-            DECharacter controller = coll.gameObject.GetComponent<DECharacter>();
+            DEController controller = coll.gameObject.GetComponent<DEController>();
             if (controller == null)
                 return;
 

@@ -10,10 +10,9 @@ using UnityEditor;
 
 namespace druggedcode.engine
 {
-	public class DECharacter : MonoBehaviour, IDamageable
+	public class DECharacterOld : MonoBehaviour, IDamageable
 	{
 		#region static
-
 		const string ANIM_EVENT_VX = "VX";
 		const string ANIM_EVENT_VY = "VY";
 		const string ANIM_EVENT_WAITATTACK = "WaitAttack";
@@ -25,14 +24,14 @@ namespace druggedcode.engine
 		const string ANIM_EVENT_SOUND = "Sound";
 		const string ANIM_EVENT_EFFECT = "Effect";
 
-		static public List<DECharacter> All = new List<DECharacter> ();
+		static public List<DECharacterOld> All = new List<DECharacterOld> ();
 
-		static private void Register (DECharacter ch)
+		static private void Register (DECharacterOld ch)
 		{
 			if (All.Contains (ch) == false) All.Add (ch);
 		}
 
-		static private void Unregister (DECharacter ch)
+		static private void Unregister (DECharacterOld ch)
 		{
 			if (All.Contains (ch)) All.Remove (ch);
 		}
@@ -131,15 +130,15 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 		// event
 		//----------------------------------------------------------------------------------------------------------
-		public UnityAction<DECharacter> OnUpdateInput;
-		public UnityAction<DECharacter> OnDead;
+		public UnityAction<DECharacterOld> OnUpdateInput;
+		public UnityAction<DECharacterOld> OnDead;
 
 		//----------------------------------------------------------------------------------------------------------
 		// public
 		//----------------------------------------------------------------------------------------------------------
 		public Ladder CurrentLadder { get; set; }
 
-		public DEController Controller { get; private set; }
+		public DEControllerOld Controller { get; private set; }
 
 		public int JumpCount { get; set; }
 
@@ -208,7 +207,7 @@ namespace druggedcode.engine
 		virtual protected void Awake ()
 		{
 			mTr = transform;
-			Controller = GetComponent<DEController> ();
+			Controller = GetComponent<DEControllerOld> ();
 
 			Health = new HealthState (hp);
 
@@ -243,7 +242,7 @@ namespace druggedcode.engine
 
 			foreach (Weapon w in mWeaponList)
 			{
-				w.Init (this, mSkeletonAnimation.skeleton);
+				//w.Init (this, mSkeletonAnimation.skeleton);
 			}
 
 			if (mWeaponList.Count > 0) EquipWeapon (mWeaponList [0]);
@@ -1116,7 +1115,6 @@ namespace druggedcode.engine
 
 			//add rigidbody2d and primaryCollider;
 		}
-
 		#region physics
 
 		//캐릭터의 중력을 활성화 하거나 비활성화한다.
@@ -1139,7 +1137,7 @@ namespace druggedcode.engine
 			}
 		}
 
-		public void UpdatePhysicInfo (PhysicInfo physicInfo)
+		public void UpdatePhysicInfo (PhysicsData physicInfo)
 		{
 			Controller.SetPhysicsSpace (physicInfo);
 		}

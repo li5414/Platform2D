@@ -14,14 +14,14 @@ namespace druggedcode.engine
         public bool GoesRightInitially = true;
 
 
-        private DEController _controller;
+        private DEControllerOld _controller;
         private Vector2 _direction;
         private Vector2 _startPosition;
         private Vector2 _initialDirection;
 
         void Awake()
         {
-            _controller = GetComponent<DEController>();
+            _controller = GetComponent<DEControllerOld>();
             _startPosition = transform.position;
             _direction = GoesRightInitially ? Vector2.right : -Vector2.right;
             _initialDirection = _direction;

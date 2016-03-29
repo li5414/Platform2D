@@ -11,8 +11,6 @@ public class ResourceManager : Singleton<ResourceManager>
 	DTSData<DTSCharacter> mDTSDataCharacter;
 	DTSData<DTSLocation> mDTSDataLocation;
 
-    Dictionary<string,DECharacter> prefabList;
-
     override protected void Awake()
     {
         base.Awake();
@@ -66,23 +64,6 @@ public class ResourceManager : Singleton<ResourceManager>
     public Object Load( string path )
     {
         return Resources.Load( path );
-    }
-
-    public ResourceRequest LoadLocation( DTSLocation dts )
-    {
-        string path = "locations/" + dts.id + "/" + dts.assetName;
-        print("[RM] load path: " + path);
-
-        ResourceRequest req = Resources.LoadAsync<ALocation>(path);
-
-        return req;
-    }
-
-    public ResourceRequest LoadLocation( string path )
-    {
-       ResourceRequest req = Resources.LoadAsync<ALocation>(path);
-       
-       return req;
     }
 
     public void Log( object msg )

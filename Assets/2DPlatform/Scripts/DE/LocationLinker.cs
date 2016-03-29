@@ -33,12 +33,12 @@ namespace druggedcode.engine
 			LayerUtil.ChangeLayer( gameObject, DruggedEngine.MASK_TRIGGER_AT_PLAYER );
 		}
 
-        public void In(DEPlayer player)
+        public void In(DEPlayerOld player)
         {
             GameManager.Instance.MoveLocation(locationID, cpID);
         }
 
-        public void Out(DEPlayer player)
+        public void Out(DEPlayerOld player)
         {
             player.transform.position = transform.position;
         }
@@ -64,7 +64,7 @@ namespace druggedcode.engine
 
         void OnTriggerEnter2D(Collider2D other)
         {
-            DEPlayer player = other.GetComponent<DEPlayer>();
+            DEPlayerOld player = other.GetComponent<DEPlayerOld>();
             if (player == null) return;
 
             switch (type)
@@ -82,7 +82,7 @@ namespace druggedcode.engine
 
         void OnTriggerExit2D(Collider2D other)
         {
-            DEPlayer player = other.GetComponent<DEPlayer>();
+            DEPlayerOld player = other.GetComponent<DEPlayerOld>();
             if (player == null) return;
             switch (type)
             {

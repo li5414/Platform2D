@@ -1,711 +1,545 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 using System.Collections;
-using System.Collections.Generic;
 
 namespace druggedcode.engine
 {
-	[RequireComponent (typeof(Collider2D), typeof(Rigidbody2D))]
 	public class DEController : MonoBehaviour
 	{
-		//----------------------------------------------------------------------------------------------------------
-		// helper 상수들
-		//----------------------------------------------------------------------------------------------------------
-		const float LARGE_VALUE = 500000f;
-		const float SMALL_VALUE = 0.0001f;
-		public const int VERTICAL_RAY_NUM = 3;
-		const float GROUND_RAY_LENGTH = 0.4f;
+		const float CAST_GROUND_LENGTH = 0.1f;
+		const float CAST_GROUND_START_Y_OFFSET = 0.05f;
+		//CAST_GROUND_LENGTH - CAST_GROUND_START_Y_OFFSET 가 실제 position 에서 아래로 쏜 길이가 된다.
+		#region inspector
+		[Header ("References")]
+		public PolygonCollider2D primaryCollider;
 
-		//----------------------------------------------------------------------------------------------------------
-		// Inspector
-		//----------------------------------------------------------------------------------------------------------
+		[Header("Move")]
+		public float accelOnGround = 30f;
+		public float accelOnAir = 10f;
 
+		[Header("Jump")]
+		public float jumpHeight = 3f;
+		public float jumpHeightOnAir = 2f;
 
-		[Header ("Collision")]
-		public BoxCollider2D headChecker;
+		[Header ("Physics")]
+		public float ownGravity = -8;
+		public float defaultFriction = 0.4f;
+		public float defaultBounce = 0;
 
-		[Header ("Parameters")]
-		public float gravityScale = 1;
-		//넘을 수 있는 바닥 높이 비율 ( 충돌 BoxCollider2D 의 크기에 비례 )
-		[Range (0, 1)]
-		public float toleranceHeightRatio = 0.2f;
-		/// 캐릭터가 걸을 수 있는 최고 앵글( degree )
-		[Range (0, 80)]
-		public float maximumSlopeAngle = 30f;
+		[Header ("Raycasting")]
+		public LayerMask characterMask;
 
-		//충돌감지를 위한 레이캐스팅 설정
-		[Header ("RayCasting")]
-		[Range (2, 10)]
-		public int rayHorizontalCount = 3;
-		public Vector2 raySafetyDis = new Vector2(0.1f,0.01f);
+		//[HideInInspector]
+		public LayerMask currentMask;
+		#endregion
 
-		//----------------------------------------------------------------------------------------------------------
-		//get;set;
-		//----------------------------------------------------------------------------------------------------------
-		public DEControllerState state { get; private set; }
-		public Vector2 Velocity { get { return mVelocity; } set { mVelocity = value; }}
-		public float vx { get { return mVelocity.x; } set { mTargetVX = value;}}
-		public float vy { get { return mVelocity.y; } set { mVelocity.y = value; }}
+		#region getter setter
+		public NewControllerState State { get; private set; }
+		public Vector2 Axis {get;set;}
+		public int Facing{get;set;}
+		public float Friction{ get{ return mPhysicMaterial.friction; }}
+		#endregion
 
-		public float Gravity { get { return DruggedEngine.Gravity + _physicSpaceInfo.Gravity; } }
+		public UnityAction OnJustGotGrounded;
 
-		public float PlatformFriction{ get;set;}
-		public Vector2 PlatformVelocity{ get { return Vector2.zero; }}
-
-		//----------------------------------------------------------------------------------------------------------
-		// 속도, 움직임. y가 마이너스인 경우가 낙하상태이다.
-		//----------------------------------------------------------------------------------------------------------
-		public Vector2 mVelocity;
-		float mTargetVX;
-		Vector2 mAddedForce;
-
-		Vector2 mMoveDirection = Vector2.right;
-
-		LayerMask mDefaultPlatformMask;
-		Vector2 mTranslateVector;
-
-		PhysicInfo _physicSpaceInfo;
-
-		float mLockedVY;
-
-		bool mMoveLocked;
-		Coroutine mLockMoveRoutine;
-
-		//----------------------------------------------------------------------------------------------------------
-		// caching components
-		//----------------------------------------------------------------------------------------------------------
+		Rigidbody2D mRb;
 		Transform mTr;
-		BoxCollider2D mCollider;
+		PhysicsMaterial2D mPhysicMaterial;
+		protected Vector2 mPassedVelocity;
 
-		Vector3 mHeadCheckerPos;
-		Vector3 mHeadCheckerExtents = Vector3.zero;
+		Vector3 mCastOriginCenter;
+		Vector3 mCastOriginBack;
+		Vector3 mCastOriginForward;
+		Vector3 wallCastOrigin;
+		float wallCastDistance;
 
-		bool mCheckCollisions;
-
-		Vector2 _colliderDefaultSize;
-		float _toleranceHeight;
-
-		int mHitCount;
-		//충돌 횟수
-		ColliderInfo mColliderBound;
-		RaycastHit2D mHit2D;
-		List<Rigidbody2D> _sideHittedPushableObject;
+		bool doPassthrough;
+		Platform passThroughPlatform;
+		//oneway
+		Platform movingPlatform;
+		//moving
 
 
-		void Awake ()
+		bool airControllLock;
+		float mLockedVY;
+		public float TargetVX{get;set;}
+
+		virtual protected void Awake ()
 		{
-			GetComponent<Rigidbody2D> ().isKinematic = true;
-
-			if (headChecker != null)
-			{
-				mHeadCheckerPos = headChecker.transform.localPosition;
-				mHeadCheckerExtents = headChecker.bounds.extents;
-				headChecker.enabled = false;
-			}
-
-			mCollider = GetComponent<BoxCollider2D> ();
+			mRb = GetComponent<Rigidbody2D> ();
+			mRb.angularDrag = 0f;
+			mRb.drag = 0f;
+			mRb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
 			mTr = transform;
 
-			_colliderDefaultSize = mCollider.size;
-			_toleranceHeight = mCollider.bounds.size.y * toleranceHeightRatio;
+			State = new NewControllerState ();
 
-			_sideHittedPushableObject = new List<Rigidbody2D> ();
-			state = new DEControllerState ();
+			CalculateRayBounds (primaryCollider);
 
-			mCheckCollisions = true;
+			if (primaryCollider.sharedMaterial == null)
+			{
+				mPhysicMaterial = new PhysicsMaterial2D ("ControllerColliderMaterial");
+				SetFriction( defaultFriction );
+				SetBounce( defaultBounce );
+			}
+			else
+			{
+				mPhysicMaterial = Instantiate (primaryCollider.sharedMaterial);
+			}
 
-			ResetPhysicInfo ();
+			primaryCollider.sharedMaterial = mPhysicMaterial;
 		}
 
-		void Start ()
+		virtual protected void Start ()
 		{
-			mDefaultPlatformMask = DruggedEngine.MASK_ALL_GROUND;
-			UpdateBound ();
+			currentMask = DruggedEngine.MASK_ALL_GROUND;
 		}
 
-		//----------------------------------------------------------------------------------------------------------
-		// 속도관련
-		//----------------------------------------------------------------------------------------------------------
+		void CalculateRayBounds (PolygonCollider2D coll)
+		{
+			Bounds b = coll.bounds;
+			Vector3 min = mTr.InverseTransformPoint (b.min);
+			Vector3 center = mTr.InverseTransformPoint (b.center);
+			Vector3 max = mTr.InverseTransformPoint (b.max);
+
+			mCastOriginBack.x = min.x;
+			mCastOriginBack.y = min.y + CAST_GROUND_START_Y_OFFSET;
+
+			mCastOriginCenter.x = center.x;
+			mCastOriginCenter.y = min.y + CAST_GROUND_START_Y_OFFSET;
+
+			mCastOriginForward.x = max.x;
+			mCastOriginForward.y = min.y + CAST_GROUND_START_Y_OFFSET;
+
+			wallCastOrigin = center;
+			wallCastDistance = b.extents.x + CAST_GROUND_START_Y_OFFSET;
+		}
+
+		public void SetFacing( int facing )
+		{
+			facing = facing;
+		}
+
+		#region controll Velocity
+		public Vector2 Velocity
+		{
+			get{ return mRb.velocity; }
+			set{ mRb.velocity = value; }
+		}
+
+		public float vx
+		{
+			get{ return mRb.velocity.x; }
+			set{ mRb.velocity = new Vector2( value, mRb.velocity.y); }
+		}
+
+		public float vy
+		{
+			get{ return mRb.velocity.y; }
+			set{ mRb.velocity = new Vector2( mRb.velocity.x, value); }
+		}
+
+		public void Stop()
+		{
+			mRb.velocity = Vector2.zero;
+			TargetVX = 0f;
+		}
 
 		public void AddForce (Vector2 force)
 		{
-			mAddedForce += force;
+			mRb.velocity = mRb.velocity + force;
 		}
 
 		public void AddForceX( float x )
 		{
-			mAddedForce.x += x;
+			mRb.velocity = new Vector2( mRb.velocity.x + x, mRb.velocity.y );
 		}
 
 		public void AddForceY( float y )
 		{
-			mAddedForce.y += y;
+			mRb.velocity = new Vector2( mRb.velocity.x, mRb.velocity.y + y );
 		}
 
-		public void LockMove (float duration)
+		public void Jump()
 		{
-			if (mLockMoveRoutine != null) StopCoroutine (mLockMoveRoutine);
-			mLockMoveRoutine = StartCoroutine (LockMoveRoutine (duration));
+			float jumpPower = State.IsGrounded ? jumpHeight : jumpHeightOnAir;
+			jumpPower = Mathf.Sqrt (2.05f * jumpPower * Mathf.Abs (DruggedEngine.Gravity + ownGravity ));
+			jumpPower += State.PlatformVelocity.y;
+			vy = jumpPower;
+			if( State.IsGrounded ) State.ClearPlatform();
 		}
+		#endregion
 
-		IEnumerator LockMoveRoutine (float duration)
-		{
-			mMoveLocked = true;
-			yield return new WaitForRealSeconds (duration);
-			mMoveLocked = false;
-		}
-
-		public void Stop ()
-		{
-			mVelocity = Vector2.zero;
-			mTargetVX = 0f;
-		}
-
-		//----------------------------------------------------------------------------------------------------------
-		// core logic. 충돌처리. Update 에서 설정한 값, 상황을  LateUpdate 에서 실제로 처리한다.
-		//----------------------------------------------------------------------------------------------------------
-
-		public void LockVY (float lockvy)
-		{
-			mLockedVY = lockvy;
-		}
-
-		public void UnLockVY ()
-		{
-			mLockedVY = 0f;
-		}
-
-		float mDelta;
 		void FixedUpdate ()
 		{
-			mDelta = Time.deltaTime;
-
-			UpdateBound ();
-
-			Move();
-
-			CheckMoveDirection ();
-
-			state.SaveLastStateAndReset ();
-
 			CheckCollisions ();
-
-			mTr.Translate (mTranslateVector, Space.World);
+			Move();
 		}
 
+		#region Move
 		void Move()
 		{
-			if( state.IsGrounded )
-			{
-				mVelocity.x += ( mTargetVX - mVelocity.x ) * PlatformFriction;
-			}
-			else
-			{
-				mVelocity.x = mTargetVX;
-			}
+			Vector2 currentVelocity = mRb.velocity;
 
-			//y speed
-			if (mLockedVY != 0f)
-			{
-				mVelocity.y = mLockedVY;
-			}
-			else
-			{
-				mVelocity.y += Gravity * gravityScale * mDelta;
-			}
+			MoveX( ref currentVelocity );
+			MoveY( ref currentVelocity );
 
-			mVelocity += mAddedForce;
-
-			if( state.StandingPlatform != null )
-			{
-				mVelocity += state.StandingPlatform.velocity;
-			}
-
-			mTranslateVector = mVelocity * mDelta;
-
-			if( mAddedForce.x != 0f )
-			{
-				mAddedForce.x =  Mathf.MoveTowards( mAddedForce.x, 0f, mDelta * 16f);
-			}
-
-			if( mAddedForce.y != 0f )
-			{
-				mAddedForce.y =  Mathf.MoveTowards( mAddedForce.y, 0f,mDelta * 16f );
-			}
+			mRb.velocity = currentVelocity;
 		}
 
-		void CheckMoveDirection ()
+		void MoveX (ref Vector2 velocity)
 		{
-			if ( mMoveDirection.x == 1 && mVelocity.x < 0)
+			float absAxisX = Mathf.Abs(Axis.x);
+			float currentX = velocity.x;
+			if( State.IsGrounded )
 			{
-				mMoveDirection = new Vector2 (-1, 0);
+				TargetVX += State.PlatformVelocity.x;
+				if( absAxisX > 0.1f )
+				{
+					currentX = Mathf.MoveTowards( currentX, TargetVX, Time.deltaTime * accelOnGround);
+					//if slide > nextVelocity.x = savedXVelocity + platformXVelocity;
+					//if attack >  nextVelocity.x = Mathf.MoveTowards(nextVelocity.x, platformXVelocity, Time.deltaTime * 8);
+				}
+				else
+				{
+					currentX = Mathf.MoveTowards(currentX, TargetVX, Time.deltaTime * accelOnGround);
+				}
+
+//				currentX += State.PlatformVelocity.x;
 			}
-			else if (mMoveDirection.x == -1 && mVelocity.x > 0)
+			else
 			{
-				mMoveDirection = new Vector2 (1, 0);
+				if( airControllLock )
+				{
+					//currentX = Mathf.MoveTowards(currentX, mTargetSpeed, Time.deltaTime * 8);
+				}
+				else
+				{
+					currentX = Mathf.MoveTowards( currentX, TargetVX, Time.deltaTime * accelOnAir );
+				}
+
+			}
+
+			velocity.x = currentX;
+		}
+
+		void MoveY(ref Vector2 velocity)
+		{
+			float currentY = velocity.y;
+
+			if( State.IsGrounded )
+			{
+				currentY += State.PlatformVelocity.y;
+			}
+			else
+			{
+				if( velocity.y > 0 )
+				{
+					currentY += ownGravity * Time.deltaTime;
+				}
+				else
+				{
+					currentY+= ownGravity * Time.deltaTime;
+				}
+
+				if (mLockedVY != 0f) currentY = Mathf.Clamp( currentY, mLockedVY, 0f );
+			}
+
+			velocity.y = currentY;
+		}
+		#endregion
+
+		#region Physics
+		public void SetFriction (float friction )
+		{
+			if( friction != mPhysicMaterial.friction )
+			{
+				mPhysicMaterial.friction = friction;
+				primaryCollider.gameObject.SetActive (false);
+				primaryCollider.gameObject.SetActive (true);
 			}
 		}
 
-		//충돌검사. 충돌 상황에 따라 _translateVector 가 변경 될 수 있다.
+		public void SetBounce( float bounce )
+		{
+			if( bounce != mPhysicMaterial.bounciness )
+			{
+				mPhysicMaterial.bounciness = bounce;
+				primaryCollider.gameObject.SetActive (false);
+				primaryCollider.gameObject.SetActive (true);
+			}
+		}
+        
+        public void SetExternalPhysics( PhysicsData info )
+        {
+            
+        }
+        
+        public void ResetExternalPhysics()
+        {
+            
+        }
+		#endregion
+
+		#region Collision
 		void CheckCollisions ()
 		{
-			if (mCheckCollisions == false) return;
-
-			_sideHittedPushableObject.Clear ();
+			State.SaveLastStateAndReset ();
 
 			CastRaysBelow ();
-			CastRaysSide ();
-			CastRaysAbove ();
 
-			if (Time.deltaTime > 0)	mVelocity = mTranslateVector / Time.deltaTime; //충돌로 인해 변경된 벡터를 바탕으로 속도 재설정.
+			//밀수 있는 것들은 민다.
 
-			if (state.HasCollisions) PushHittedObject (); //밀수 있는 것들은 민다.
-
-			//지상에 막 닿은건지 아닌지를 판단한다.
-			if (state.WasColldingBelowLastFrame == false && state.IsGrounded)
+			if( State.JustGotGrounded )
 			{
-				state.JustGotGrounded = true;
+				if( OnJustGotGrounded != null ) OnJustGotGrounded();
 			}
 		}
 
 		void CastRaysBelow ()
 		{
-			if ( mTranslateVector.y > 0) return;
+			if( State.IsGrounded == false && vy > 0f ) return;
 
-			float rayLength = mColliderBound.hHalf + GROUND_RAY_LENGTH;
-			if( mTranslateVector.y < 0f ) rayLength += Mathf.Abs (mTranslateVector.y);
+			GameObject nowStanding = GroundCast( mCastOriginCenter ); //center
 
-			int rayIndex, rayIndexIncrease;
-			if (mMoveDirection.x == 1)
-			{
-				rayIndex = VERTICAL_RAY_NUM - 1;
-				rayIndexIncrease = -1;
-			}
-			else
-			{
-				rayIndex = 0;
-				rayIndexIncrease = 1;
-			}
+			if (nowStanding == null) nowStanding = GroundCast( Facing == 1 ? mCastOriginBack : mCastOriginForward ); //back
+			if (nowStanding == null) nowStanding = GroundCast( Facing == 1 ? mCastOriginForward : mCastOriginBack ); //forward
 
-			Vector2 verticalRayCastFromLeft = new Vector2 (mColliderBound.xLeft + mTranslateVector.x, mColliderBound.yCenter);
-			Vector2 verticalRayCastToRight = new Vector2 (mColliderBound.xRight + mTranslateVector.x, mColliderBound.yCenter);
+			State.StandingGameObject = nowStanding;
 
-			mHitCount = 0;
-
-			float sumY = 0f;
-			float fowardY = 0;
-
-			//float tolerance = mColliderBound.yBottom + _toleranceHeight;
-
-			RaycastHit2D closestHit = new RaycastHit2D();
-			float closestY = -LARGE_VALUE;
-
-			for (int i = 0; i < VERTICAL_RAY_NUM; i++)
-			{
-				float hitY;
-				Color rayColor = Color.red;
-
-				#if UNITY_EDITOR
-				if( i == 1 ) rayColor = Color.grey;
-				else if( i == 2 ) rayColor = Color.blue;
-				#endif
-
-				Vector2 rayOriginPoint = Vector2.Lerp (verticalRayCastFromLeft, verticalRayCastToRight, (float)rayIndex / (float)(VERTICAL_RAY_NUM - 1));
-
-				if ( mTranslateVector.y > 0f && state.WasColldingBelowLastFrame == false )
-					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, -Vector2.up, rayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, rayColor );
-				else
-					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, -Vector2.up, rayLength, mDefaultPlatformMask, rayColor );
-
-
-				if (mHit2D)
-				{
-					hitY = mHit2D.point.y;
-					if (i == 0) fowardY = hitY;
-
-					if ( hitY > mColliderBound.yBottom &&
-						state.WasColldingBelowLastFrame == false &&
-						mHit2D.collider.gameObject.layer == DruggedEngine.LAYER_ONEWAY )
-					{
-						//print( "hitY: " +hitY + ", yBottom: " + mColliderBound.yBottom );
-						state.IsGroundedInfo [i] = false;
-					}
-					else
-					{
-						++mHitCount;
-						sumY += hitY;
-						//print( "i : " + i + ", hitY : " + hitY + ", lowestY :" + closestY );
-						if (hitY > closestY)
-						{
-							closestHit = mHit2D;
-							closestY = hitY;
-						}
-
-						state.IsGroundedInfo [i] = true;
-					}
-				}
-				else
-				{
-					state.IsGroundedInfo [i] = false;
-				}
-
-				rayIndex += rayIndexIncrease;
-			}
-
-			if (mHitCount == 0) return;
-			if (closestY < mColliderBound.yBottom - raySafetyDis.y + mTranslateVector.y) return;
-
-			//지면에 닿았다
-			state.IsCollidingBelow = true;
-			mTranslateVector.y = 0;
-
-			GameObject standingOn = closestHit.collider.gameObject;
-
-			if( state.StandingOn != standingOn )
-			{
-				Platform standingPlatform = standingOn.GetComponent<Platform>();
-				if( standingPlatform == null ) PlatformFriction = 1f;
-				else PlatformFriction = standingPlatform.friction;
-
-				state.StandingPlatform = standingPlatform;
-			}
-
-			state.StandingOn = standingOn;
-
-
-			state.SlopeAngle = Vector2.Angle (closestHit.normal, Vector2.up);
-
-			if (state.SlopeAngle > 0)
-			{
-				if (fowardY > mTr.position.y && state.SlopeAngle > maximumSlopeAngle)
-				{
-					mTranslateVector.x = 0;
-				}
-				mTr.position = new Vector3 (mTr.position.x, sumY / mHitCount, mTr.position.z);
-			}
-			else
-			{
-				mTr.position = new Vector3 (mTr.position.x, closestY + raySafetyDis.y, mTr.position.z);
-			}
+			if( State.IsGrounded ) State.UpdatePlatformVelocity();
 		}
 
-		void CastRaysSide ()
+		GameObject GroundCast (Vector3 origin )
 		{
-			float horizontalRayLength = mColliderBound.wHalf + raySafetyDis.x + Mathf.Abs (mTranslateVector.x);
+			RaycastHit2D hit = Physics2D.Raycast (mTr.TransformPoint (origin), Vector2.down, CAST_GROUND_LENGTH, currentMask);
 
-			Vector2 horizontalRayCastToTop = new Vector2 (mColliderBound.xCenter, mColliderBound.yTop);
-			Vector2 horizontalRayCastFromBottom = new Vector2 (mColliderBound.xCenter, mColliderBound.yBottom + _toleranceHeight);
+			if (hit.collider == null) return null;
+			if (hit.collider.isTrigger) return null;
 
-			mHitCount = 0;
+			State.SlopeAngle = Vector2.Angle (hit.normal, Vector2.up);
+			return hit.collider.gameObject;
+		}
+		#endregion
 
-			//위에서 아래로 내려가면서 지정한 분할 수 만큼 검사
-			for (int i = 0; i < rayHorizontalCount; i++)
+		//아래를 누르고 점프를 눌른 경우 PlatformCast(centerGroundCastOrigin); 를 통해 밟고있는 platform 을 찾아 내 판단했다
+		public void PassOneway()
+		{
+			if( State.IsOnOneway == false ) return;
+
+//			Platform platform
+//			mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
+//			Controller.state.ClearPlatform ();
+//			Controller.PassThroughOneway ();
+
+//			StartCoroutine (PassthroughRoutine (0.1f));
+			ExceptOneway( State.StandingPlatform );
+		}
+
+		public void ExceptOneway( Platform oneway )
+		{
+			print("ExceptOneway");
+			currentMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
+			Physics2D.IgnoreCollision( primaryCollider, oneway.platformCollider, true);
+		}
+
+		public void IncludeOneway( Platform oneway )
+		{
+			currentMask = DruggedEngine.MASK_ALL_GROUND;
+			Physics2D.IgnoreCollision( primaryCollider, oneway.platformCollider, false );
+		}
+
+		IEnumerator PassthroughRoutine ( float duration )
+		{
+			ExceptOneway( State.StandingPlatform );
+			yield break;
+
+			yield return new WaitForSeconds( duration );
+
+//			currentMask = DruggedEngine.MASK_ALL_GROUND;
+//			Physics2D.IgnoreCollision(primaryCollider, oneway.GetCollider(), false);
+		}
+
+
+		//TODO:  deal with SetFriction workaround breaking ignore pairs.........
+		void IgnoreCharacterCollisions (bool ignore)
+		{
+			// foreach (GameCharacter gc in All)
+			// 	if (gc == this)
+			// 		continue;
+			// 	else {
+			// 		gc.IgnoreCollision(primaryCollider, ignore);
+			// 	}
+		}
+
+
+		//Detect being on top of a characters's head
+		Rigidbody2D OnTopOfCharacter ()
+		{
+			Rigidbody2D character = GetRelevantCharacterCast (mCastOriginCenter, 0.15f);
+			if (character == null)
+				character = GetRelevantCharacterCast (mCastOriginBack, 0.15f);
+			if (character == null)
+				character = GetRelevantCharacterCast (mCastOriginForward, 0.15f);
+
+			return character;
+		}
+
+		Rigidbody2D GetRelevantCharacterCast (Vector3 origin, float dist)
+		{
+			RaycastHit2D[] hits = Physics2D.RaycastAll (transform.TransformPoint (origin), Vector2.down, dist, characterMask);
+			if (hits.Length > 0)
 			{
-				Vector2 rayOriginPoint = Vector2.Lerp (horizontalRayCastToTop, horizontalRayCastFromBottom, (float)i / (float)(rayHorizontalCount - 1));
+				int index = 0;
 
-				if ( state.WasColldingBelowLastFrame && i == rayHorizontalCount - 1)
-					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_ALL_GROUND, Color.red);
-				else
-					mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, mMoveDirection, horizontalRayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.red);
-				
-				if (mHit2D)
+				if (hits [0].rigidbody == mRb)
 				{
-					if (i == rayHorizontalCount - 1 && Vector2.Angle (mHit2D.normal, Vector2.up) < maximumSlopeAngle)
-					{
-						//가장 아래의 레이가 막혔지만 허용 가능한 경사이므로 막혔다고 체크하지 않는다.
-					}
-					else
-					{
-						++mHitCount;
-						break;
-					}
+					if (hits.Length == 1)
+						return null;
+
+					index = 1;
+				}
+				if (hits [index].rigidbody == mRb)
+					return null;
+
+				var hit = hits [index];
+				if (hit.collider != null && hit.collider.attachedRigidbody != null)
+				{
+					return hit.collider.attachedRigidbody;
 				}
 			}
 
-			if (mHitCount == 0) return;
-
-
-			if (mMoveDirection.x == 1)
-			{
-				state.IsCollidingRight = true;
-				mTranslateVector.x = mHit2D.point.x - mColliderBound.xRight - raySafetyDis.x;
-			}
-			else
-			{
-				state.IsCollidingLeft = true;
-				mTranslateVector.x = mHit2D.point.x - mColliderBound.xLeft + raySafetyDis.x;
-			}
-
-			state.CollidingSide = mHit2D.collider;
-
-			if (mHit2D.rigidbody != null) _sideHittedPushableObject.Add (mHit2D.rigidbody);
+			return null;
 		}
 
-		void CastRaysAbove ()
-		{
-			//낙하중일땐 무시
-			if (mTranslateVector.y < 0) return;
-
-			float rayLength = mColliderBound.hHalf + raySafetyDis.y + mTranslateVector.y;
-
-			Vector2 verticalRayCastStart = new Vector2 (mColliderBound.xLeft + mTranslateVector.x, mColliderBound.yCenter);
-			Vector2 verticalRayCastEnd = new Vector2 (mColliderBound.xRight + mTranslateVector.x, mColliderBound.yCenter);
-
-			mHitCount = 0;
-
-			for (int i = 0; i < VERTICAL_RAY_NUM; i++)
-			{
-				Vector2 rayOriginPoint = Vector2.Lerp (verticalRayCastStart, verticalRayCastEnd, (float)i / (float)(VERTICAL_RAY_NUM - 1));
-				mHit2D = PhysicsUtil.DrawRayCast (rayOriginPoint, Vector2.up, rayLength, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND, Color.blue);
-
-				if (mHit2D)
-				{
-					++mHitCount;
-					break;
-				}
-
-			}
-
-			if (mHitCount == 0) return;
-
-			state.IsCollidingAbove = true;
-
-			if (state.IsCollidingBelow == false)
-			{
-				float ty = mHit2D.point.y - mColliderBound.h - raySafetyDis.y;
-				mTr.position = new Vector3 (mTr.position.x, ty, mTr.position.z);
-				mTranslateVector.y = 0;
-			}
-		}
-
-		//----------------------------------------------------------------------------------------------------------
-		// 충돌체 크기 변경
-		//----------------------------------------------------------------------------------------------------------
-		public void UpdateColliderSize (float xScale, float yScale)
-		{
-			UpdateColliderSize (new Vector2 (_colliderDefaultSize.x * xScale, _colliderDefaultSize.y * yScale));
-		}
-
-		public void ResetColliderSize ()
-		{
-			UpdateColliderSize (_colliderDefaultSize);
-		}
-
-		void UpdateColliderSize (Vector2 size)
-		{
-			mCollider.size = size;
-			mCollider.offset = new Vector2 (0f, mCollider.size.y * 0.5f);
-
-			UpdateBound ();
-		}
-
-		//----------------------------------------------------------------------------------------------------------
-		// 현재 BoxCollider의 위치, 사이즈에 대한 정보를 충돌 검사 계산 시 사용하기 용이한 형태의 자료구조로 생성한다.
-		//----------------------------------------------------------------------------------------------------------
-		void UpdateBound ()
-		{
-			Bounds bounds = mCollider.bounds;
-			Vector3 min = bounds.min;
-			Vector3 max = bounds.max;
-			Vector3 center = bounds.center;
-			Vector3 size = bounds.size;
-
-			mColliderBound = new ColliderInfo (
-				min.x, center.x, max.x, size.x,
-				min.y, center.y, max.y, size.y
-			);
-
-			//editor 인 경우 캐릭터의 Collider를 명확히 표시하자.
-			if (Application.isEditor)
-			{
-				Color drawColor = Color.green;
-
-				Debug.DrawLine (new Vector2 (mColliderBound.xLeft, mColliderBound.yBottom), new Vector2 (mColliderBound.xRight, mColliderBound.yBottom), drawColor);
-				Debug.DrawLine (new Vector2 (mColliderBound.xLeft, mColliderBound.yCenter), new Vector2 (mColliderBound.xRight, mColliderBound.yCenter), drawColor);
-				Debug.DrawLine (new Vector2 (mColliderBound.xLeft, mColliderBound.yTop), new Vector2 (mColliderBound.xRight, mColliderBound.yTop), drawColor);
-
-				Debug.DrawLine (new Vector2 (mColliderBound.xLeft, mColliderBound.yBottom), new Vector2 (mColliderBound.xLeft, mColliderBound.yTop), drawColor);
-				Debug.DrawLine (new Vector2 (mColliderBound.xCenter, mColliderBound.yBottom), new Vector2 (mColliderBound.xCenter, mColliderBound.yTop), drawColor);
-				Debug.DrawLine (new Vector2 (mColliderBound.xRight, mColliderBound.yBottom), new Vector2 (mColliderBound.xRight, mColliderBound.yTop), drawColor);
-			}
-		}
-
-		//----------------------------------------------------------------------------------------------------------
-		// 충돌판정을 끄고 켠다.
-		//----------------------------------------------------------------------------------------------------------
-
-		public void PassThroughOneway ()
-		{
-			StartCoroutine (DisableCollisionsWithOneWayPlatforms( 0.1f ));
-		}
-
-		IEnumerator DisableCollisionsWithOneWayPlatforms (float duration)
-		{
-			mDefaultPlatformMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
-			yield return new WaitForSeconds (duration);
-			mDefaultPlatformMask = DruggedEngine.MASK_ALL_GROUND;
-		}
-
-		public void CollisionsOn ()
-		{
-			mCheckCollisions = true;
-		}
-
-		public void CollisionsOff (float duration = 0f)
-		{
-			if (duration == 0f) mCheckCollisions = false;
-			else StartCoroutine (DisableCollisionRoutine (duration));
-		}
-
-		IEnumerator DisableCollisionRoutine (float duration)
-		{
-			mCheckCollisions = false;
-			yield return new WaitForSeconds (duration);
-			mCheckCollisions = true;
-		}
-
-		void PushHittedObject ()
-		{
-			/*
-            //사이드로 충돌했을 때 저장해둔 목록을 가져와 파라메터에서 설정한 값으로 민다.
-			foreach (Rigidbody2D body in _sideHittedPushableObject)
-			{
-				if (body == null || body.isKinematic)
-					continue;
-
-				Vector3 pushDir = new Vector3(_velocity.x, 0, 0);
-				//  body.AddForce ( pushDir.normalized * Physics2DPushForce );
-				body.velocity = new Vector3(_velocity.x, 0, 0) * 2;
-			}
-			*/
-		}
-
-		public void SetPhysicsSpace (PhysicInfo physicInfo)
-		{
-			_physicSpaceInfo = physicInfo;
-		}
-
-		public void ResetPhysicInfo ()
-		{
-			_physicSpaceInfo = new PhysicInfo (0, 1);
-		}
-
-		public bool IsCollidingHead {
+		//check to see if pressing against a wall
+		public bool PressingAgainstWall {
 			get {
-				if (mHeadCheckerExtents != Vector3.zero)
+				float x = mRb.velocity.x;
+				bool usingVelocity = true;
+				if (Mathf.Abs (x) < 0.1f)
 				{
+					x = Axis.x;
+					if (Mathf.Abs (x) == 0f)
+					{
+						return false;
+					} else
+					{
+						usingVelocity = false;
+					}
+				}
 
-					Vector2 pointA = mTr.position + mHeadCheckerPos - mHeadCheckerExtents;
-					Vector2 pointB = mTr.position + mHeadCheckerPos + mHeadCheckerExtents;
-					return Physics2D.OverlapArea (pointA, pointB, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND);
-				}
-				else
+				Vector2 origin = mTr.TransformPoint (wallCastOrigin);
+				Vector2 direction = new Vector2 (x, 0).normalized;
+				float distance = wallCastDistance + (usingVelocity ? x * Time.deltaTime : 0);
+				RaycastHit2D hit = Physics2D.Raycast( origin, direction, distance, currentMask);
+				if (hit.collider != null && !hit.collider.isTrigger)
 				{
-					return state.IsCollidingAbove;
+					if (hit.collider.GetComponent<Platform> ().oneway)
+						return false;
+
+					return true;
 				}
+				return false;
 			}
 		}
 
-		struct ColliderInfo
+		#if UNITY_EDITOR
+		void OnDrawGizmos ()
 		{
-			public float xLeft, xCenter, xRight;
-			public float w, wHalf;
-			public float yBottom, yCenter, yTop;
-			public float h, hHalf;
+			if (Application.isPlaying == false) return;
 
-			public ColliderInfo (
-				float xLeft, float xCenter, float xRight, float w,
-				float yBottom, float yCenter, float yTop, float h)
-			{
-				this.xLeft = xLeft;
-				this.xCenter = xCenter;
-				this.xRight = xRight;
-				this.w = w;
-				this.wHalf = w * 0.5f;
+			if (State.IsGrounded) Gizmos.color = Color.green;
+			else Gizmos.color = Color.grey;
 
-				this.yBottom = yBottom;
-				this.yCenter = yCenter;
-				this.yTop = yTop;
-				this.h = h;
-				this.hHalf = h * 0.5f;
-			}
+			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginCenter), 0.05f);
+			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginBack), 0.05f);
+			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginForward), 0.05f);
 
-			public Vector2 bottom {
-				get { return new Vector2 (xCenter, yBottom); }
-			}
+			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginCenter), mTr.TransformPoint (mCastOriginCenter + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
+			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginBack), mTr.TransformPoint (mCastOriginBack + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
+			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginForward), mTr.TransformPoint (mCastOriginForward + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
 		}
+		#endif
 	}
 
-	public class DEControllerState
+	#region ControllerState
+	public class NewControllerState
 	{
-		// 상하좌우 충돌여부
-		public bool IsCollidingAbove { get; set; }
-		public bool IsCollidingBelow { get; set; }
-		public bool IsCollidingLeft { get; set; }
-		public bool IsCollidingRight { get; set; }
-		public bool HasCollisions { get { return IsCollidingLeft || IsCollidingRight || IsCollidingAbove || IsCollidingBelow; } }
-
-		public bool WasColldingBelowLastFrame { get; set; }
-		public bool WasColldingAdoveLastFrame { get; set; }
-		public bool JustGotGrounded { get; set; }
-
-		public bool IsGrounded { get { return IsCollidingBelow; } }
-		public bool IsGroundedForward { get { return IsGroundedInfo [0]; } }
-		public bool IsGroundedCenter { get { return IsGroundedInfo [1]; } }
-		public bool IsGroundedBack { get { return IsGroundedInfo [2]; } }
-		public List<bool> IsGroundedInfo{ get; private set; }
+		GameObject mStandingOn;
 
 		public float SlopeAngle { get; set; }
 
-		//IsCollidingBelow 와 같이 변해야 한다.
-		public GameObject StandingOn { get; set;}
-		public Platform StandingPlatform{get;set;}
-		public Collider2D CollidingSide { get; set; }
+		public bool JustGotGrounded { get; private set; }
+
+		public bool WasColldingBelowLastFrame { get; private set; }
+
+		public bool WasColldingAdoveLastFrame { get; private set; }
+
+		public bool IsCollidingAbove { get; set; }
+
+		public bool IsGrounded{ get; private set; }
+
+		public Platform StandingPlatform { get; private set; }
+
+		public Vector2 PlatformVelocity { get; private set; }
 
 		public bool IsOnOneway {
 			get {
-				if (IsGrounded == false) return false;
-				else if (StandingOn == null) return false;
-
-				Platform platform = StandingOn.GetComponent<Platform>();
-				if( platform == null ) return false;
-				else return platform.oneway;
+				if (IsGrounded == false || StandingPlatform == null ) return false;
+				return StandingPlatform.oneway;
 			}
 		}
 
-		public DEControllerState ()
+		public GameObject StandingGameObject
 		{
-			IsGroundedInfo = new List<bool> (new bool[DEController.VERTICAL_RAY_NUM]);
+			get { return mStandingOn; }
+			set {
+				if (mStandingOn == value) return;
 
-			Reset ();
+				mStandingOn = value;
+
+				if (mStandingOn == null)
+				{
+					IsGrounded = false;
+					PlatformVelocity = Vector2.zero;
+					StandingPlatform = null;
+				}
+				else
+				{
+					IsGrounded = true;
+
+					if (WasColldingBelowLastFrame == false) JustGotGrounded = true;
+
+					StandingPlatform = mStandingOn.GetComponent<Platform> ();
+
+				}
+			}
 		}
 
-		public void ClearPlatform ()
+		public void UpdatePlatformVelocity()
 		{
-			IsCollidingBelow = false;
-			StandingOn = null;
-			StandingPlatform = null;
+			if (StandingPlatform == null) PlatformVelocity = Vector2.zero;
+			else PlatformVelocity = StandingPlatform.velocity;
+		}
+
+		public void ClearPlatform()
+		{
+			StandingGameObject = null;
 			SlopeAngle = 0f;
-
 			JustGotGrounded = false;
-		}
-
-		public void Reset ()
-		{
-			IsCollidingAbove = IsCollidingLeft = IsCollidingRight = false;
-
-			CollidingSide = null;
-
-			ClearPlatform();
 		}
 
 		public void SaveLastStateAndReset ()
 		{
-			WasColldingBelowLastFrame = IsCollidingBelow;
+			WasColldingBelowLastFrame = IsGrounded;
 			WasColldingAdoveLastFrame = IsCollidingAbove;
 
-			Reset ();
+			SlopeAngle = 0f;
+			JustGotGrounded = false;
 		}
 	}
+	#endregion
 }
 

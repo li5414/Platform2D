@@ -20,7 +20,6 @@ public class ALocation : MonoBehaviour
     TimeSpan runningTime{ get{ return DateTime.UtcNow - mStarted; }}
 
     List<CheckPoint> mCheckPointList;
-    List<DECharacter> mCharacterList;
 
 	List<EnemySpawner> mSpawners;
 
@@ -31,8 +30,6 @@ public class ALocation : MonoBehaviour
 		tag = Config.TAG_LOCATION;
         //mCam = DECamera.Instance;
 
-        mCharacterList = new List<DECharacter>();
-
         mMission = GetComponent<Mission>();
 
         //모든 checkPoint 를 찾는다.
@@ -40,12 +37,6 @@ public class ALocation : MonoBehaviour
         mCheckPointList = FindObjectsOfType<CheckPoint>().OrderBy(t => t.transform.position.x).ToList();
 
 		GetComponentsInChildren<EnemySpawner>( mSpawners );
-
-		DEPlayer[] players = GameObject.FindObjectsOfType<DEPlayer>();
-		foreach( DEPlayer player in players )
-		{
-			if( player.dts == null )Destroy( player.gameObject );
-		}
     }
 
     void Start()
@@ -67,7 +58,7 @@ public class ALocation : MonoBehaviour
         }
     }
 
-	public void SpawnPlayer( DEPlayer player )
+	public void SpawnPlayer( DEActor player )
     {
 		CheckPoint cp = GetCheckPoint( User.Instance.checkPointID );
 

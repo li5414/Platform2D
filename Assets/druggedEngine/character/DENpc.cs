@@ -3,8 +3,7 @@ using System.Collections;
 
 namespace druggedcode.engine
 {
-	public class Gunman : DEPlayerOld {
-
-	}
-
+    public class DENpc : DEActor
+    {
+    }
 }

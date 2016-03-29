@@ -44,7 +44,7 @@ namespace druggedcode.engine
         #if UNITY_EDITOR
         void Update()
         {
-            debugText.text = "character : " + DECharacter.All.Count;
+            debugText.text = "character : " + DEActor.AllActor.Count;
         }
         #endif
 

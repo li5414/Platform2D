@@ -3,13 +3,13 @@ using UnityEditor;
 
 namespace druggedcode.engine
 {
-    [CustomEditor(typeof(DECharacter))]
+    [CustomEditor(typeof(DECharacterOld))]
     public class DECharacterEditor : Editor
     {
-        protected DECharacter mCharacter;
+        protected DECharacterOld mCharacter;
         void OnEnable()
         {
-            mCharacter = (DECharacter) target;
+            mCharacter = (DECharacterOld) target;
         }
         
         #if UNITY_EDITOR

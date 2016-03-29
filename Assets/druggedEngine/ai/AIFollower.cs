@@ -24,7 +24,7 @@ namespace druggedcode.engine
 		//-------------------------------------------------------------------------------------------------------------------------------------
 	
 		private Transform _target;
-		private DECharacter _character;
+		private DEActor _character;
 		private DEController _controller;
 		//  private CharacterJetpack _jetpack;
 		private float _speed;
@@ -33,7 +33,7 @@ namespace druggedcode.engine
 		void Awake()
 		{
 			//행동에 필요한 컴포넌트 저장
-			_character = GetComponentInParent<DECharacter>();
+			_character = GetComponentInParent<DEActor>();
 			_controller = GetComponentInParent<DEController>();
 			//  _jetpack = (CharacterJetpack)GetComponentInParent<CharacterJetpack>();
 	
@@ -94,13 +94,13 @@ namespace druggedcode.engine
 			}
 			
 			//구해진 속력으로 에이전트의 가로축 이동
-			_character.horizontalAxis = _speed * _direction;
+			//_character.horizontalAxis = _speed * _direction;
 			
 			//앞뒤로 무엇인가 충돌 되는 것이 있다면 점프를 하게 한다.
-			if ( _controller.state.IsCollidingLeft || _controller.state.IsCollidingRight )
-			{
+			// if ( _controller.state.IsCollidingLeft || _controller.state.IsCollidingRight )
+			// {
 				//_character.Jump();
-			}
+			// }
 			
 			/*
 			// 만약 제트팩을 장착했다면 수직 거리가 있는 경우 제트팩을 사용한다.

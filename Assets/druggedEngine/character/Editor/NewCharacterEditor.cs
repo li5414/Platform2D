@@ -4,13 +4,13 @@ using System.Collections;
 
 namespace druggedcode.engine
 {
-	[CustomEditor(typeof( NewCharacter ))]
+	[CustomEditor(typeof( DEActor ))]
 	public class NewCharacterEditor : Editor
 	{
-		protected NewCharacter mCharacter;
+		protected DEActor mCharacter;
 		void OnEnable()
 		{
-			mCharacter = (NewCharacter) target;
+			mCharacter = (DEActor) target;
 		}
 
 		#if UNITY_EDITOR

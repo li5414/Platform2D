@@ -88,7 +88,7 @@ namespace druggedcode.engine
 
 		public void OnTriggerEnter2D(Collider2D collider)
 		{
-            DECharacter character = collider.GetComponent<DECharacter>();
+            DEPlayer character = collider.GetComponent<DEPlayer>();
 
 			if ( character == null )
 				return;
