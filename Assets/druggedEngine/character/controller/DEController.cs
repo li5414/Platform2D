@@ -64,6 +64,7 @@ namespace druggedcode.engine
 		float mLockedVY;
 		public float TargetVX{get;set;}
 
+		#region Initialize
 		virtual protected void Awake ()
 		{
 			mRb = GetComponent<Rigidbody2D> ();
@@ -116,10 +117,7 @@ namespace druggedcode.engine
 			wallCastDistance = b.extents.x + CAST_GROUND_START_Y_OFFSET;
 		}
 
-		public void SetFacing( int facing )
-		{
-			facing = facing;
-		}
+		#endregion
 
 		#region controll Velocity
 		public Vector2 Velocity
@@ -159,6 +157,16 @@ namespace druggedcode.engine
 		public void AddForceY( float y )
 		{
 			mRb.velocity = new Vector2( mRb.velocity.x, mRb.velocity.y + y );
+		}
+
+		public void LockVY (float lockvy)
+		{
+			mLockedVY = lockvy;
+		}
+
+		public void UnLockVY ()
+		{
+			mLockedVY = 0f;
 		}
 
 		public void Jump()
@@ -321,25 +329,35 @@ namespace druggedcode.engine
 			State.SlopeAngle = Vector2.Angle (hit.normal, Vector2.up);
 			return hit.collider.gameObject;
 		}
-		#endregion
 
-		//아래를 누르고 점프를 눌른 경우 PlatformCast(centerGroundCastOrigin); 를 통해 밟고있는 platform 을 찾아 내 판단했다
+		public void UpdateColliderSize (float xScale, float yScale)
+		{
+			primaryCollider.transform.localScale = new Vector3(xScale,yScale,1f);
+		}
+
+		public void ResetColliderSize()
+		{
+			UpdateColliderSize (1f,1f);
+		}
+
+		public bool IsCollidingHead
+		{
+			get
+			{
+				return false;
+			}
+		}
+
+
 		public void PassOneway()
 		{
 			if( State.IsOnOneway == false ) return;
 
-//			Platform platform
-//			mTr.position = new Vector2 (mTr.position.x, mTr.position.y - 0.1f);
-//			Controller.state.ClearPlatform ();
-//			Controller.PassThroughOneway ();
-
-//			StartCoroutine (PassthroughRoutine (0.1f));
 			ExceptOneway( State.StandingPlatform );
 		}
 
 		public void ExceptOneway( Platform oneway )
 		{
-			print("ExceptOneway");
 			currentMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
 			Physics2D.IgnoreCollision( primaryCollider, oneway.platformCollider, true);
 		}
@@ -350,18 +368,9 @@ namespace druggedcode.engine
 			Physics2D.IgnoreCollision( primaryCollider, oneway.platformCollider, false );
 		}
 
-		IEnumerator PassthroughRoutine ( float duration )
-		{
-			ExceptOneway( State.StandingPlatform );
-			yield break;
+		#endregion
 
-			yield return new WaitForSeconds( duration );
-
-//			currentMask = DruggedEngine.MASK_ALL_GROUND;
-//			Physics2D.IgnoreCollision(primaryCollider, oneway.GetCollider(), false);
-		}
-
-
+		#region UNUSED
 		//TODO:  deal with SetFriction workaround breaking ignore pairs.........
 		void IgnoreCharacterCollisions (bool ignore)
 		{
@@ -444,6 +453,7 @@ namespace druggedcode.engine
 				return false;
 			}
 		}
+		#endregion
 
 		#if UNITY_EDITOR
 		void OnDrawGizmos ()

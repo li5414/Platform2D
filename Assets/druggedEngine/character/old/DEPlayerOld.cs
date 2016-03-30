@@ -73,7 +73,7 @@ namespace druggedcode.engine
             AddTransition(TransitionGround_Crouch);
         }
 
-        protected void Chrouch()
+        protected void Crouch()
         {
             SetState(CharacterState.CROUCH);
 
@@ -263,7 +263,7 @@ namespace druggedcode.engine
         {
             if (verticalAxis < -0.1f)
             {
-                Chrouch();
+                Crouch();
                 return true;
             }
 

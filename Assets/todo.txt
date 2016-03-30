@@ -10,6 +10,11 @@ oneway 재구현
 무빙플랫폼에서 아래로 향할 때 덜덜 거리는 문제
 무빙플랫폼에 물건 놓기
 
+Controller의 IsCollidingHead.
+Controller의 PressingAgainstWall
+Controller의 SetExternalPhysics, ResetExternalPhysics
+DEActor의 GravityActive
+
 변경된 controller에 맞게 Platform 의 friction 수정
 
 점프다운 공격 프로세스

@@ -19,11 +19,11 @@ namespace druggedcode.engine
         [InputAxis]
         public string attackKey;
 
-        DEActor mPlayer;
+		DEPlayer mPlayer;
 
 		void Start ()
 		{
-			mPlayer = GetComponent<DEActor>();
+			mPlayer = GetComponent<DEPlayer>();
 			mPlayer.OnUpdateInput += OnUpdateInput;
 		}
 

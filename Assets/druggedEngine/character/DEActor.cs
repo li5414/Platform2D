@@ -73,8 +73,8 @@ namespace druggedcode.engine
         // input
         //----------------------------------------------------------------------------------------------------------
         public Vector2 axis { get; set; }
-        public bool isJumpPressed { get; set; }
-        public bool isRun { get; set; }
+		public Vector2 lastAxis { get; set; }
+		public bool isRun { get; set; }
 
         //GET,SET
         public CharacterState State { get; protected set; }
@@ -338,6 +338,8 @@ namespace druggedcode.engine
 
             if (mCanFacing) UpdateFacing();
             if (mCanMove) Move();
+
+			lastAxis = axis;
         }
 
         void FixedUpdate()
@@ -701,72 +703,41 @@ namespace druggedcode.engine
 
         #region Action
 
-        void CheckJumpCancle()
-        {
-            if (isJumpPressed == false)
-            {
-                float vy = Controller.vy;
-                if (vy > 0) Controller.vy = Mathf.MoveTowards(vy, 0f, Time.deltaTime * 50f);
-            }
-        }
-
-        virtual public void DoJump()
+        public void DoJump()
         {
             if (mCanJump == false) return;
             if (JumpCount >= jumpMax) return;
 
-            SetState(CharacterState.JUMP);
-
-            SetRestrict(true, true, true, true, true, false);
-
-            mStateLoop += CheckJumpCancle;
-
-            bool wallJump = false;
-            GameObject jumpEffect = null;
-
-            if (JumpCount == 0)
-            {
-                PlatformSoundPlay();
-                PlatformEffectSpawn();
-
-                if (State == CharacterState.WALLSLIDE)
-                {
-                    //					Controller.vx = mFacing == Facing.LEFT ? 4 : -4;
-                    //					Controller.LockMove (0.5f);
-                    //					wallJump = true;
-                }
-                else if (Controller.State.IsGrounded)
-                {
-
-                }
-
-                PlayAnimation(jumpAnim);
-                //jumpEffect = jumpEffectPrefab;
-            }
-            //airJump
-            else
-            {
-                PlayAnimation(jumpAnim);
-                //jumpEffect = airJumpEffectPrefab;
-            }
-
-            CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
-            Controller.Jump();
-
-            mJumpStartTime = Time.time;
-            JumpCount++;
-
-            if (wallJump)
-            {
-                SpawnAtFoot(jumpEffect, Quaternion.Euler(0, 0, mFacing * 90), new Vector3(mFacing * 1f, 1f, 1f));
-            }
-            else
-            {
-                FXManager.Instance.SpawnFX(jumpEffect, mTr.position, new Vector3(mFacing * 1f, 1f, 1f));
-            }
-
-            AddTransition(TransitionJump_Fall);
+			if (JumpCount == 0) Jump();
+			else AirJump();
         }
+
+		virtual protected void Jump()
+		{
+			SetState(CharacterState.JUMP);
+			SetRestrict(true, true, true, true, true, false);
+
+			PlatformSoundPlay();
+			PlatformEffectSpawn();
+
+			PlayAnimation(jumpAnim);
+			CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
+
+			Controller.Jump();
+			mJumpStartTime = Time.time;
+			JumpCount++;
+
+			AddTransition(TransitionJump_Fall);
+		}
+
+		virtual protected void AirJump()
+		{
+			PlayAnimation(jumpAnim);
+
+			Controller.Jump();
+			mJumpStartTime = Time.time;
+			JumpCount++;
+		}
 
         virtual public void DoJumpBelow()
         {

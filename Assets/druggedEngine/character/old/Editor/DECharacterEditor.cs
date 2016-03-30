@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace druggedcode.engine
 {
-    [CustomEditor(typeof(DECharacterOld))]
+	[CustomEditor(typeof(DE))]
     public class DECharacterEditor : Editor
     {
         protected DECharacterOld mCharacter;

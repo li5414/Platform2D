@@ -3,25 +3,31 @@ using System.Collections;
 
 namespace druggedcode.engine
 {
-    public class Hitman : DEActor
+	public class Hitman : DEPlayer
     {
         [Header("-- Hitman --")]
         
         [Header ("Crounch")]
 		[SpineAnimation]
 		public string crouchAnim;
-		public float CrouchSpeed = 1f;
+		public float crouchSpeed = 1f;
         
         [Header("WallSlide")]
         [SpineAnimation]
         public string wallSlideAnim;
         public float wallSlideSpeed = -1f;
         
+		[Header ("Ladder")]
+		[SpineAnimation]
+		public string ladderAnim;
+		public float ladderSpeed = 2f;
+		public float ladderClimbSpeed = 1f;
+
         [Header("ClearAttackCollider")]
         [SpineAnimation]
         public string clearAttackAnim;
         
-        
+		#region override DEFAULT BEHAVIOUR
         override protected void Idle()
         {
             base.Idle();
@@ -53,93 +59,145 @@ namespace druggedcode.engine
             AddTransition(TransitionAir_WallSLide);
             AddTransition(Transition_Climb);
         }
+		#endregion
         
-        void Chrouch()
+		#region CROUCH
+        void Crouch()
         {
             SetState(CharacterState.CROUCH);
 
+			SetRestrict( true,true,true,true,true,true );
+
             PlayAnimation(crouchAnim);
-            CurrentSpeed = CrouchSpeed;
+            CurrentSpeed = crouchSpeed;
             Controller.UpdateColliderSize(1f, 0.5f);
 
-            mStateLoop += Move;
-            mStateLoop += delegate
-            {
-                if (horizontalAxis == 0f) currentAnimationTimeScale(0f);
-                else currentAnimationTimeScale(1f);
-            };
+			if( -0.1f < axis.x && axis.x < 0.1f )
+			{
+				Controller.SetFriction(idleFriction);
+				currentAnimationTimeScale(0f);
+			}
+			else
+			{
+				Controller.SetFriction(movingFriction);
+			}
 
             AddTransition(TransitionGround_Fall);
             AddTransition(TransitionCrouch_Idle);
+
+			mStateLoop += CrouchLoop;
         }
-        
-        #region Action
-        override public void DoJump()
+
+		void CrouchLoop()
+		{
+			if( lastAxis.x == axis.x ) return;
+
+			if ( -0.1f < axis.x && axis.x < 0.1f )
+			{
+				Controller.SetFriction(idleFriction);
+				currentAnimationTimeScale(0f);
+			}
+			else
+			{
+				Controller.SetFriction(movingFriction);
+				currentAnimationTimeScale(1f);
+			}
+		}
+		#endregion
+
+		#region LADDER CLIMB
+		protected void LadderClimb()
+		{
+			SetState(CharacterState.LADDER);
+
+			SetRestrict( false,false,true,false,false,false );
+
+			PlayAnimation(ladderAnim);
+
+			Controller.Stop();
+			Controller.State.ClearPlatform();
+			GravityActive(false);
+			ResetJump();
+
+			AddTransition(TransitionLadder_Idle);
+
+			mStateLoop += LadderClimbLoop;
+			mStateExit += LadderClimbExit;
+		}
+
+		void LadderClimbLoop()
+		{
+			if (axis.y == 0f) currentAnimationTimeScale(0f);
+			else currentAnimationTimeScale(1f);
+
+			Controller.vy = axis.y * ladderClimbSpeed;
+		}
+
+		void LadderClimbExit()
+		{
+			Controller.Stop();
+			GravityActive(true);
+		}
+		#endregion
+
+		#region WALLSLIDE
+		protected void WallSlide()
+		{
+			SetState(CharacterState.WALLSLIDE);
+
+			SetRestrict( false,false,true,false,false,false );
+
+			PlayAnimation(wallSlideAnim);
+			Controller.Stop();
+			ResetJump();
+
+			Controller.LockVY(wallSlideSpeed);
+			//AnimFilp = true;
+			//BodyPosition(new Vector2(mFacing == Facing.LEFT ? -0.15f : 0.15f, 0f));
+
+			AddTransition(TransitionAir_Idle);
+			AddTransition(TransitionWallSlide_Fall);
+
+			mStateExit += WallSlideExit;
+		}
+
+		void WallSlideExit()
+		{
+			Controller.UnLockVY();
+			//AnimFilp = false;
+			//BodyPosition(Vector2.zero);
+		}
+		#endregion
+
+        #region JUMP
+		override protected void Jump()
         {
-            base.DoJump();
+			base.Jump();
+			if (State == CharacterState.WALLSLIDE)
+			{
+				//					Controller.vx = mFacing == Facing.LEFT ? 4 : -4;
+				//					Controller.LockMove (0.5f);
+				SpawnAtFoot(jumpEffectPrefab, Quaternion.Euler(0, 0, mFacing * 90), new Vector3(mFacing * 1f, 1f, 1f));
+			}
+			else if (Controller.State.IsGrounded)
+			{
+				FXManager.Instance.SpawnFX(jumpEffectPrefab, mTr.position, new Vector3(mFacing * 1f, 1f, 1f));
+			}
 
             AddTransition(TransitionAir_WallSLide);
             AddTransition(Transition_Climb);
-        }
-        
-        
-        protected void LadderClimb()
-        {
-            SetState(CharacterState.LADDER);
 
-            mCanDash = false;
-            mCanJump = true;
-            mCanEscape = false;
-            mCanAttack = false;
-
-            Controller.state.ClearPlatform();
-            PlayAnimation(ladderAnim);
-            GravityActive(false);
-            Stop();
-            ResetJump();
-
-            AddTransition(TransitionLadder_Idle);
-
-            mStateLoop += delegate
-            {
-                if (verticalAxis == 0f) currentAnimationTimeScale(0f);
-                else currentAnimationTimeScale(1f);
-                Controller.vy = verticalAxis * ladderClimbSpeed;
-            };
-
-            mStateExit += delegate
-            {
-                Stop();
-                GravityActive(true);
-            };
+			mStateLoop += JumpLoop;
         }
 
-        protected void WallSlide()
-        {
-            SetState(CharacterState.WALLSLIDE);
-
-            mCanDash = false;
-            mCanJump = true;
-            mCanEscape = false;
-            mCanAttack = false;
-
-            PlayAnimation(wallSlideAnim);
-            AnimFilp = true;
-            Controller.LockVY(wallSlideSpeed);
-            BodyPosition(new Vector2(mFacing == Facing.LEFT ? -0.15f : 0.15f, 0f));
-            Stop();
-            ResetJump();
-
-            AddTransition(TransitionAir_Idle);
-            AddTransition(TransitionWallSlide_Fall);
-
-            mStateExit += delegate
-            {
-                AnimFilp = false;
-                Controller.UnLockVY();
-                BodyPosition(Vector2.zero);
-            };
-        }
+		void JumpLoop()
+		{
+			if (isJumpPressed == false)
+			{
+				float vy = Controller.vy;
+				if (vy > 0) Controller.vy = Mathf.MoveTowards(vy, 0f, Time.deltaTime * 50f);
+			}
+		}
         #endregion
         
         protected virtual IEnumerator Dive()
@@ -162,6 +220,24 @@ namespace druggedcode.engine
         }
         
         #region Transition
+		protected bool TransitionLadder_Idle()
+		{
+			if (Controller.State.IsGrounded || CurrentLadder == null)
+			{
+				Idle();
+				return true;
+			}
+
+			// 캐릭터가 사다리의 정상 바닥보다 y 위치가 올라간 경우 등반을 멈춘다.
+			if (mTr.position.y > CurrentLadder.PlatformY)
+			{
+				Idle();
+				return true;
+			}
+
+			return false;
+		}
+
         bool TransitionAir_WallSLide()
         {
             if (jumpElapsedTime < 0.3f) return false;
@@ -182,15 +258,15 @@ namespace druggedcode.engine
         {
             if (CurrentLadder == null) return false;
 
-            if (verticalAxis > 0.1f && CurrentLadder.PlatformY > mTr.position.y)
+			if (axis.y > 0.1f && CurrentLadder.PlatformY > mTr.position.y)
             {
                 //사다리를 등반하며 점프하자마자 다시 붙는현상을 피하기위해 약간의 버퍼타임을 둔다. 
-                if (Controller.state.IsGrounded == false && jumpElapsedTime < 0.2f) return false;
+                if (Controller.State.IsGrounded == false && jumpElapsedTime < 0.2f) return false;
                 mTr.position = new Vector2(CurrentLadder.transform.position.x, mTr.position.y + 0.1f);
                 LadderClimb();
                 return true;
             }
-            else if (verticalAxis < -0.1f && CurrentLadder.PlatformY <= mTr.position.y)
+			else if (axis.y < -0.1f && CurrentLadder.PlatformY <= mTr.position.y)
             {
                 mTr.position = new Vector2(CurrentLadder.transform.position.x, CurrentLadder.PlatformY - 0.1f);
                 LadderClimb();
@@ -202,7 +278,7 @@ namespace druggedcode.engine
         
         bool TransitionCrouch_Idle()
         {
-            if (verticalAxis >= -0.1f && Controller.IsCollidingHead == false)
+			if (axis.y >= -0.1f && Controller.IsCollidingHead == false)
             {
                 Idle();
                 return true;
@@ -212,9 +288,9 @@ namespace druggedcode.engine
         
         bool TransitionGround_Crouch()
         {
-            if (verticalAxis < -0.1f)
+			if (axis.y < -0.1f)
             {
-                Chrouch();
+                Crouch();
                 return true;
             }
 
@@ -223,27 +299,8 @@ namespace druggedcode.engine
         #endregion
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         //입력하지 않고 계산으로 알수있지 않을까
         public float downAttackFrameSkip;
-
         protected void StateLoopLogic()
         {
             base.StateUpdate();
