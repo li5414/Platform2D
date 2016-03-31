@@ -43,8 +43,9 @@ namespace druggedcode.engine
 				if( axisY < -0.1f ) mPlayer.DoJumpBelow();
 				else mPlayer.DoJump();
 			}
-			// if( Input.GetKeyDown (escapeKey)) mPlayer.OrderEscape();
-			// if( Input.GetKeyDown (dashKey)) mPlayer.OrderDash();
+
+			if( Input.GetKeyDown (escapeKey)) mPlayer.DoEscape();
+			if( Input.GetKeyDown (dashKey)) mPlayer.DoDash();
 			// if (Input.GetButtonDown( attackKey )) mPlayer.OrderAttack();
 		}
 	}

@@ -5,6 +5,7 @@ namespace druggedcode.engine
 {
 	public class Hitman : DEPlayer
     {
+		#region INSPECTOR
         [Header("-- Hitman --")]
         
         [Header ("Crounch")]
@@ -23,10 +24,25 @@ namespace druggedcode.engine
 		public float ladderSpeed = 2f;
 		public float ladderClimbSpeed = 1f;
 
+		[Header ("Dash")]
+		[SpineAnimation]
+		public string dashAnim;
+		public float dashSpeed = 1f;
+		public float dashDuration = 0.1f;
+
+		[Header ("Escape")]
+		[SpineAnimation]
+		public string escapeAnim;
+		public float escapeDuration = 1f;
+
         [Header("ClearAttackCollider")]
         [SpineAnimation]
         public string clearAttackAnim;
-        
+		#endregion
+
+		protected float mDashStartTime;
+		protected float mEscapeStartTime;
+
 		#region override DEFAULT BEHAVIOUR
         override protected void Idle()
         {
@@ -70,7 +86,7 @@ namespace druggedcode.engine
 
             PlayAnimation(crouchAnim);
             CurrentSpeed = crouchSpeed;
-            Controller.UpdateColliderSize(1f, 0.5f);
+            Controller.UpdateColliderSize(1f, 0.65f);
 
 			if( -0.1f < axis.x && axis.x < 0.1f )
 			{
@@ -85,24 +101,28 @@ namespace druggedcode.engine
             AddTransition(TransitionGround_Fall);
             AddTransition(TransitionCrouch_Idle);
 
-			mStateLoop += CrouchLoop;
+			mStateLoop += delegate
+			{
+				if( lastAxis.x == axis.x ) return;
+
+				if ( -0.1f < axis.x && axis.x < 0.1f )
+				{
+					Controller.SetFriction(idleFriction);
+					currentAnimationTimeScale(0f);
+				}
+				else
+				{
+					Controller.SetFriction(movingFriction);
+					currentAnimationTimeScale(1f);
+				}
+			};
+
+			mStateExit += delegate
+			{
+				Controller.ResetColliderSize();
+			};
         }
 
-		void CrouchLoop()
-		{
-			if( lastAxis.x == axis.x ) return;
-
-			if ( -0.1f < axis.x && axis.x < 0.1f )
-			{
-				Controller.SetFriction(idleFriction);
-				currentAnimationTimeScale(0f);
-			}
-			else
-			{
-				Controller.SetFriction(movingFriction);
-				currentAnimationTimeScale(1f);
-			}
-		}
 		#endregion
 
 		#region LADDER CLIMB
@@ -121,22 +141,19 @@ namespace druggedcode.engine
 
 			AddTransition(TransitionLadder_Idle);
 
-			mStateLoop += LadderClimbLoop;
-			mStateExit += LadderClimbExit;
-		}
+			mStateLoop += delegate
+			{
+				if (axis.y == 0f) currentAnimationTimeScale(0f);
+				else currentAnimationTimeScale(1f);
 
-		void LadderClimbLoop()
-		{
-			if (axis.y == 0f) currentAnimationTimeScale(0f);
-			else currentAnimationTimeScale(1f);
+				Controller.vy = axis.y * ladderClimbSpeed;
+			};
 
-			Controller.vy = axis.y * ladderClimbSpeed;
-		}
-
-		void LadderClimbExit()
-		{
-			Controller.Stop();
-			GravityActive(true);
+			mStateExit += delegate
+			{
+				Controller.Stop();
+				GravityActive(true);
+			};
 		}
 		#endregion
 
@@ -158,14 +175,12 @@ namespace druggedcode.engine
 			AddTransition(TransitionAir_Idle);
 			AddTransition(TransitionWallSlide_Fall);
 
-			mStateExit += WallSlideExit;
-		}
-
-		void WallSlideExit()
-		{
-			Controller.UnLockVY();
-			//AnimFilp = false;
-			//BodyPosition(Vector2.zero);
+			mStateExit += delegate
+			{
+				Controller.UnLockVY();
+				//AnimFilp = false;
+				//BodyPosition(Vector2.zero);
+			};
 		}
 		#endregion
 
@@ -187,19 +202,68 @@ namespace druggedcode.engine
             AddTransition(TransitionAir_WallSLide);
             AddTransition(Transition_Climb);
 
-			mStateLoop += JumpLoop;
-        }
-
-		void JumpLoop()
-		{
-			if (isJumpPressed == false)
+			mStateLoop += delegate
 			{
-				float vy = Controller.vy;
-				if (vy > 0) Controller.vy = Mathf.MoveTowards(vy, 0f, Time.deltaTime * 50f);
-			}
-		}
+				if (isJumpPressed == false)
+				{
+					float vy = Controller.vy;
+					if (vy > 0) Controller.vy = Mathf.MoveTowards(vy, 0f, Time.deltaTime * 50f);
+				}
+			};
+        }
         #endregion
-        
+
+		#region DASH
+		override public void DoDash()
+		{
+            if (mCanDash == false) return;
+
+			SetState (CharacterState.DASH);
+
+			SetRestrict( false,false,false,false,false,false );
+
+			mDashStartTime = Time.time;
+
+			PlayAnimation (dashAnim);
+			GravityActive (false);
+			Controller.vx = mFacing * dashSpeed;
+
+			AddTransition (TransitionDash_Idle);
+
+			mStateExit += delegate
+			{
+				GravityActive (true);
+				Controller.Stop();
+			};
+		}
+		#endregion
+
+		#region ESCAPE
+		override public void DoEscape()
+		{
+            if (mCanEscape == false) return;
+
+			SetState (CharacterState.ESCAPE);
+
+			SetRestrict( false,false,true,false,true,false );
+
+			mEscapeStartTime = Time.time;
+			PlayAnimation (escapeAnim);
+			Controller.UpdateColliderSize (1f, 0.5f);
+			Controller.Stop();
+			Controller.vx = mFacing * RunSpeed;
+
+			AddTransition (TransitionGround_Fall);
+			AddTransition (TransitionEscape_Idle);
+
+			mStateExit += delegate
+			{
+				Controller.ResetColliderSize ();
+				GhostMode (false);
+			};
+		}
+		#endregion
+
         protected virtual IEnumerator Dive()
         {
             yield break;
@@ -296,8 +360,27 @@ namespace druggedcode.engine
 
             return false;
         }
+
+		protected bool TransitionDash_Idle ()
+		{
+			float dashElapsedTime = Time.time - mDashStartTime;
+			if (dashElapsedTime < dashDuration) return false;
+
+			Idle ();
+			return true;
+		}
+
+		protected bool TransitionEscape_Idle ()
+		{
+			float slideElapsedTime = Time.time - mEscapeStartTime;
+			if (slideElapsedTime < escapeDuration) return false;
+			if (Controller.IsCollidingHead) return false;
+
+			Idle ();
+			return true;
+		}
+
         #endregion
-        
         
         //입력하지 않고 계산으로 알수있지 않을까
         public float downAttackFrameSkip;

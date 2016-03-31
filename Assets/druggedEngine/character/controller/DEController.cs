@@ -129,13 +129,20 @@ namespace druggedcode.engine
 		public float vx
 		{
 			get{ return mRb.velocity.x; }
-			set{ mRb.velocity = new Vector2( value, mRb.velocity.y); }
+			set
+			{
+				TargetVX = value;
+				mRb.velocity = new Vector2( value, mRb.velocity.y);
+			}
 		}
 
 		public float vy
 		{
 			get{ return mRb.velocity.y; }
-			set{ mRb.velocity = new Vector2( mRb.velocity.x, value); }
+			set
+			{
+				mRb.velocity = new Vector2( mRb.velocity.x, value);
+			}
 		}
 
 		public void Stop()

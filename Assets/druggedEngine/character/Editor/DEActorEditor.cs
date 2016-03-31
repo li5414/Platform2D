@@ -5,7 +5,7 @@ using System.Collections;
 namespace druggedcode.engine
 {
 	[CustomEditor(typeof( DEActor ))]
-	public class NewCharacterEditor : Editor
+	public class DEActorEditor : Editor
 	{
 		protected DEActor mCharacter;
 		void OnEnable()

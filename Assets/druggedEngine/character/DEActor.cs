@@ -100,10 +100,11 @@ namespace druggedcode.engine
         //restriction
         protected bool mCanJump;
         protected bool mCanAttack;
-        protected bool mCanEscape;
-        protected bool mCanDash;
         protected bool mCanMove;
         protected bool mCanFacing;
+
+		protected bool mCanEscape;
+		protected bool mCanDash;
 
         //
         protected float mJumpStartTime;
@@ -767,59 +768,12 @@ namespace druggedcode.engine
 
         virtual public void DoDash()
         {
-            /*
-            if (mCanDash == false) return;
-			SetState (CharacterState.DASH);
-
-			mCanDash = false;
-			mCanJump = false;
-			mCanEscape = false;
-			mCanAttack = true;
-
-			mDashStartTime = Time.time;
-
-			PlayAnimation (dashAnim);
-			GravityActive (false);
-			Stop ();
-			Controller.vx = mFacing == Facing.RIGHT ? dashSpeed : -dashSpeed;
-
-			AddTransition (TransitionDash_Idle);
-
-			mStateExit += delegate
-			{
-				GravityActive (true);
-				Stop ();
-			};
-            */
+			
         }
 
         virtual public void DoEscape()
         {
-            /*
-            if (mCanEscape == false) return;
-
-			SetState (CharacterState.ESCAPE);
-
-			mCanDash = true;
-			mCanJump = true;
-			mCanEscape = false;
-			mCanAttack = false;
-
-			mEscapeStartTime = Time.time;
-			PlayAnimation (escapeAnim);
-			Controller.UpdateColliderSize (1f, 0.5f);
-			Stop ();
-			Controller.vx = mFacing == Facing.RIGHT ? RunSpeed : -RunSpeed;
-
-			AddTransition (TransitionGround_Fall);
-			AddTransition (TransitionEscape_Idle);
-
-			mStateExit += delegate
-			{
-				Controller.ResetColliderSize ();
-				GhostMode (false);
-			};
-            */
+           
         }
         #endregion
 
