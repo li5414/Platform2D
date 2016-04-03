@@ -209,7 +209,9 @@ namespace druggedcode.engine
 			float currentX = velocity.x;
 			if( State.IsGrounded )
 			{
+				if(State.PlatformVelocity.x != 0 )print("t: " +TargetVX );
 				TargetVX += State.PlatformVelocity.x;
+				if(State.PlatformVelocity.x != 0 )print("\tafter t: " +TargetVX );
 				if( absAxisX > 0.1f )
 				{
 					currentX = Mathf.MoveTowards( currentX, TargetVX, Time.deltaTime * accelOnGround);
@@ -235,6 +237,8 @@ namespace druggedcode.engine
 				}
 
 			}
+
+			if(State.PlatformVelocity.x != 0 ) print("current :" + currentX + ", now :" + velocity.x );
 
 			velocity.x = currentX;
 		}

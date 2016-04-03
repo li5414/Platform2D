@@ -589,7 +589,9 @@ namespace druggedcode.engine
 
             PlayAnimation(idleAnim);
             CurrentSpeed = 0f;
-            Controller.SetFriction(idleFriction);
+
+			if( Controller.State.PlatformVelocity == Vector2.zero ) Controller.SetFriction( idleFriction );
+			else Controller.SetFriction( movingFriction );
 
             AddTransition(TransitionGround_Fall);
             AddTransition(TransitionIdle_Move);
