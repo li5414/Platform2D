@@ -249,13 +249,9 @@ namespace druggedcode.engine
 			}
 			else
 			{
-				if( velocity.y > 0 )
+				if( mRb.gravityScale == 1f )
 				{
 					currentY += ownGravity * Time.deltaTime;
-				}
-				else
-				{
-					currentY+= ownGravity * Time.deltaTime;
 				}
 
 				if (mLockedVY != 0f) currentY = Mathf.Clamp( currentY, mLockedVY, 0f );
@@ -295,6 +291,18 @@ namespace druggedcode.engine
         {
             
         }
+
+		public void GravityActive(bool useGravity )
+		{
+			if (useGravity)
+			{
+				mRb.gravityScale = 1f;
+			}
+			else
+			{
+				mRb.gravityScale = 0f;
+			}
+		}
 		#endregion
 
 		#region Collision
@@ -366,13 +374,18 @@ namespace druggedcode.engine
 		public void ExceptOneway( Platform oneway )
 		{
 			currentMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
-			Physics2D.IgnoreCollision( primaryCollider, oneway.platformCollider, true);
+			IgnoreCollision( oneway.platformCollider, true );
 		}
 
 		public void IncludeOneway( Platform oneway )
 		{
 			currentMask = DruggedEngine.MASK_ALL_GROUND;
-			Physics2D.IgnoreCollision( primaryCollider, oneway.platformCollider, false );
+			IgnoreCollision( oneway.platformCollider, false );
+		}
+
+		public void IgnoreCollision( Collider2D col, bool ignore )
+		{
+			Physics2D.IgnoreCollision( primaryCollider, col, ignore );
 		}
 
 		#endregion

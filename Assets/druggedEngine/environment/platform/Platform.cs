@@ -91,7 +91,7 @@ namespace druggedcode.engine
 
 			if( controller.vy > -1f )
 			{
-				print(">  oneway Enter: " + name + " in " + other.name );
+				//print(">  oneway Enter: " + name + " in " + other.name );
 				controller.ExceptOneway( this );
 			}
 		}
@@ -103,7 +103,7 @@ namespace druggedcode.engine
 			DEController controller = other.GetComponentInParent< DEController>();
 			if( controller == null ) return;
 
-			print("    <  oneway Exit: " + name + " out " + other.name );
+			//print("    <  oneway Exit: " + name + " out " + other.name );
 
 			controller.IncludeOneway( this );
 		}

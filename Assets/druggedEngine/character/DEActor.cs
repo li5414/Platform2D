@@ -519,26 +519,6 @@ namespace druggedcode.engine
                 */
             }
         }
-        
-        //짧은 dash 를 하거나 사다리를 올라가는 등 중력의 영향을 껏다 켰다 할 수 있도록 한다.
-        public void GravityActive(bool useGravity )
-        {
-            if (useGravity)
-            {
-                // if (Controller.gravityScale == 0)
-                // {
-                //     Controller.gravityScale = _originalGravity;
-                // }
-            }
-            else
-            {
-                // if (Controller.gravityScale != 0)
-                // {
-                //     _originalGravity = Controller.gravityScale;
-                // }
-                // Controller.gravityScale = 0;
-            }
-        }
         #endregion
 
         #region STATE CONTROLL

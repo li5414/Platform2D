@@ -136,7 +136,9 @@ namespace druggedcode.engine
 
 			Controller.Stop();
 			Controller.State.ClearPlatform();
-			GravityActive(false);
+			Controller.GravityActive(false);
+
+			Controller.ExceptOneway( CurrentLadder.ladderPlatform );
 			ResetJump();
 
 			AddTransition(TransitionLadder_Idle);
@@ -152,7 +154,7 @@ namespace druggedcode.engine
 			mStateExit += delegate
 			{
 				Controller.Stop();
-				GravityActive(true);
+				Controller.GravityActive(true);
 			};
 		}
 		#endregion
@@ -225,14 +227,15 @@ namespace druggedcode.engine
 			mDashStartTime = Time.time;
 
 			PlayAnimation (dashAnim);
-			GravityActive (false);
+			Controller.GravityActive (false);
+			Controller.vy = 0f;
 			Controller.vx = mFacing * dashSpeed;
 
 			AddTransition (TransitionDash_Idle);
 
 			mStateExit += delegate
 			{
-				GravityActive (true);
+				Controller.GravityActive (true);
 				Controller.Stop();
 			};
 		}
@@ -250,7 +253,8 @@ namespace druggedcode.engine
 			mEscapeStartTime = Time.time;
 			PlayAnimation (escapeAnim);
 			Controller.UpdateColliderSize (1f, 0.5f);
-			Controller.Stop();
+			Controller.SetFriction( movingFriction );
+			Controller.vy = 0f;
 			Controller.vx = mFacing * RunSpeed;
 
 			AddTransition (TransitionGround_Fall);
@@ -288,6 +292,7 @@ namespace druggedcode.engine
 		{
 			if (Controller.State.IsGrounded || CurrentLadder == null)
 			{
+				print("tpye1 " + Controller.State.IsGrounded + ", " + CurrentLadder );
 				Idle();
 				return true;
 			}

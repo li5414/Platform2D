@@ -23,6 +23,7 @@ namespace druggedcode.engine
 				EditorGUILayout.LabelField( "CurrentSpeed", mCharacter.CurrentSpeed.ToString());
 				EditorGUILayout.LabelField("hp",mCharacter.Health.ToString());
 
+				EditorGUILayout.Space ();
 				DrawDefaultInspector();
 			}
 			else

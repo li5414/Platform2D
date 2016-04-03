@@ -27,7 +27,7 @@ namespace druggedcode.engine
 
         public void OnTriggerEnter2D(Collider2D collider)
         {
-            DEActor character = collider.GetComponent<DEActor>();
+			DEActor character = collider.GetComponentInParent<DEActor>();
             if (character == null) return;
 
             character.CurrentLadder = this;
@@ -35,7 +35,7 @@ namespace druggedcode.engine
 
         public void OnTriggerExit2D(Collider2D collider)
         {
-            DEActor character = collider.GetComponent<DEActor>();
+			DEActor character = collider.GetComponentInParent<DEActor>();
             if (character == null) return;
             
             character.CurrentLadder = null;

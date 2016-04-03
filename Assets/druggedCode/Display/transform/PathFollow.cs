@@ -132,7 +132,7 @@ namespace druggedcode
 
 			if (points.Count < 2) return;
 
-			Gizmos.color = Color.yellow;
+			Gizmos.color = Color.red;
 
 			for (var i = 1; i < points.Count; i++)
 			{
