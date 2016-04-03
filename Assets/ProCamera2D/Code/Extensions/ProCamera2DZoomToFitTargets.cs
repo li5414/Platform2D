@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DZoomToFitTargets : BasePC2D
+    public class ProCamera2DZoomToFitTargets : BasePC2D, ISizeOverrider
     {
         public static string ExtensionName = "Zoom To Fit";
 
@@ -34,28 +34,21 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             if (ProCamera2D == null)
                 return;
 
-            _initialCamSize = ProCamera2D.GameCameraSize;
+            _initialCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
             _targetCamSize = _initialCamSize;
             _targetCamSizeSmoothed = _targetCamSize;
+
+            ProCamera2D.AddSizeOverrider(this);
         }
 
-        override public void OnReset()
-        {
-            _zoomVelocity = 0;
+        #region ISizeOverrider implementation
 
-            _previousCamSize = _initialCamSize;
-            _targetCamSize = _initialCamSize;
-            _targetCamSizeSmoothed = _initialCamSize;
-        }
-
-        override protected void OnPreMoveUpdate(float deltaTime)
+        public float OverrideSize(float deltaTime, float originalSize)
         {
-            Step();
-        }
+            if (!enabled)
+                return originalSize;
 
-        void Step()
-        {
-            _targetCamSizeSmoothed = ProCamera2D.GameCameraSize;
+            _targetCamSizeSmoothed = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
 
             if (DisableWhenOneTarget && ProCamera2D.CameraTargets.Count <= 1)
                 _targetCamSize = _initialCamSize;
@@ -63,7 +56,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             {
                 if (_previousCamSize == ProCamera2D.ScreenSizeInWorldCoordinates.y)
                 {
-                    _targetCamSize = ProCamera2D.GameCameraSize;
+                    _targetCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
                     _targetCamSizeSmoothed = _targetCamSize;
                     _zoomVelocity = 0f;
                 }
@@ -73,8 +66,21 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
             _previousCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y;
 
-            if (Mathf.Abs(ProCamera2D.GameCameraSize - _targetCamSize) > .0001f)
-                UpdateScreenSize(_targetCamSize < _targetCamSizeSmoothed ? ZoomInSmoothness : ZoomOutSmoothness);
+            return _targetCamSizeSmoothed = Mathf.SmoothDamp(_targetCamSizeSmoothed, _targetCamSize, ref _zoomVelocity, _targetCamSize < _targetCamSizeSmoothed ? ZoomInSmoothness : ZoomOutSmoothness);
+        }
+
+        public int SOOrder { get { return _soOrder; } set { _soOrder = value; } }
+        int _soOrder = 0;
+
+        #endregion
+
+        override public void OnReset()
+        {
+            _zoomVelocity = 0;
+
+            _previousCamSize = _initialCamSize;
+            _targetCamSize = _initialCamSize;
+            _targetCamSizeSmoothed = _initialCamSize;
         }
 
         void UpdateTargetCamSize()
@@ -119,13 +125,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             _minCameraSize = _initialCamSize / MaxZoomInAmount;
             _maxCameraSize = _initialCamSize * MaxZoomOutAmount;
             _targetCamSize = Mathf.Clamp(_targetCamSize, _minCameraSize, _maxCameraSize);
-        }
-
-        protected void UpdateScreenSize(float smoothness)
-        {
-            _targetCamSizeSmoothed = Mathf.SmoothDamp(_targetCamSizeSmoothed, _targetCamSize, ref _zoomVelocity, smoothness);
-
-            ProCamera2D.UpdateScreenSize(_targetCamSizeSmoothed);
         }
 
         #if UNITY_EDITOR

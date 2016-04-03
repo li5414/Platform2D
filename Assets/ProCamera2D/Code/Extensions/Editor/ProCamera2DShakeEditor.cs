@@ -24,6 +24,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             _script = MonoScript.FromMonoBehaviour(proCamera2DShake);
 
             // Get presets from play mode
+            if (_playModePresets == null)
+                _playModePresets = new List<ShakePreset>();
+            
             serializedObject.Update();
             if (!Application.isPlaying && _playModePresets.Count > 0)
             {
@@ -41,6 +44,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     preset.FindPropertyRelative("Randomness").floatValue = _playModePresets[i].Randomness;
                     preset.FindPropertyRelative("InitialAngle").floatValue = _playModePresets[i].InitialAngle;
                     preset.FindPropertyRelative("Rotation").vector3Value = _playModePresets[i].Rotation;
+                    preset.FindPropertyRelative("IgnoreTimeScale").boolValue = _playModePresets[i].IgnoreTimeScale;
                 }
                 _playModePresets.Clear();
             }
@@ -76,6 +80,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     proCamera2DShake.Randomness = element.FindPropertyRelative("Randomness").floatValue;
                     proCamera2DShake.InitialAngle = element.FindPropertyRelative("InitialAngle").floatValue;
                     proCamera2DShake.Rotation = element.FindPropertyRelative("Rotation").vector3Value;
+                    proCamera2DShake.IgnoreTimeScale = element.FindPropertyRelative("IgnoreTimeScale").boolValue;
 
                     proCamera2DShake.UseRandomInitialAngle = proCamera2DShake.InitialAngle < 0;
 
@@ -96,6 +101,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     element.FindPropertyRelative("Randomness").floatValue = proCamera2DShake.Randomness;
                     element.FindPropertyRelative("InitialAngle").floatValue = proCamera2DShake.InitialAngle;
                     element.FindPropertyRelative("Rotation").vector3Value = proCamera2DShake.Rotation;
+                    element.FindPropertyRelative("IgnoreTimeScale").boolValue = proCamera2DShake.IgnoreTimeScale;
 
                     proCamera2DShake.UseRandomInitialAngle = proCamera2DShake.InitialAngle < 0;
 
@@ -119,7 +125,8 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                         element.FindPropertyRelative("Randomness").floatValue,
                         element.FindPropertyRelative("InitialAngle").floatValue,
                         element.FindPropertyRelative("Rotation").vector3Value,
-                        element.FindPropertyRelative("Smoothness").floatValue
+                        element.FindPropertyRelative("Smoothness").floatValue,
+                        element.FindPropertyRelative("IgnoreTimeScale").boolValue
                     );
                 }
                 GUI.enabled = true;
@@ -181,7 +188,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
             // Random initial direction
             EditorGUILayout.BeginHorizontal();
-            _tooltip = new GUIContent("Use Random Initial Angle", "If checked, the initial shaking angle will be random");
+            _tooltip = new GUIContent("Use Random Initial Angle", "If enabled, the initial shaking angle will be random");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("UseRandomInitialAngle"), _tooltip);
 
             if (!proCamera2DShake.UseRandomInitialAngle)
@@ -194,6 +201,10 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             // Rotation
             _tooltip = new GUIContent("Rotation", "The maximum rotation the camera will reach");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("Rotation"), _tooltip);
+
+            // Ignore time scale
+            _tooltip = new GUIContent("Ignore TimeScale", "If enabled, the shake will occur even if the timeScale is 0");
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("IgnoreTimeScale"), _tooltip);
 
             // Shake test buttons
             GUI.enabled = Application.isPlaying;
@@ -220,7 +231,8 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                         Randomness = proCamera2DShake.Randomness,
                         Smoothness = proCamera2DShake.Smoothness,
                         InitialAngle = proCamera2DShake.UseRandomInitialAngle ? -1f : proCamera2DShake.InitialAngle,
-                        Rotation = proCamera2DShake.Rotation
+                        Rotation = proCamera2DShake.Rotation,
+                        IgnoreTimeScale = proCamera2DShake.IgnoreTimeScale,
                     });
             }
 

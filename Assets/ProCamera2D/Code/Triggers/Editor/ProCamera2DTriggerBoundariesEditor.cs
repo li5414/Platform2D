@@ -22,13 +22,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 proCamera2DTriggerBoundaries.NumericBoundaries = numericBoundaries == null ? proCamera2DTriggerBoundaries.ProCamera2D.gameObject.AddComponent<ProCamera2DNumericBoundaries>() : numericBoundaries;
             }
 
-            if (proCamera2DTriggerBoundaries.PositionAndSizeOverrider == null && proCamera2DTriggerBoundaries.ProCamera2D != null)
-            {
-                var positionAndSizeOverrider = proCamera2DTriggerBoundaries.ProCamera2D.GetComponent<ProCamera2DPositionAndSizeOverrider>();
-                proCamera2DTriggerBoundaries.PositionAndSizeOverrider = positionAndSizeOverrider == null ? proCamera2DTriggerBoundaries.ProCamera2D.gameObject.AddComponent<ProCamera2DPositionAndSizeOverrider>() : positionAndSizeOverrider;
-                proCamera2DTriggerBoundaries.PositionAndSizeOverrider.hideFlags = HideFlags.HideInInspector;
-            }
-
             _script = MonoScript.FromMonoBehaviour(proCamera2DTriggerBoundaries);
         }
 

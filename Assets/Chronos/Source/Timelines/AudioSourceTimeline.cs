@@ -19,7 +19,7 @@ namespace Chronos
 			}
 		}
 
-		public AudioSourceTimeline(Timeline timeline) : base(timeline) { }
+		public AudioSourceTimeline(Timeline timeline, AudioSource component) : base(timeline, component) { }
 
 		public override void CopyProperties(AudioSource source)
 		{

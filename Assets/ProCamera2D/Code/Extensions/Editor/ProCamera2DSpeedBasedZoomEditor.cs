@@ -20,26 +20,20 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
             DrawDefaultInspector();
 
-            if (proCamera2DSpeedBasedZoom.ZoomInSmoothness < .5f)
-                proCamera2DSpeedBasedZoom.ZoomInSmoothness = .5f;
-
-            if (proCamera2DSpeedBasedZoom.ZoomOutSmoothness < .5f)
-                proCamera2DSpeedBasedZoom.ZoomOutSmoothness = .5f;
-
             if (proCamera2DSpeedBasedZoom.MaxZoomInAmount < 1f)
                 proCamera2DSpeedBasedZoom.MaxZoomInAmount = 1f;
 
             if (proCamera2DSpeedBasedZoom.MaxZoomOutAmount < 1f)
                 proCamera2DSpeedBasedZoom.MaxZoomOutAmount = 1f;
 
-            if (proCamera2DSpeedBasedZoom.SpeedForZoomOut <= proCamera2DSpeedBasedZoom.SpeedForZoomIn)
-                proCamera2DSpeedBasedZoom.SpeedForZoomOut = proCamera2DSpeedBasedZoom.SpeedForZoomIn + .1f;
+            if (proCamera2DSpeedBasedZoom.CamVelocityForZoomOut <= proCamera2DSpeedBasedZoom.CamVelocityForZoomIn)
+                proCamera2DSpeedBasedZoom.CamVelocityForZoomOut = proCamera2DSpeedBasedZoom.CamVelocityForZoomIn + .1f;
 
-            if (proCamera2DSpeedBasedZoom.SpeedForZoomIn >= proCamera2DSpeedBasedZoom.SpeedForZoomOut)
-                proCamera2DSpeedBasedZoom.SpeedForZoomIn = proCamera2DSpeedBasedZoom.SpeedForZoomOut - .1f;
+            if (proCamera2DSpeedBasedZoom.CamVelocityForZoomIn >= proCamera2DSpeedBasedZoom.CamVelocityForZoomOut)
+                proCamera2DSpeedBasedZoom.CamVelocityForZoomIn = proCamera2DSpeedBasedZoom.CamVelocityForZoomOut - .1f;
 
-            if (proCamera2DSpeedBasedZoom.SpeedForZoomIn < .5f)
-                proCamera2DSpeedBasedZoom.SpeedForZoomIn = .5f;
+            if (proCamera2DSpeedBasedZoom.CamVelocityForZoomIn < .5f)
+                proCamera2DSpeedBasedZoom.CamVelocityForZoomIn = .5f;
 
             EditorGUILayout.Space();
             GUI.enabled = false;

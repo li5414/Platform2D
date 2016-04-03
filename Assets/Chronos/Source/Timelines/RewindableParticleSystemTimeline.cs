@@ -102,7 +102,7 @@ namespace Chronos
 			emissionEvents.Add(new EmissionEvent(action, emissionEventsTime));
 		}
 
-		public RewindableParticleSystemTimeline(Timeline timeline) : base(timeline)
+		public RewindableParticleSystemTimeline(Timeline timeline, ParticleSystem component) : base(timeline, component)
 		{
 			emissionEvents = new List<EmissionEvent>();
 			stateEvents = new List<StateEvent>();

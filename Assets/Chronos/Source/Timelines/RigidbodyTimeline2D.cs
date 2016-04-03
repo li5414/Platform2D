@@ -31,7 +31,7 @@ namespace Chronos
 			}
 		}
 
-		public RigidbodyTimeline2D(Timeline timeline) : base(timeline) { }
+		public RigidbodyTimeline2D(Timeline timeline, Rigidbody2D component) : base(timeline, component) { }
 
 		public override void CopyProperties(Rigidbody2D source)
 		{

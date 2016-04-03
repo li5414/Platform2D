@@ -5,7 +5,7 @@ using System;
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DRepeater : BasePC2D
+    public class ProCamera2DRepeater : BasePC2D, IPostMover
     {
         public static string ExtensionName = "Repeater";
 
@@ -56,6 +56,12 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         {
             base.Awake();
 
+            if (ObjectToRepeat == null)
+            {
+                Debug.LogWarning("ProCamera2D Repeater extension - No ObjectToRepeat defined!");
+                return;
+            }
+
             _objStartPosition = new Vector3(
                 Vector3H(ObjectToRepeat.position), 
                 Vector3V(ObjectToRepeat.position),
@@ -65,34 +71,41 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
             if (ObjectOnStage)
                 InitCopy(ObjectToRepeat);
+
+            ProCamera2D.Instance.AddPostMover(this);
         }
 
-        protected override void OnPostMoveUpdate(float deltaTime)
+        #region IPostMover implementation
+
+        public void PostMove(float deltaTime)
         {
+            if(!enabled)
+                return;
+            
             // Get screen size at the object depth
             var cameraSize = Utils.GetScreenSizeInWorldCoords(CameraToUse, ProCamera2D.CameraDepthPos - Vector3D(_objStartPosition));
 
             // Find indices
             var cameraPos = _cameraToUseTransform.position;
             var camBottomLeft = new Vector2(
-                                    Vector3H(cameraPos) - cameraSize.x / 2,
-                                    Vector3V(cameraPos) - cameraSize.y / 2);
+                Vector3H(cameraPos) - cameraSize.x / 2,
+                Vector3V(cameraPos) - cameraSize.y / 2);
 
             var camOffset = new Vector2(
-                                camBottomLeft.x - _objStartPosition.x - ObjectBottomLeft.x,
-                                camBottomLeft.y - _objStartPosition.y - ObjectBottomLeft.y);
+                camBottomLeft.x - _objStartPosition.x - ObjectBottomLeft.x,
+                camBottomLeft.y - _objStartPosition.y - ObjectBottomLeft.y);
 
             var startIndex = new IntPoint(
-                                 Mathf.FloorToInt(camOffset.x / ObjectSize.x),
-                                 Mathf.FloorToInt(camOffset.y / ObjectSize.y));
+                Mathf.FloorToInt(camOffset.x / ObjectSize.x),
+                Mathf.FloorToInt(camOffset.y / ObjectSize.y));
 
             var copiesNeeded = new IntPoint(
-                                   Mathf.CeilToInt(cameraSize.x / ObjectSize.x),
-                                   Mathf.CeilToInt(cameraSize.y / ObjectSize.y));
+                Mathf.CeilToInt(cameraSize.x / ObjectSize.x),
+                Mathf.CeilToInt(cameraSize.y / ObjectSize.y));
 
             var endIndex = new IntPoint(
-                               startIndex.X + copiesNeeded.X,
-                               startIndex.Y + copiesNeeded.Y);
+                startIndex.X + copiesNeeded.X,
+                startIndex.Y + copiesNeeded.Y);
 
             // If the indices change
             if (!startIndex.IsEqual(_prevStartIndex) || !endIndex.IsEqual(_prevEndIndex))
@@ -107,6 +120,12 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             _prevStartIndex = startIndex;
             _prevEndIndex = endIndex;
         }
+
+        public int PMOrder { get { return _pmOrder; } set { _pmOrder = value; } }
+
+        int _pmOrder = 2000;
+
+        #endregion
 
         void FreeOutOfRangeObjects(IntPoint startIndex, IntPoint endIndex)
         {

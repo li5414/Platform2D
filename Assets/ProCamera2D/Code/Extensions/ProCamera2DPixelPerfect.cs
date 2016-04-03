@@ -2,7 +2,7 @@
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DPixelPerfect : BasePC2D
+    public class ProCamera2DPixelPerfect : BasePC2D, IPositionOverrider
     {
         public static string ExtensionName = "Pixel Perfect";
 
@@ -20,6 +20,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         public int Zoom = 1;
 
         public bool SnapMovementToGrid;
+        public bool SnapCameraToGrid = true;
         public bool DrawGrid;
         public Color GridColor = new Color(1f, 0f, 0f, .1f);
         public float GridDensity;
@@ -37,6 +38,8 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         }
 
         float _pixelStep = -1;
+
+        float _viewportScale;
 
         Transform _parent;
 
@@ -59,12 +62,29 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             #endif
 
             ResizeCameraToPixelPerfect();
+
+            ProCamera2D.AddPositionOverrider(this);
         }
-        
-        override protected void OnPostMoveUpdate(float deltaTime)
+
+        #region IPositionOverrider implementation
+
+        public Vector3 OverridePosition(float deltaTime, Vector3 originalPosition)
         {
-            AlignPositionToPixelPerfect();
+            if (!enabled)
+                return originalPosition;
+
+            // If shaking
+            _parent = _transform.parent;
+            if (_parent != null && _parent.position != Vector3.zero)
+                _parent.position = VectorHVD(Utils.AlignToGrid(Vector3H(_parent.position), _pixelStep), Utils.AlignToGrid(Vector3V(_parent.position), _pixelStep), Vector3D(_parent.position));
+
+            return VectorHVD(Utils.AlignToGrid(Vector3H(originalPosition), _pixelStep), Utils.AlignToGrid(Vector3V(originalPosition), _pixelStep), Vector3D(originalPosition));
         }
+
+        public int POOrder { get { return _poOrder; } set { _poOrder = value; } }
+        int _poOrder = 2000;
+
+        #endregion
 
         #if UNITY_EDITOR
         void LateUpdate()
@@ -79,23 +99,13 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         /// </summary>
         public void ResizeCameraToPixelPerfect()
         {
-            var viewportScale = CalculateViewportScale();
+            _viewportScale = CalculateViewportScale();
 
-            CalculatePixelStep(viewportScale);
+            CalculatePixelStep(_viewportScale);
 
-            var newSize = ((ProCamera2D.GameCamera.pixelHeight * .5f) * (1f / PixelsPerUnit)) / (Zoom * viewportScale);
+            var newSize = ((ProCamera2D.GameCamera.pixelHeight * .5f) * (1f / PixelsPerUnit)) / (Zoom * _viewportScale);
 
-            ProCamera2D.GameCamera.orthographicSize = newSize;
-
-            ProCamera2D.ScreenSizeInWorldCoordinates = new Vector2(newSize * 2 * ProCamera2D.GameCamera.aspect, newSize * 2);
-
-            #if PC2D_TK2D_SUPPORT
-            if (ProCamera2D.Tk2dCam == null)
-                return;
-
-            ProCamera2D.Tk2dCam.CameraSettings.orthographicPixelsPerMeter = PixelsPerUnit * Zoom * viewportScale;
-            ProCamera2D.Tk2dCam.CameraSettings.orthographicSize = newSize;
-            #endif
+            ProCamera2D.UpdateScreenSize(newSize);
         }
 
         public float CalculateViewportScale()
@@ -121,12 +131,19 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
         void AlignPositionToPixelPerfect()
         {
+            var cameraPixelStep = _pixelStep;
+
+            if (SnapMovementToGrid && !SnapCameraToGrid)
+            {
+                cameraPixelStep = 1f / (PixelsPerUnit * _viewportScale * Zoom);
+            }
+
             // If shaking
             _parent = _transform.parent;
             if (_parent != null && _parent.position != Vector3.zero)
-                _parent.position = VectorHVD(Utils.AlignToGrid(Vector3H(_parent.position), _pixelStep), Utils.AlignToGrid(Vector3V(_parent.position), _pixelStep), Vector3D(_parent.position));
+                _parent.position = VectorHVD(Utils.AlignToGrid(Vector3H(_parent.position), cameraPixelStep), Utils.AlignToGrid(Vector3V(_parent.position), cameraPixelStep), Vector3D(_parent.position));
             
-            _transform.localPosition = VectorHVD(Utils.AlignToGrid(Vector3H(_transform.localPosition), _pixelStep), Utils.AlignToGrid(Vector3V(_transform.localPosition), _pixelStep), Vector3D(_transform.localPosition));
+            _transform.localPosition = VectorHVD(Utils.AlignToGrid(Vector3H(_transform.localPosition), cameraPixelStep), Utils.AlignToGrid(Vector3V(_transform.localPosition), cameraPixelStep), Vector3D(_transform.localPosition));
         }
 
         #if UNITY_EDITOR

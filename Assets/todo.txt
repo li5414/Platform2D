@@ -2,18 +2,22 @@
 * working
 ---------------------------------------------------------------------------------------------------------------
 
-oneway 재구현
-
 ---------------------------------------------------------------------------------------------------------------
 * todo
 ---------------------------------------------------------------------------------------------------------------
+
+wall slide
+
+Weapon System
+
+sekeleton 가 자식에 없어도 animatino 이름을 가질수있도록
+
 무빙플랫폼에서 아래로 향할 때 덜덜 거리는 문제
 무빙플랫폼에 물건 놓기
 
 Controller의 IsCollidingHead.
 Controller의 PressingAgainstWall
 Controller의 SetExternalPhysics, ResetExternalPhysics
-DEActor의 GravityActive
 
 변경된 controller에 맞게 Platform 의 friction 수정
 
@@ -22,6 +26,8 @@ DEActor의 GravityActive
 공격버튼을 막 누르면 이상해지는 문제
 Chronos 적용
 SpineEvent - Sound, SendMessage 추가
+
+ladder,  oneway 의 충돌처리를 캐릭터쪽에서 하는게 낫지 않을까
 
 ---------------------------------------------------------------------------------------------------------------
 * 다듬어야 하는 클래스

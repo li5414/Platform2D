@@ -12,7 +12,7 @@ namespace Chronos
 		{
 			private Recorder<TSnapshot> parent;
 
-			public DelegatedRecorder(Recorder<TSnapshot> parent, Timeline timeline) : base(timeline)
+			public DelegatedRecorder(Recorder<TSnapshot> parent, Timeline timeline) : base(timeline, null)
 			{
 				this.parent = parent;
 			}

@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,49 +28,28 @@ namespace Chronos
 	[AddComponentMenu("Time/Timeline")]
 	[DisallowMultipleComponent]
 	[HelpURL("http://ludiq.io/chronos/documentation#Timeline")]
-	public class Timeline : MonoBehaviour
+	public class Timeline : TimelineEffector
 	{
 		protected internal const float DefaultRecordingDuration = 30;
-		protected internal const float DefaultRecordingInterval = 0.5f;
 
 		public Timeline()
 		{
+			children = new HashSet<TimelineChild>();
 			areaClocks = new HashSet<IAreaClock>();
 			occurrences = new HashSet<Occurrence>();
 			handledOccurrences = new HashSet<Occurrence>();
 			previousDeltaTimes = new Queue<float>();
 			timeScale = lastTimeScale = 1;
-			activeComponents = new HashSet<IComponentTimeline>();
-
-			animation = new AnimationTimeline(this);
-			animator = new AnimatorTimeline(this);
-			audioSource = new AudioSourceTimeline(this);
-			navMeshAgent = new NavMeshAgentTimeline(this);
-			rigidbody = new RigidbodyTimeline3D(this);
-			rigidbody2D = new RigidbodyTimeline2D(this);
-			transform = new TransformTimeline(this);
-			windZone = new WindZoneTimeline(this);
 		}
-
-		protected virtual void Awake()
-		{
-			// Moved CacheComponents() out of here to allow ProtectRewindable()
-		}
-
-		protected virtual void Start()
+		
+		protected override void Start()
 		{
 			timeScale = lastTimeScale = clock.timeScale;
-
-			CacheComponents();
-
-			foreach (IComponentTimeline component in activeComponents)
-			{
-				component.AdjustProperties();
-				component.Start();
-			}
+			
+			base.Start();
 		}
 
-		protected virtual void Update()
+		protected override void Update()
 		{
 			TriggerEvents();
 
@@ -103,9 +81,17 @@ namespace Chronos
 
 			if (timeScale != lastTimeScale)
 			{
-				foreach (IComponentTimeline component in activeComponents)
+				foreach (var component in components)
 				{
 					component.AdjustProperties();
+				}
+
+				foreach (var child in children)
+				{
+					foreach (var component in child.components)
+					{
+						component.AdjustProperties();
+					}
 				}
 			}
 
@@ -117,10 +103,7 @@ namespace Chronos
 
 			RecordSmoothing();
 
-			foreach (IComponentTimeline component in activeComponents)
-			{
-				component.Update();
-			}
+			base.Update();
 
 			if (timeScale > 0)
 			{
@@ -129,14 +112,6 @@ namespace Chronos
 			else if (timeScale < 0)
 			{
 				TriggerBackwardOccurrences();
-			}
-		}
-
-		protected virtual void FixedUpdate()
-		{
-			foreach (IComponentTimeline component in activeComponents)
-			{
-				component.FixedUpdate();
 			}
 		}
 
@@ -149,11 +124,16 @@ namespace Chronos
 		protected Occurrence nextForwardOccurrence;
 		protected Occurrence nextBackwardOccurrence;
 		protected internal HashSet<IAreaClock> areaClocks;
-		protected HashSet<IComponentTimeline> activeComponents;
+		protected internal HashSet<TimelineChild> children;
 
 		#endregion
 
 		#region Properties
+		
+		protected override Timeline timeline
+		{
+			get { return this; }
+		}
 
 		[SerializeField]
 		private TimelineMode _mode;
@@ -249,50 +229,6 @@ namespace Chronos
 		public TimeState state
 		{
 			get { return Timekeeper.GetTimeState(timeScale); }
-		}
-
-		[SerializeField, FormerlySerializedAs("_recordTransform")]
-		private bool _rewindable = true;
-
-		/// <summary>
-		/// Determines whether the timeline should record support rewind.
-		/// </summary>
-		public bool rewindable
-		{
-			get { return _rewindable; }
-			set { ProtectRewindable(); _rewindable = value; }
-		}
-
-		[SerializeField]
-		private float _recordingDuration = DefaultRecordingDuration;
-
-		/// <summary>
-		/// The maximum duration in seconds during which snapshots will be recorded. Higher values offer more rewind time but require more memory. 
-		/// </summary>
-		public float recordingDuration
-		{
-			get { return _recordingDuration; }
-			set { ProtectRewindable(); _recordingDuration = value; }
-		}
-
-		[SerializeField]
-		private float _recordingInterval = DefaultRecordingInterval;
-
-		/// <summary>
-		/// The interval in seconds at which snapshots will be recorder. Lower values offer more rewind precision but require more memory. 
-		/// </summary>
-		public float recordingInterval
-		{
-			get { return _recordingInterval; }
-			set { ProtectRewindable(); _recordingInterval = value; }
-		}
-
-		private void ProtectRewindable()
-		{
-			if (activeRecorder != null)
-			{
-				throw new ChronosException("Cannot change rewind properties after the timeline has started.");
-			}
 		}
 
 		#endregion
@@ -581,40 +517,72 @@ namespace Chronos
 			return Schedule(time - delay, repeatable, occurrence);
 		}
 
-		public Occurrence Schedule<T>(float time, bool repeatable, ForwardAction<T> forward, BackwardAction<T> backward)
+		#region Func<T>
+
+		public Occurrence Schedule<T>(float time, bool repeatable, ForwardFunc<T> forward, BackwardFunc<T> backward)
 		{
-			return Schedule(time, repeatable, new DelegateOccurrence<T>(forward, backward));
+			return Schedule(time, repeatable, new FuncOccurence<T>(forward, backward));
 		}
 
-		public Occurrence Do<T>(bool repeatable, ForwardAction<T> forward, BackwardAction<T> backward)
+		public Occurrence Do<T>(bool repeatable, ForwardFunc<T> forward, BackwardFunc<T> backward)
 		{
-			return Do(repeatable, new DelegateOccurrence<T>(forward, backward));
+			return Do(repeatable, new FuncOccurence<T>(forward, backward));
 		}
 
-		public Occurrence Plan<T>(float delay, bool repeatable, ForwardAction<T> forward, BackwardAction<T> backward)
+		public Occurrence Plan<T>(float delay, bool repeatable, ForwardFunc<T> forward, BackwardFunc<T> backward)
 		{
-			return Plan(delay, repeatable, new DelegateOccurrence<T>(forward, backward));
+			return Plan(delay, repeatable, new FuncOccurence<T>(forward, backward));
 		}
 
-		public Occurrence Memory<T>(float delay, bool repeatable, ForwardAction<T> forward, BackwardAction<T> backward)
+		public Occurrence Memory<T>(float delay, bool repeatable, ForwardFunc<T> forward, BackwardFunc<T> backward)
 		{
-			return Memory(delay, repeatable, new DelegateOccurrence<T>(forward, backward));
+			return Memory(delay, repeatable, new FuncOccurence<T>(forward, backward));
 		}
 
-		public Occurrence Schedule(float time, ForwardOnlyAction forward)
+		#endregion
+
+		#region Action
+
+		public Occurrence Schedule(float time, bool repeatable, ForwardAction forward, BackwardAction backward)
 		{
-			return Schedule(time, false, new ForwardDelegateOccurrence(forward));
+			return Schedule(time, repeatable, new ActionOccurence(forward, backward));
 		}
 
-		public Occurrence Plan(float delay, ForwardOnlyAction forward)
+		public Occurrence Do(bool repeatable, ForwardAction forward, BackwardAction backward)
 		{
-			return Plan(delay, false, new ForwardDelegateOccurrence(forward));
+			return Do(repeatable, new ActionOccurence(forward, backward));
 		}
 
-		public Occurrence Memory(float delay, ForwardOnlyAction forward)
+		public Occurrence Plan(float delay, bool repeatable, ForwardAction forward, BackwardAction backward)
 		{
-			return Memory(delay, false, new ForwardDelegateOccurrence(forward));
+			return Plan(delay, repeatable, new ActionOccurence(forward, backward));
 		}
+
+		public Occurrence Memory(float delay, bool repeatable, ForwardAction forward, BackwardAction backward)
+		{
+			return Memory(delay, repeatable, new ActionOccurence(forward, backward));
+		}
+
+		#endregion
+
+		#region Forward Action
+
+		public Occurrence Schedule(float time, ForwardAction forward)
+		{
+			return Schedule(time, false, new ForwardActionOccurence(forward));
+		}
+
+		public Occurrence Plan(float delay, ForwardAction forward)
+		{
+			return Plan(delay, false, new ForwardActionOccurence(forward));
+		}
+
+		public Occurrence Memory(float delay, ForwardAction forward)
+		{
+			return Memory(delay, false, new ForwardActionOccurence(forward));
+		}
+
+		#endregion
 
 		/// <summary>
 		/// Removes the specified occurrence from the timeline. 
@@ -706,150 +674,44 @@ namespace Chronos
 
 		#endregion
 
-		#region Components
+		#region Rewinding / Recording
 
-		public new AnimationTimeline animation { get; protected set; }
-		public AnimatorTimeline animator { get; protected set; }
-		public AudioSourceTimeline audioSource { get; protected set; }
-		public NavMeshAgentTimeline navMeshAgent { get; protected set; }
-		public new IParticleSystemTimeline particleSystem { get; protected set; }
-		public new RigidbodyTimeline3D rigidbody { get; protected set; }
-		public new RigidbodyTimeline2D rigidbody2D { get; protected set; }
-		public new TransformTimeline transform { get; protected set; }
-		public WindZoneTimeline windZone { get; protected set; }
+		[SerializeField, FormerlySerializedAs("_recordTransform")]
+		private bool _rewindable = true;
 
-		protected IRecorder activeRecorder
+		/// <summary>
+		/// Determines whether the timeline should record support rewind.
+		/// </summary>
+		public bool rewindable
 		{
-			get
+			get { return _rewindable; }
+			set
 			{
-				if (rigidbody.component != null) return rigidbody;
-				if (rigidbody2D.component != null) return rigidbody2D;
-				if (transform.component != null) return transform;
-				return null;
+				_rewindable = value;
+				
+				if (particleSystem != null)
+				{
+					CacheComponents();
+				}
 			}
 		}
 
-		/// <summary>
-		/// The components used by the timeline are cached for performance optimization. If you add or remove built-in Unity components on the GameObject, you need to call this method to update the timeline accordingly. 
-		/// </summary>
-		public virtual void CacheComponents()
-		{
-			if (particleSystem == null)
-			{
-				if (rewindable)
-				{
-					particleSystem = new RewindableParticleSystemTimeline(this);
-				}
-				else
-				{
-					particleSystem = new NonRewindableParticleSystemTimeline(this);
-				}
-			}
-
-			activeComponents.Clear();
-
-			if (animator.Cache(GetComponent<Animator>()))
-			{
-				activeComponents.Add(animator);
-			}
-
-			if (animation.Cache(GetComponent<Animation>()))
-			{
-				activeComponents.Add(animation);
-			}
-
-			if (audioSource.Cache(GetComponent<AudioSource>()))
-			{
-				activeComponents.Add(audioSource);
-			}
-
-			if (navMeshAgent.Cache(GetComponent<NavMeshAgent>()))
-			{
-				activeComponents.Add(navMeshAgent);
-			}
-
-			if (particleSystem.Cache(GetComponent<ParticleSystem>()))
-			{
-				activeComponents.Add(particleSystem);
-			}
-
-			if (windZone.Cache(GetComponent<WindZone>()))
-			{
-				activeComponents.Add(windZone);
-			}
-
-			// Only activate one of Rigidbody / Rigidbody2D / Transform timelines at once
-
-			if (rigidbody.Cache(GetComponent<Rigidbody>()))
-			{
-				activeComponents.Add(rigidbody);
-				rigidbody2D.Cache(null);
-				transform.Cache(null);
-			}
-			else if (rigidbody2D.Cache(GetComponent<Rigidbody2D>()))
-			{
-				activeComponents.Add(rigidbody2D);
-				rigidbody.Cache(null);
-				transform.Cache(null);
-			}
-			else if (transform.Cache(GetComponent<Transform>()))
-			{
-				activeComponents.Add(transform);
-				rigidbody.Cache(null);
-				rigidbody2D.Cache(null);
-			}
-		}
+		[SerializeField]
+		private float _recordingDuration = DefaultRecordingDuration;
 
 		/// <summary>
-		/// Sets the recording duration and interval in seconds. This will reset the saved snapshots.
+		/// The maximum duration in seconds during which snapshots will be recorded. Higher values offer more rewind time but require more memory. 
 		/// </summary>
-		public void SetRecording(float duration, float interval)
+		public float recordingDuration
 		{
-			recordingDuration = duration;
-			recordingInterval = interval;
-
-			ResetRecording();
-		}
-
-		/// <summary>
-		/// Resets the saved snapshots. 
-		/// </summary>
-		public void ResetRecording()
-		{
-			activeRecorder.Reset();
-		}
-
-		/// <summary>
-		/// Estimate the memory usage in bytes from the storage of snapshots for the current recording duration and interval. 
-		/// </summary>
-		public int EstimateMemoryUsage()
-		{
-			if (Application.isPlaying && activeRecorder != null)
+			get { return _recordingDuration; }
+			set
 			{
-				return activeRecorder.EstimateMemoryUsage();
-			}
-			else
-			{
-				if (!rewindable)
-				{
-					return 0;
-				}
+				_recordingDuration = value;
 
-				if (GetComponent<Rigidbody>() != null)
+				if (recorder != null)
 				{
-					return RigidbodyTimeline3D.EstimateMemoryUsage(recordingDuration, recordingInterval);
-				}
-				else if (GetComponent<Rigidbody2D>() != null)
-				{
-					return RigidbodyTimeline2D.EstimateMemoryUsage(recordingDuration, recordingInterval);
-				}
-				else if (GetComponent<Transform>() != null)
-				{
-					return TransformTimeline.EstimateMemoryUsage(recordingDuration, recordingInterval);
-				}
-				else
-				{
-					return 0;
+					recorder.Reset();
 				}
 			}
 		}

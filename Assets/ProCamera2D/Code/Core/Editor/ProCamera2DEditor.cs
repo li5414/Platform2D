@@ -355,113 +355,37 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
 
             // Follow horizontal
+            EditorGUILayout.BeginHorizontal();
             _tooltip = new GUIContent("Follow " + hAxis, "Should the camera move on the horizontal axis?");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("FollowHorizontal"), _tooltip);
             if (proCamera2D.FollowHorizontal)
             {
-                EditorGUI.indentLevel = 1;
-
                 // Follow smoothness
-                _tooltip = new GUIContent("Follow Smoothness", "How long it takes the camera to reach the target horizontal position.");
+                _tooltip = new GUIContent("Smoothness", "How long it takes the camera to reach the target horizontal position.");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("HorizontalFollowSmoothness"), _tooltip);
 
                 if (proCamera2D.HorizontalFollowSmoothness < 0f)
                     proCamera2D.HorizontalFollowSmoothness = 0f;
 
-                // Limit camera distance to target
-                EditorGUILayout.BeginHorizontal();
-                _tooltip = new GUIContent("Limit Cam Distance", "Prevent the camera target from getting too far. Use this if you have a high follow smoothness and your targets are getting out of the screen.");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("LimitHorizontalCameraDistance"), _tooltip);
-
-                if (proCamera2D.LimitHorizontalCameraDistance)
-                {
-                    _tooltip = new GUIContent(" ", "The percentage of the screen at which the camera will be forced to move");
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("MaxHorizontalTargetDistance"), _tooltip);
-
-                    if (proCamera2D.MaxHorizontalTargetDistance < .1f)
-                        proCamera2D.MaxHorizontalTargetDistance = .1f;
-                    else if (proCamera2D.MaxHorizontalTargetDistance > 1f)
-                        proCamera2D.MaxHorizontalTargetDistance = 1f;
-                }
-
-                EditorGUILayout.EndHorizontal();
-
-                // Limit speed
-                EditorGUILayout.BeginHorizontal();
-
-                _tooltip = new GUIContent("Limit Speed", "Limit how fast the camera moves per second on the horizontal axis");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("LimitMaxHorizontalSpeed"), _tooltip);
-
-                if (proCamera2D.LimitMaxHorizontalSpeed)
-                {
-                    _tooltip = new GUIContent(" ", "Limit how fast the camera moves per second on the horizontal axis");
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("MaxHorizontalSpeed"), _tooltip);
-
-                    if (proCamera2D.MaxHorizontalSpeed <= 0)
-                        proCamera2D.MaxHorizontalSpeed = 0.01f;
-                }
-
-                EditorGUILayout.EndHorizontal();
-
-                EditorGUI.indentLevel = 0;
-                AddSpace();
             }
-
-
+            EditorGUILayout.EndHorizontal();
 
 
             // Follow vertical
+            EditorGUILayout.BeginHorizontal();
             _tooltip = new GUIContent("Follow " + vAxis, "Should the camera move on the vertical axis?");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("FollowVertical"), _tooltip);
 
             if (proCamera2D.FollowVertical)
             {
-                EditorGUI.indentLevel = 1;
-
                 // Follow smoothness
-                _tooltip = new GUIContent("Follow Smoothness", "How long it takes the camera to reach the target vertical position.");
+                _tooltip = new GUIContent("Smoothness", "How long it takes the camera to reach the target vertical position.");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("VerticalFollowSmoothness"), _tooltip);
 
                 if (proCamera2D.VerticalFollowSmoothness < 0f)
                     proCamera2D.VerticalFollowSmoothness = 0f;
-
-                // Limit camera distance to target    
-                EditorGUILayout.BeginHorizontal();
-                _tooltip = new GUIContent("Limit Cam Distance", "Prevent the camera target from getting too far. Use this if you have a high follow smoothness and your targets are getting out of the screen.");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("LimitVerticalCameraDistance"), _tooltip);
-
-                if (proCamera2D.LimitVerticalCameraDistance)
-                {
-                    _tooltip = new GUIContent(" ", "The percentage of the screen at which the camera will be forced to move");
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("MaxVerticalTargetDistance"), _tooltip);
-
-                    if (proCamera2D.MaxVerticalTargetDistance < .1f)
-                        proCamera2D.MaxVerticalTargetDistance = .1f;
-                    else if (proCamera2D.MaxVerticalTargetDistance > 1f)
-                        proCamera2D.MaxVerticalTargetDistance = 1f;
-                }
-
-                EditorGUILayout.EndHorizontal();
-
-                // Limit camera speed
-                EditorGUILayout.BeginHorizontal();
-
-                _tooltip = new GUIContent("Limit Speed", "Limit how fast the camera moves per second on the vertical axis");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("LimitMaxVerticalSpeed"), _tooltip);
-
-                if (proCamera2D.LimitMaxVerticalSpeed)
-                {
-                    _tooltip = new GUIContent(" ", "Limit how fast the camera moves per second on the vertical axis");
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("MaxVerticalSpeed"), _tooltip);
-
-                    if (proCamera2D.MaxVerticalSpeed <= 0)
-                        proCamera2D.MaxVerticalSpeed = 0.01f;
-                }
-
-                EditorGUILayout.EndHorizontal();
-
-                EditorGUI.indentLevel = 0;
             }
+            EditorGUILayout.EndHorizontal();
 
             if (!proCamera2D.FollowHorizontal && !proCamera2D.FollowVertical)
                 EditorGUILayout.HelpBox("Camera won't move if it's not following the targets on any axis.", MessageType.Error, true);

@@ -3,7 +3,7 @@
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
     [ExecuteInEditMode]
-    public class ProCamera2DPixelPerfectSprite : BasePC2D
+    public class ProCamera2DPixelPerfectSprite : BasePC2D, IPostMover
     {
         public bool IsAMovingObject;
         public bool IsAChildSprite;
@@ -33,12 +33,23 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             GetSprite();
 
             SetAsPixelPerfect();
+
+            ProCamera2D.Instance.AddPostMover(this);
         }
-        
-        override protected void OnPostMoveUpdate(float deltaTime)
+
+        #region IPostMover implementation
+
+        public void PostMove(float deltaTime)
         {
-            Step();
+            if(enabled)
+                Step();
         }
+
+        public int PMOrder { get { return _pmOrder; } set { _pmOrder = value; } }
+
+        int _pmOrder = 2000;
+
+        #endregion
 
         #if UNITY_EDITOR
         void LateUpdate()
@@ -143,6 +154,13 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     Mathf.Sign(_transform.localScale.y) * scale, 
                     _transform.localScale.z);
             }
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            ProCamera2D.Instance.RemovePostMover(this);
         }
     }
 }

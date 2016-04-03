@@ -56,7 +56,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 proCamera2DPixelPerfectSprite.GetComponent<Rigidbody2D>() != null ||
                 proCamera2DPixelPerfectSprite.GetComponent<Collider>() != null ||
                 proCamera2DPixelPerfectSprite.GetComponent<Collider2D>() != null ||
-                proCamera2DPixelPerfectSprite.GetComponent<UnityEngine.CharacterController>() != null))
+                proCamera2DPixelPerfectSprite.GetComponent<CharacterController>() != null))
             {
                 EditorGUILayout.HelpBox("You should not add this component to GameObjects that have physics components, because rounding the sprite to a pixel-perfect position might interfere with the physics calculations. Please add the sprite as a child of this GameObject and add this component to it instead.", MessageType.Warning, true);
             }

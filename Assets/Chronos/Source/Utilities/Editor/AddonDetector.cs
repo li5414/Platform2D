@@ -46,8 +46,7 @@ namespace Chronos
 			CheckForAddons(false);
 		}
 
-		// [MenuItem("Assets/" + PluginName + "/Check for addons...")]
-        [MenuItem("" + PluginName + "/Check for addons...")]
+		[MenuItem(PluginName + "/Check for addons...")]
 		public static void ManualCheckForAddons()
 		{
 			CheckForAddons(true);

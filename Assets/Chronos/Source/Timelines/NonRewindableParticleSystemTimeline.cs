@@ -4,7 +4,7 @@ namespace Chronos
 {
 	public class NonRewindableParticleSystemTimeline : ComponentTimeline<ParticleSystem>, IParticleSystemTimeline
 	{
-		public NonRewindableParticleSystemTimeline(Timeline timeline) : base(timeline) { }
+		public NonRewindableParticleSystemTimeline(Timeline timeline, ParticleSystem component) : base(timeline, component) { }
 
 		private bool warnedRewind;
 

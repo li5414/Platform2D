@@ -21,8 +21,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         public float TransitionDuration = 1f;
         public EaseType TransitionEaseType;
 
-        public int AnimsCount;
-
         ProCamera2D ProCamera2D;
         ProCamera2DNumericBoundaries NumericBoundaries;
 
@@ -53,6 +51,32 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             }
         }
 
+        public int GetAnimsCount()
+        {
+            var animsCount = 0;
+            if (UseLeftBoundary)
+                animsCount++;
+            else if (!UseLeftBoundary && NumericBoundaries.UseLeftBoundary && UseRightBoundary && RightBoundary < NumericBoundaries.TargetLeftBoundary) 
+                animsCount++;
+
+            if (UseRightBoundary)
+                animsCount++;
+            else if (!UseRightBoundary && NumericBoundaries.UseRightBoundary && UseLeftBoundary && LeftBoundary > NumericBoundaries.TargetRightBoundary) 
+                animsCount++;
+
+            if (UseTopBoundary)
+                animsCount++;
+            else if (!UseTopBoundary && NumericBoundaries.UseTopBoundary && UseBottomBoundary && BottomBoundary > NumericBoundaries.TargetTopBoundary) 
+                animsCount++;
+
+            if (UseBottomBoundary)
+                animsCount++;
+            else if (!UseBottomBoundary && NumericBoundaries.UseBottomBoundary && UseTopBoundary && TopBoundary < NumericBoundaries.TargetBottomBoundary) 
+                animsCount++;
+
+            return animsCount;
+        }
+
         public void Transition()
         {
             if (OnTransitionStarted != null)
@@ -63,7 +87,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             NumericBoundaries.UseNumericBoundaries = true;
 
             // Animate boundaries
-            AnimsCount = 0;
             if (UseLeftBoundary)
             {
                 NumericBoundaries.UseLeftBoundary = true;
@@ -72,9 +95,8 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     NumericBoundaries.StopCoroutine(NumericBoundaries.LeftBoundaryAnimRoutine);
 
                 NumericBoundaries.LeftBoundaryAnimRoutine = NumericBoundaries.StartCoroutine(LeftTransitionRoutine(TransitionDuration));
-                AnimsCount++;
             }
-            else if (!UseLeftBoundary && NumericBoundaries.UseLeftBoundary && UseRightBoundary && RightBoundary < NumericBoundaries.TargetLeftBoundary) 
+            else if (!UseLeftBoundary && NumericBoundaries.UseLeftBoundary && UseRightBoundary && RightBoundary < NumericBoundaries.TargetLeftBoundary)
             {
                 NumericBoundaries.UseLeftBoundary = true;
                 UseLeftBoundary = true;
@@ -85,7 +107,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     NumericBoundaries.StopCoroutine(NumericBoundaries.LeftBoundaryAnimRoutine);
 
                 NumericBoundaries.LeftBoundaryAnimRoutine = NumericBoundaries.StartCoroutine(LeftTransitionRoutine(TransitionDuration, true));
-                AnimsCount++;
             }
 
             if (UseRightBoundary)
@@ -96,7 +117,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     NumericBoundaries.StopCoroutine(NumericBoundaries.RightBoundaryAnimRoutine);
 
                 NumericBoundaries.RightBoundaryAnimRoutine = NumericBoundaries.StartCoroutine(RightTransitionRoutine(TransitionDuration));
-                AnimsCount++;
             }
             else if (!UseRightBoundary && NumericBoundaries.UseRightBoundary && UseLeftBoundary && LeftBoundary > NumericBoundaries.TargetRightBoundary) 
             {
@@ -109,7 +129,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     NumericBoundaries.StopCoroutine(NumericBoundaries.RightBoundaryAnimRoutine);
 
                 NumericBoundaries.RightBoundaryAnimRoutine = NumericBoundaries.StartCoroutine(RightTransitionRoutine(TransitionDuration, true));
-                AnimsCount++;
             }
 
             if (UseTopBoundary)
@@ -120,7 +139,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     NumericBoundaries.StopCoroutine(NumericBoundaries.TopBoundaryAnimRoutine);
 
                 NumericBoundaries.TopBoundaryAnimRoutine = NumericBoundaries.StartCoroutine(TopTransitionRoutine(TransitionDuration));
-                AnimsCount++;
             }
             else if (!UseTopBoundary && NumericBoundaries.UseTopBoundary && UseBottomBoundary && BottomBoundary > NumericBoundaries.TargetTopBoundary) 
             {
@@ -133,7 +151,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     NumericBoundaries.StopCoroutine(NumericBoundaries.TopBoundaryAnimRoutine);
 
                 NumericBoundaries.TopBoundaryAnimRoutine = NumericBoundaries.StartCoroutine(TopTransitionRoutine(TransitionDuration, true));
-                AnimsCount++;
             }
 
             if (UseBottomBoundary)
@@ -144,7 +161,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     NumericBoundaries.StopCoroutine(NumericBoundaries.BottomBoundaryAnimRoutine);
 
                 NumericBoundaries.BottomBoundaryAnimRoutine = NumericBoundaries.StartCoroutine(BottomTransitionRoutine(TransitionDuration));
-                AnimsCount++;
             }
             else if (!UseBottomBoundary && NumericBoundaries.UseBottomBoundary && UseTopBoundary && TopBoundary < NumericBoundaries.TargetBottomBoundary) 
             {
@@ -157,13 +173,12 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     NumericBoundaries.StopCoroutine(NumericBoundaries.BottomBoundaryAnimRoutine);
 
                 NumericBoundaries.BottomBoundaryAnimRoutine = NumericBoundaries.StartCoroutine(BottomTransitionRoutine(TransitionDuration, true));
-                AnimsCount++;
             }
         }
 
         IEnumerator LeftTransitionRoutine(float duration, bool turnOffBoundaryAfterwards = false)
         {
-            var initialLeftBoundary = Vector3H(ProCamera2D.CameraPosition) - ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
+            var initialLeftBoundary = Vector3H(ProCamera2D.LocalPosition) - ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
 
             NumericBoundaries.TargetLeftBoundary = LeftBoundary;
 
@@ -182,7 +197,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 {
                     NumericBoundaries.LeftBoundary = Utils.EaseFromTo(initialLeftBoundary, LeftBoundary, t, TransitionEaseType);
 
-                    var currentCamLeftEdge = Vector3H(ProCamera2D.CameraPosition) - ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
+                    var currentCamLeftEdge = Vector3H(ProCamera2D.LocalPosition) - ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
                     if (currentCamLeftEdge < NumericBoundaries.TargetLeftBoundary &&
                         NumericBoundaries.LeftBoundary < currentCamLeftEdge)
                         NumericBoundaries.LeftBoundary = currentCamLeftEdge;
@@ -203,7 +218,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
         IEnumerator RightTransitionRoutine(float duration, bool turnOffBoundaryAfterwards = false)
         {
-            var initialRightBoundary = Vector3H(ProCamera2D.CameraPosition) + ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
+            var initialRightBoundary = Vector3H(ProCamera2D.LocalPosition) + ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
 
             NumericBoundaries.TargetRightBoundary = RightBoundary;
 
@@ -222,7 +237,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 {
                     NumericBoundaries.RightBoundary = Utils.EaseFromTo(initialRightBoundary, RightBoundary, t, TransitionEaseType);
 
-                    var currentCamRightEdge = Vector3H(ProCamera2D.CameraPosition) + ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
+                    var currentCamRightEdge = Vector3H(ProCamera2D.LocalPosition) + ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
                     if (currentCamRightEdge > NumericBoundaries.TargetRightBoundary &&
                         NumericBoundaries.RightBoundary > currentCamRightEdge)
                         NumericBoundaries.RightBoundary = currentCamRightEdge;
@@ -243,7 +258,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
         IEnumerator TopTransitionRoutine(float duration, bool turnOffBoundaryAfterwards = false)
         {
-            var initialTopBoundary = Vector3V(ProCamera2D.CameraPosition) + ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
+            var initialTopBoundary = Vector3V(ProCamera2D.LocalPosition) + ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
 
             NumericBoundaries.TargetTopBoundary = TopBoundary;
 
@@ -262,7 +277,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 {
                     NumericBoundaries.TopBoundary = Utils.EaseFromTo(initialTopBoundary, TopBoundary, t, TransitionEaseType);
 
-                    var currentCamTopEdge = Vector3V(ProCamera2D.CameraPosition) + ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
+                    var currentCamTopEdge = Vector3V(ProCamera2D.LocalPosition) + ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
                     if (currentCamTopEdge > NumericBoundaries.TargetTopBoundary &&
                         NumericBoundaries.TopBoundary > currentCamTopEdge)
                         NumericBoundaries.TopBoundary = currentCamTopEdge;
@@ -283,7 +298,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
         IEnumerator BottomTransitionRoutine(float duration, bool turnOffBoundaryAfterwards = false)
         {
-            var initialBottomBoundary = Vector3V(ProCamera2D.CameraPosition) - ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
+            var initialBottomBoundary = Vector3V(ProCamera2D.LocalPosition) - ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
 
             NumericBoundaries.TargetBottomBoundary = BottomBoundary;
 
@@ -302,7 +317,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 {
                     NumericBoundaries.BottomBoundary = Utils.EaseFromTo(initialBottomBoundary, BottomBoundary, t, TransitionEaseType);
 
-                    var currentCamBottomEdge = Vector3V(ProCamera2D.CameraPosition) - ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
+                    var currentCamBottomEdge = Vector3V(ProCamera2D.LocalPosition) - ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
                     if (currentCamBottomEdge < NumericBoundaries.TargetBottomBoundary &&
                         NumericBoundaries.BottomBoundary < currentCamBottomEdge)
                         NumericBoundaries.BottomBoundary = currentCamBottomEdge;

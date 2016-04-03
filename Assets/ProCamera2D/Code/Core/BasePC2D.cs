@@ -58,14 +58,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         {   
         }
 
-        protected virtual void OnPreMoveUpdate(float deltaTime)
-        {
-        }
-
-        protected virtual void OnPostMoveUpdate(float deltaTime)
-        {
-        }
-
         void Enable()
         {
             if (_enabled)
@@ -73,8 +65,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             
             _enabled = true;
             ProCamera2D.OnReset += OnReset;
-            ProCamera2D.PreMoveUpdate += OnPreMoveUpdate;
-            ProCamera2D.PostMoveUpdate += OnPostMoveUpdate;
         }
 
         void Disable()
@@ -83,8 +73,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             {
                 _enabled = false;
                 ProCamera2D.OnReset -= OnReset;
-                ProCamera2D.PreMoveUpdate -= OnPreMoveUpdate;
-                ProCamera2D.PostMoveUpdate -= OnPostMoveUpdate;
             }
         }
 

@@ -25,7 +25,7 @@ namespace Chronos
 			}
 		}
 
-		public TransformTimeline(Timeline timeline) : base(timeline) { }
+		public TransformTimeline(Timeline timeline, Transform component) : base(timeline, component) { }
 
 		protected override Snapshot LerpSnapshots(Snapshot from, Snapshot to, float t)
 		{

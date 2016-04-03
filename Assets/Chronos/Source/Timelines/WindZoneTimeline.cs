@@ -61,7 +61,7 @@ namespace Chronos
 			}
 		}
 
-		public WindZoneTimeline(Timeline timeline) : base(timeline) { }
+		public WindZoneTimeline(Timeline timeline, WindZone component) : base(timeline, component) { }
 
 		public override void CopyProperties(WindZone source)
 		{

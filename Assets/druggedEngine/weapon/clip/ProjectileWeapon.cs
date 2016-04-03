@@ -13,7 +13,7 @@ namespace druggedcode.engine
         public string missleSlot;
         public SkeletonRenderer weaponRenderer;
 
-        public override void Setup()
+        public override void Equip()
         {
             if (clip == 0)
             {

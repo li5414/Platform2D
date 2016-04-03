@@ -12,8 +12,8 @@ namespace Chronos
 
 	public abstract class RigidbodyTimeline<TComponent, TSnapshot> : RecorderTimeline<TComponent, TSnapshot>, IRigidbodyTimeline where TComponent : Component
 	{
-		public RigidbodyTimeline(Timeline timeline) : base(timeline) {}
-		
+		public RigidbodyTimeline(Timeline timeline, TComponent component) : base(timeline, component) { }
+
 		public override void Update()
 		{
 			float timeScale = timeline.timeScale;

@@ -37,12 +37,6 @@ public class GameManager : MonoBehaviour
 
 		GameManager prefab = Resources.Load<GameManager>("GameManager");
 		GameObject.Instantiate<GameManager>( prefab );
-        
-        DEActor[] actors = GameObject.FindObjectsOfType<DEActor>();
-		foreach( DEActor ac in actors )
-		{
-			if( ac.dts == null ) Destroy( ac.gameObject );
-		}
 	}
 
     void Awake()
@@ -161,18 +155,13 @@ public class GameManager : MonoBehaviour
     {
         print("[GM] MoveLocation locationID: " + locationID + ", cpID: " + cpID );
 
-		PlayerPause();
-
 		gameCamera.Reset();
+		playerControllable = false;
 
 		yield return UI.FadeOut();
 
-		if( player != null )
-		{
-			player.transform.SetParent( User.Instance.transform );
-			player.gameObject.SetActive( false );
-			player.OnDead -= OnPlayerDead;
-		}
+
+		if( player != null ) player.UnUse( User.Instance.transform );
 
 		yield return ServerCommunicator.Instance.Move( locationID, cpID );
 
@@ -231,10 +220,9 @@ public class GameManager : MonoBehaviour
 		gameCamera.Run();
 		location.Run();
 
-		yield return UI.FadeIn();
-
 		playerControllable = true;
 
+		yield return UI.FadeIn();
 	}
 
     public void Restart()

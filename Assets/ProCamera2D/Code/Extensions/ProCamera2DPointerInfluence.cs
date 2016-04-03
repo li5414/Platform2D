@@ -2,7 +2,7 @@
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DPointerInfluence : BasePC2D
+    public class ProCamera2DPointerInfluence : BasePC2D, IPreMover
     {
         public static string ExtensionName = "Pointer Influence";
 
@@ -14,16 +14,32 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         Vector2 _influence;
         Vector2 _velocity;
 
+        protected override void Awake()
+        {
+            base.Awake();
+
+            ProCamera2D.Instance.AddPreMover(this);
+        }
+
         override public void OnReset()
         {
             _influence = Vector2.zero;
             _velocity = Vector2.zero;
         }
 
-        override protected void OnPreMoveUpdate(float deltaTime)
+        #region IPreMover implementation
+
+        public void PreMove(float deltaTime)
         {
-            ApplyInfluence();
+            if(enabled)
+                ApplyInfluence();
         }
+
+        public int PrMOrder { get { return _prmOrder; } set { _prmOrder = value; } }
+
+        int _prmOrder = 3000;
+
+        #endregion
 
         void ApplyInfluence()
         {

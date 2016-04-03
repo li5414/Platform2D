@@ -23,7 +23,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
     }
 
     [ExecuteInEditMode]
-    public class ProCamera2DParallax : BasePC2D
+    public class ProCamera2DParallax : BasePC2D, IPostMover
     {
         public static string ExtensionName = "Parallax";
 
@@ -105,12 +105,23 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     enabled = false;
             }
             #endif
+
+            ProCamera2D.Instance.AddPostMover(this);
         }
-        
-        override protected void OnPostMoveUpdate(float deltaTime)
+
+        #region IPostMover implementation
+
+        public void PostMove(float deltaTime)
         {
-            Move();
+            if(enabled)
+                Move();
         }
+
+        public int PMOrder { get { return _pmOrder; } set { _pmOrder = value; } }
+
+        int _pmOrder = 1000;
+
+        #endregion
 
         #if UNITY_EDITOR
         void LateUpdate()

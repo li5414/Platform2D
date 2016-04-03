@@ -13,7 +13,6 @@ namespace Chronos
 	public interface IComponentTimeline<T> : IComponentTimeline where T : Component
 	{
 		T component { get; }
-		bool Cache(T source);
 	}
 
 	public abstract class ComponentTimeline<T> : IComponentTimeline<T> where T : Component
@@ -21,9 +20,11 @@ namespace Chronos
 		protected Timeline timeline { get; private set; }
 		public T component { get; internal set; }
 
-		public ComponentTimeline(Timeline timeline)
+		public ComponentTimeline(Timeline timeline, T component)
 		{
 			this.timeline = timeline;
+			this.component = component;
+			CopyProperties(component);
 		}
 
 		public virtual void Start() { }
@@ -35,20 +36,6 @@ namespace Chronos
 		public void AdjustProperties()
 		{
 			AdjustProperties(timeline.timeScale);
-		}
-
-		public bool Cache(T source)
-		{
-			bool shouldCopy = component == null && source != null;
-
-			component = source;
-
-			if (shouldCopy)
-			{
-				CopyProperties(source);
-			}
-
-			return source != null;
 		}
 	}
 }

@@ -5,7 +5,6 @@ namespace druggedcode.engine
 {
 	public class PlayerInput : MonoBehaviour
 	{
-
 		[Header ("Keyboard")]
 		public KeyCode leftKey = KeyCode.A;
 		public KeyCode rightKey = KeyCode.D;
@@ -38,6 +37,13 @@ namespace druggedcode.engine
 			mPlayer.isRun = Input.GetKey (runKey);
 			mPlayer.isJumpPressed = Input.GetKey( jumpKey );
 
+			if( mPlayer.currentManualLinker != null && axisY > 0.5f )
+			{
+				mPlayer.currentManualLinker.Move();
+				return;
+			}
+
+
 			if( Input.GetKeyDown (jumpKey))
 			{
 				if( axisY < -0.1f ) mPlayer.DoJumpBelow();
@@ -46,7 +52,7 @@ namespace druggedcode.engine
 
 			if( Input.GetKeyDown (escapeKey)) mPlayer.DoEscape();
 			if( Input.GetKeyDown (dashKey)) mPlayer.DoDash();
-			// if (Input.GetButtonDown( attackKey )) mPlayer.OrderAttack();
+			if (Input.GetButtonDown( attackKey )) mPlayer.DoAttack();
 		}
 	}
 }

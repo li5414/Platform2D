@@ -2,7 +2,7 @@
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DGeometryBoundaries : BasePC2D
+    public class ProCamera2DGeometryBoundaries : BasePC2D, IPositionDeltaChanger
     {
         public static string ExtensionName = "Geometry Boundaries";
 
@@ -16,25 +16,28 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             base.Awake();
 
             _cameraMoveInColliderBoundaries = new MoveInColliderBoundaries(ProCamera2D);
-            _cameraMoveInColliderBoundaries.CameraTransform = _transform;
-            _cameraMoveInColliderBoundaries.CameraSize = ProCamera2D.ScreenSizeInWorldCoordinates;
+            _cameraMoveInColliderBoundaries.CameraTransform = ProCamera2D.transform;
             _cameraMoveInColliderBoundaries.CameraCollisionMask = BoundariesLayerMask;
-        }
-        
-        override protected void OnPostMoveUpdate(float deltaTime)
-        {
-            MoveInBoundaries();
+
+            ProCamera2D.AddPositionDeltaChanger(this);
         }
 
-        void MoveInBoundaries()
+        #region IPositionDeltaChanger implementation
+
+        public Vector3 AdjustDelta(float deltaTime, Vector3 originalDelta)
         {
+            if (!enabled)
+                return originalDelta;
+            
             _cameraMoveInColliderBoundaries.CameraSize = ProCamera2D.ScreenSizeInWorldCoordinates;
-
-            // Remove the delta movement
-            _transform.Translate(-ProCamera2D.DeltaMovement, Space.World);
 
             // Apply movement considering the collider boundaries
-            _transform.Translate(_cameraMoveInColliderBoundaries.Move(ProCamera2D.DeltaMovement), Space.World);
+            return _cameraMoveInColliderBoundaries.Move(originalDelta);
         }
+
+        public int PDCOrder { get { return _pdcOrder; } set { _pdcOrder = value; } }
+        int _pdcOrder = 3000;
+
+        #endregion
     }
 }

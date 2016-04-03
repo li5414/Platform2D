@@ -13,14 +13,15 @@ namespace druggedcode.engine
         #region STATIC
         const string ANIM_EVENT_VX = "VX";
         const string ANIM_EVENT_VY = "VY";
-        const string ANIM_EVENT_WAITATTACK = "WaitAttack";
-        const string ANIM_EVENT_FIRE = "Fire";
-        const string ANIM_EVENT_EJECT_CASING = "EjectCasing";
         const string ANIM_EVENT_GRAVITY = "Gravity";
         const string ANIM_EVENT_GHOSTING = "Ghosting";
         const string ANIM_EVENT_STEP = "Step";
         const string ANIM_EVENT_SOUND = "Sound";
         const string ANIM_EVENT_EFFECT = "Effect";
+
+		public const string ANIM_EVENT_WAITATTACK = "WaitAttack";
+		public const string ANIM_EVENT_FIRE = "Fire";
+		public const string ANIM_EVENT_EJECT_CASING = "EjectCasing";
 
         static public List<DEActor> AllActor = new List<DEActor>();
         static private void Register(DEActor ch)
@@ -34,6 +35,7 @@ namespace druggedcode.engine
         }
         #endregion
 
+		#region INSPECTOR
         public Transform graphic;
 
         public float idleFriction = 20;
@@ -68,7 +70,9 @@ namespace druggedcode.engine
         [Header("Hit")]
         [SpineAnimation]
         public string hitAnim;
+		#endregion
 
+		#region PROPERTY
         //----------------------------------------------------------------------------------------------------------
         // input
         //----------------------------------------------------------------------------------------------------------
@@ -118,6 +122,7 @@ namespace druggedcode.engine
         // weapon
         protected List<Weapon> mWeaponList;
         protected Weapon mCurrentWeapon;
+		#endregion
 
         #region Initialize
         virtual protected void Awake()
@@ -140,20 +145,17 @@ namespace druggedcode.engine
 
         virtual protected void Start()
         {
-            //initAnim
             mSkeletonAnimation.state.Event += HandleEvent;
             mSkeletonAnimation.state.Complete += HandleComplete;
 
-            //initWeapon
-            Weapon[] weaponArr = GetComponents<Weapon>();
-            mWeaponList = new List<Weapon>(weaponArr);
+			Weapon[] weaponArr = GetComponents<Weapon>();
+			mWeaponList = new List<Weapon>(weaponArr);
+			foreach (Weapon w in mWeaponList)
+			{
+				w.Init (this, mSkeletonAnimation );
+			}
 
-            foreach (Weapon w in mWeaponList)
-            {
-                //w.Init (this, mSkeletonAnimation.skeleton);
-            }
-
-            //if (mWeaponList.Count > 0) EquipWeapon (mWeaponList [0]);
+			if (mWeaponList.Count > 0) EquipWeapon (mWeaponList [0]);
 
             Idle();
         }
@@ -166,24 +168,13 @@ namespace druggedcode.engine
         virtual protected void OnDisable()
         {
             Unregister(this);
+			CurrentLadder = null;
+			OnDead = null;
         }
 
         public void ResetJump()
         {
             JumpCount = 0;
-        }
-
-        //대화창등이 시작될 때 캐릭터를 멈춘다. 
-        public void Pause(bool onoff = true)
-        {
-            if (onoff)
-            {
-                Idle();
-            }
-            else
-            {
-
-            }
         }
 
         public void Spawn(Vector3 pos)
@@ -218,18 +209,6 @@ namespace druggedcode.engine
                     OnAnimVY(e.Int, e.Float, e.String);
                     break;
 
-                case ANIM_EVENT_WAITATTACK:
-                    OnAnimWaitAttack(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_FIRE:
-                    OnFire(e.Int, e.Float, e.String);
-                    break;
-
-                case ANIM_EVENT_EJECT_CASING:
-                    OnEjectCasing(e.Int, e.Float, e.String);
-                    break;
-
                 case ANIM_EVENT_GHOSTING:
                     OnAnimGhosting(e.Int, e.Float, e.String);
                     break;
@@ -250,7 +229,7 @@ namespace druggedcode.engine
 
         virtual protected void OnAnimVX(int i, float f, string s)
         {
-            //Controller.AddForceX (mFacing == Facing.RIGHT ? f : -f);
+            Controller.AddForceX (mFacing * f );
         }
 
         virtual protected void OnAnimVY(int i, float f, string s)
@@ -258,29 +237,14 @@ namespace druggedcode.engine
             Controller.AddForceY(f);
         }
 
-        virtual protected void OnFire(int i, float f, string s)
-        {
-            //FireWeapon ();
-        }
-
-        virtual protected void OnEjectCasing(int i, float f, string s)
-        {
-            //EjectCasing ();
-        }
-
-        virtual protected void OnAnimWaitAttack(int i, float f, string s)
-        {
-            //WaitNextAttack ();
-        }
-
         virtual protected void OnAnimGhosting(int i, float f, string s)
         {
-            //GhostMode (i == 1 ? true : false, s, f);
+            GhostMode (i == 1 ? true : false, s, f);
         }
 
         virtual protected void OnAnimStep(int i, float f, string s)
         {
-            //if (Controller.state.IsGrounded) PlatformSoundPlay ();
+			if (Controller.State.IsGrounded) PlatformSoundPlay ();
         }
 
         virtual protected void OnAnimSound(int i, float f, string s)
@@ -465,16 +429,6 @@ namespace druggedcode.engine
             mRagdoll.Remove();
 
             //add rigidbody2d and primaryCollider;
-        }
-        #endregion
-
-        #region WEAPON
-        void EquipWeapon(Weapon weapon)
-        {
-            if (mCurrentWeapon == weapon) return;
-
-            mCurrentWeapon = weapon;
-            mCurrentWeapon.Setup();
         }
         #endregion
 
@@ -759,19 +713,28 @@ namespace druggedcode.engine
         }
         #endregion
 
+		#region WEAPON
+		void EquipWeapon(Weapon weapon)
+		{
+			if (mCurrentWeapon == weapon) return;
+			if (mCurrentWeapon != null ) mCurrentWeapon.Reset();
+			mCurrentWeapon = weapon;
+			mCurrentWeapon.Equip();
+		}
+		#endregion
+
         #region ATTACK
-        virtual protected void DoAttack()
+        virtual public void DoAttack()
         {
-            /*
-            if (mCanAttack == false) return;
-            //			if( mCurrentWeapon == null ) return;
+			if( mCanAttack == false ) return;
+			if( mCurrentWeapon == null ) return;
+			if( mCurrentWeapon.IsReady() == false ) return;
+			if( mCurrentWeapon.Attack())
+			{
+				SetState(CharacterState.ATTACK);
+				SetRestrict( false, false, false,true,false,false );
+			}
 
-            SetState(CharacterState.ATTACK);
-
-            mCanDash = false;
-            mCanJump = false;
-            mCanEscape = true;
-            mCanAttack = false;
 
             if (mWaitNextAttack)
             {
@@ -788,11 +751,7 @@ namespace druggedcode.engine
                 AirAttack();
             }
 
-            mStateExit += delegate
-            {
-                mWaitNextAttack = false;
-            };
-            */
+            
         }
 
         virtual protected void GroundAttack()
@@ -877,6 +836,14 @@ namespace druggedcode.engine
             }
             */
         }
+
+		protected bool TransitionAttack_Idle ()
+		{
+//			if (mWaitNextAttack == false) return false;
+//			if (Time.time < mWaitNextAttackEndTime) return false;
+//			StopWaitNextAttack ();
+//			return true;
+		}
         #endregion
 
         #region STATE TRANSITION
@@ -939,5 +906,17 @@ namespace druggedcode.engine
             return true;
         }
         #endregion
+
+		#region COLLISION
+		virtual protected void OnTriggerEnter2D( Collider2D other )
+		{
+			
+		}
+
+		virtual protected void OnTriggerExit2D( Collider2D other )
+		{
+			
+		}
+		#endregion
     }
 }

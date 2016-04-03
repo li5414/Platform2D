@@ -3,19 +3,19 @@ using System;
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DNumericBoundaries : BasePC2D
+    public class ProCamera2DNumericBoundaries : BasePC2D, IPositionDeltaChanger, ISizeOverrider
     {
         public static string ExtensionName = "Numeric Boundaries";
 
         public Action OnBoundariesTransitionStarted;
         public Action OnBoundariesTransitionFinished;
 
-        public bool UseNumericBoundaries;
+        public bool UseNumericBoundaries = true;
         public bool UseTopBoundary;
         public float TopBoundary = 10f;
         public float TargetTopBoundary;
 
-        public bool UseBottomBoundary;
+        public bool UseBottomBoundary = true;
         public float BottomBoundary = -10f;
         public float TargetBottomBoundary;
 
@@ -27,7 +27,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         public float RightBoundary = 10f;
         public float TargetRightBoundary;
 
-        public bool IsCameraSizeBounded;
         public bool IsCameraPositionHorizontallyBounded;
         public bool IsCameraPositionVerticallyBounded;
 
@@ -55,31 +54,20 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         float _verticallyBoundedDuration;
         float _horizontallyBoundedDuration;
 
-        
-        override protected void OnPostMoveUpdate(float deltaTime)
+        protected override void Awake()
         {
-            LimitSizeAndPositionToNumericBoundaries();
+            base.Awake();
+
+            ProCamera2D.AddPositionDeltaChanger(this);
+            ProCamera2D.AddSizeOverrider(this);
         }
 
-        void LimitSizeAndPositionToNumericBoundaries()
+        #region IPositionDeltaChanger implementation
+
+        public Vector3 AdjustDelta(float deltaTime, Vector3 originalDelta)
         {
-            if (!UseNumericBoundaries)
-                return;
-
-            // Set new size if outside boundaries
-            IsCameraSizeBounded = false;
-            var cameraBounds = new Vector2(RightBoundary - LeftBoundary, TopBoundary - BottomBoundary);
-            if (UseRightBoundary && UseLeftBoundary && ProCamera2D.ScreenSizeInWorldCoordinates.x > cameraBounds.x)
-            {
-                ProCamera2D.UpdateScreenSize(cameraBounds.x / ProCamera2D.GameCamera.aspect / 2);
-                IsCameraSizeBounded = true;
-            }
-
-            if (UseTopBoundary && UseBottomBoundary && ProCamera2D.ScreenSizeInWorldCoordinates.y > cameraBounds.y)
-            {
-                ProCamera2D.UpdateScreenSize(cameraBounds.y / 2);
-                IsCameraSizeBounded = true;
-            }
+            if (!enabled || !UseNumericBoundaries)
+                return originalDelta;
 
             // Check movement in the horizontal dir
             IsCameraPositionHorizontallyBounded = false;
@@ -88,7 +76,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             IsCameraPositionVerticallyBounded = false;
             ProCamera2D.IsCameraPositionTopBounded = false;
             ProCamera2D.IsCameraPositionBottomBounded = false;
-            var newPosH = Vector3H(_transform.localPosition);
+            var newPosH = Vector3H(ProCamera2D.LocalPosition) + Vector3H(originalDelta);
             if (UseLeftBoundary && newPosH - ProCamera2D.ScreenSizeInWorldCoordinates.x / 2 < LeftBoundary)
             {
                 newPosH = LeftBoundary + ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
@@ -103,7 +91,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             }
 
             // Check movement in the vertical dir
-            var newPosV = Vector3V(_transform.localPosition);
+            var newPosV = Vector3V(ProCamera2D.LocalPosition) + Vector3V(originalDelta);;
             if (UseBottomBoundary && newPosV - ProCamera2D.ScreenSizeInWorldCoordinates.y / 2 < BottomBoundary)
             {
                 newPosV = BottomBoundary + ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
@@ -123,7 +111,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 // Horizontal
                 if (IsCameraPositionHorizontallyBounded)
                 {
-                    _horizontallyBoundedDuration = Mathf.Min(HorizontalElasticityDuration, _horizontallyBoundedDuration + Time.deltaTime);
+                    _horizontallyBoundedDuration = Mathf.Min(HorizontalElasticityDuration, _horizontallyBoundedDuration + deltaTime);
 
                     var perc = 1f;
                     if (HorizontalElasticityDuration > 0)
@@ -152,13 +140,13 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 }
                 else
                 {
-                    _horizontallyBoundedDuration = Mathf.Max(0, _horizontallyBoundedDuration - Time.deltaTime);
+                    _horizontallyBoundedDuration = Mathf.Max(0, _horizontallyBoundedDuration - deltaTime);
                 }
 
                 // Vertical
                 if (IsCameraPositionVerticallyBounded)
                 {
-                    _verticallyBoundedDuration = Mathf.Min(VerticalElasticityDuration, _verticallyBoundedDuration + Time.deltaTime);
+                    _verticallyBoundedDuration = Mathf.Min(VerticalElasticityDuration, _verticallyBoundedDuration + deltaTime);
 
                     var perc = 1f;
                     if (VerticalElasticityDuration > 0)
@@ -187,14 +175,45 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 }
                 else
                 {
-                    _verticallyBoundedDuration = Mathf.Max(0, _verticallyBoundedDuration - Time.deltaTime);
+                    _verticallyBoundedDuration = Mathf.Max(0, _verticallyBoundedDuration - deltaTime);
                 }
             }
 
-            // Set to the new position
-            if (IsCameraPositionHorizontallyBounded || IsCameraPositionVerticallyBounded)
-                ProCamera2D.CameraPosition = VectorHVD(newPosH, newPosV, Vector3D(_transform.localPosition));
+            // Return the new delta
+            return VectorHV(newPosH - Vector3H(ProCamera2D.LocalPosition), newPosV - Vector3V(ProCamera2D.LocalPosition));
         }
+
+        public int PDCOrder { get { return _pdcOrder; } set { _pdcOrder = value; } }
+        int _pdcOrder = 4000;
+
+        #endregion
+
+        #region ISizeOverrider implementation
+
+        public float OverrideSize(float deltaTime, float originalSize)
+        {
+            if (!UseNumericBoundaries)
+                return originalSize;
+
+            // Set new size if outside boundaries
+            var cameraMaxSize = new Vector2(RightBoundary - LeftBoundary, TopBoundary - BottomBoundary);
+            if (UseRightBoundary && UseLeftBoundary && originalSize * ProCamera2D.GameCamera.aspect * 2f > cameraMaxSize.x)
+            {
+                return cameraMaxSize.x / ProCamera2D.GameCamera.aspect / 2f;
+            }
+
+            if (UseTopBoundary && UseBottomBoundary && originalSize * 2f > cameraMaxSize.y)
+            {
+                return cameraMaxSize.y / 2f;
+            }
+
+            return originalSize;
+        }
+
+        public int SOOrder { get { return _soOrder; } set { _soOrder = value; } }
+        int _soOrder = 2000;
+
+        #endregion
 
         #if UNITY_EDITOR
         override protected void DrawGizmos()

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DForwardFocus : BasePC2D
+    public class ProCamera2DForwardFocus : BasePC2D, IPreMover
     {
         public static string ExtensionName = "Forward Focus";
 
@@ -47,7 +47,23 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             base.Awake();
 
             StartCoroutine(Enable());
+
+            ProCamera2D.Instance.AddPreMover(this);
         }
+
+        #region IPreMover implementation
+
+        public void PreMove(float deltaTime)
+        {
+            if(__enabled && enabled)
+                ApplyInfluence(deltaTime);
+        }
+
+        public int PrMOrder { get { return _prmOrder; } set { _prmOrder = value; } }
+
+        int _prmOrder = 2000;
+
+        #endregion
 
         override public void OnReset()
         {
@@ -72,12 +88,6 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             yield return new WaitForEndOfFrame();
 
             __enabled = true;
-        }
-
-        override protected void OnPreMoveUpdate(float deltaTime)
-        {
-            if(__enabled)
-                ApplyInfluence(deltaTime);
         }
 
         void ApplyInfluence(float deltaTime)

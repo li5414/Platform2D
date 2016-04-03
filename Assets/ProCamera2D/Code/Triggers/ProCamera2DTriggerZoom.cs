@@ -33,7 +33,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             if (ProCamera2D == null)
                 return;
             
-            _startCamSize = ProCamera2D.GameCameraSize;
+            _startCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
             _initialCamSize = _startCamSize;
             _targetCamSize = _startCamSize;
             _targetCamSizeSmoothed = _startCamSize;
@@ -50,12 +50,12 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             if (ResetSizeOnExit)
             {
                 _initialCamSize = _startCamSize;
-                _targetCamSize = ProCamera2D.GameCameraSize;
-                _targetCamSizeSmoothed = ProCamera2D.GameCameraSize;
+                _targetCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
+                _targetCamSizeSmoothed = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
             }
             else
             {
-                _initialCamSize = ProCamera2D.GameCameraSize;
+                _initialCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
                 _targetCamSize = _initialCamSize;
                 _targetCamSizeSmoothed = _initialCamSize;
             }
@@ -97,9 +97,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
                 var newTargetOrtographicSize = (_initialCamSize * distancePercentage) + (finalTargetSize * (1 - distancePercentage));
 
-                if ((finalTargetSize > ProCamera2D.GameCameraSize
+                if ((finalTargetSize > ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f
                     && newTargetOrtographicSize > _targetCamSize) ||
-                    (finalTargetSize < ProCamera2D.GameCameraSize
+                    (finalTargetSize < ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f
                     && newTargetOrtographicSize < _targetCamSize) ||
                     ResetSizeOnExit)
                 {
@@ -110,7 +110,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 _previousCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y;
 
                 // Update camera size if needed
-                if (Mathf.Abs(ProCamera2D.GameCameraSize - _targetCamSize) > .0001f)
+                if (Mathf.Abs(ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f - _targetCamSize) > .0001f)
                     UpdateScreenSize(ResetSizeOnExit ? ResetSizeSmoothness : ZoomSmoothness);
 
                 // Yield
@@ -119,7 +119,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 // If the camera is bounded, reset the easing
                 if (_previousCamSize == ProCamera2D.ScreenSizeInWorldCoordinates.y)
                 {
-                    _targetCamSize = ProCamera2D.GameCameraSize;
+                    _targetCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
                     _targetCamSizeSmoothed = _targetCamSize;
                     _zoomVelocity = 0f;
                 }
@@ -130,7 +130,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         {
             while (!_insideTrigger &&
                    _instanceID == ProCamera2D.CurrentZoomTriggerID &&
-                   Mathf.Abs(ProCamera2D.GameCameraSize - _targetCamSize) > .0001f)
+                    Mathf.Abs(ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f - _targetCamSize) > .0001f)
             {
                 UpdateScreenSize(ResetSizeOnExit ? ResetSizeSmoothness : ZoomSmoothness);
                 yield return ProCamera2D.GetYield();

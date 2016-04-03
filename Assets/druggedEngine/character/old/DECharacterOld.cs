@@ -889,7 +889,7 @@ namespace druggedcode.engine
 			if (mCurrentWeapon == weapon) return;
 
 			mCurrentWeapon = weapon;
-			mCurrentWeapon.Setup ();
+			mCurrentWeapon.Equip ();
 		}
 
 		virtual protected void DoAttack ()

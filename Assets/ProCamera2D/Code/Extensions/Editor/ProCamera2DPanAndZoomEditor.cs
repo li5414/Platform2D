@@ -94,6 +94,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
                     _tooltip = new GUIContent("Draggable Area", "A normalized screen space area where the drag is active. Leave to default to use the whole screen");
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("DraggableAreaRect"), _tooltip);
+
+                    _tooltip = new GUIContent("Stop Speed On Drag Start", "How fast the camera inertia stops once the user starts dragging");
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("StopSpeedOnDragStart"), _tooltip);
                     EditorGUI.indentLevel = 1;
                 }
 

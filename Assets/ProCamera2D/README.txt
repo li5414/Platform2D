@@ -38,6 +38,28 @@ Twitter - http://www.twitter.com/lpfonseca
 
 ## CHANGELOG ##
 
+2.0.1
+- Support for Unity 5.4.0
+- Fixed skipping certain TriggerBoundaries transitions on some edges cases
+- Fixed bug calculating camera size when using a 2DToolkit Pixels Per Meter camera
+- Fixed a null reference when destroying a Pixel Perfect sprite
+
+2.0.0
+- New extension - TransitionsFX! Transition between scenes or camera positions with beautiful effects
+- Major refactor focusing on code architecture and performance
+- Moved LimitSpeed out of the core into a separate extension
+- Moved LimitDistance out of the core into a separate extension
+- Allow the camera to be parented to any kind of hierarchy
+- Added the option to not snap the camera to the pixel grid when using SnapMovementToGrid on the PixelPerfect extension
+- Added the option for the Shake extension to ignore the timeScale, allowing it to work even if the game is paused
+- Added a "ApplyInfluenceIgnoringBoundaries" method to the Shake extension
+- Fixed StopShaking method on the Shake extension
+- More code comments
+
+1.9.2
+- Added a parameter to the PanAndZoom extension that allows to define how fast the camera inertia should stop once the user starts dragging after a previous pan movement
+- NumericBoundaries extension editor tweaks
+
 1.9.1
 - Added an indication of the current camera velocity to the SpeedBasedZoom extension editor for reference
 - Added Load/Save buttons to the presets list on the Shake extension for an easier control

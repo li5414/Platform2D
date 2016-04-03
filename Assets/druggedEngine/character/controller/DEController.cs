@@ -11,7 +11,7 @@ namespace druggedcode.engine
 		//CAST_GROUND_LENGTH - CAST_GROUND_START_Y_OFFSET 가 실제 position 에서 아래로 쏜 길이가 된다.
 		#region inspector
 		[Header ("References")]
-		public PolygonCollider2D primaryCollider;
+		public Collider2D platformCollider;
 
 		[Header("Move")]
 		public float accelOnGround = 30f;
@@ -76,9 +76,9 @@ namespace druggedcode.engine
 
 			State = new NewControllerState ();
 
-			CalculateRayBounds (primaryCollider);
+			CalculateRayBounds (platformCollider);
 
-			if (primaryCollider.sharedMaterial == null)
+			if (platformCollider.sharedMaterial == null)
 			{
 				mPhysicMaterial = new PhysicsMaterial2D ("ControllerColliderMaterial");
 				SetFriction( defaultFriction );
@@ -86,10 +86,10 @@ namespace druggedcode.engine
 			}
 			else
 			{
-				mPhysicMaterial = Instantiate (primaryCollider.sharedMaterial);
+				mPhysicMaterial = Instantiate (platformCollider.sharedMaterial);
 			}
 
-			primaryCollider.sharedMaterial = mPhysicMaterial;
+			platformCollider.sharedMaterial = mPhysicMaterial;
 		}
 
 		virtual protected void Start ()
@@ -97,8 +97,14 @@ namespace druggedcode.engine
 			currentMask = DruggedEngine.MASK_ALL_GROUND;
 		}
 
-		void CalculateRayBounds (PolygonCollider2D coll)
+		void CalculateRayBounds (Collider2D coll)
 		{
+//			PolygonCollider2D
+			if( coll == null )
+			{
+				print( "name: " + name );
+			}
+
 			Bounds b = coll.bounds;
 			Vector3 min = mTr.InverseTransformPoint (b.min);
 			Vector3 center = mTr.InverseTransformPoint (b.center);
@@ -271,8 +277,8 @@ namespace druggedcode.engine
 			if( friction != mPhysicMaterial.friction )
 			{
 				mPhysicMaterial.friction = friction;
-				primaryCollider.gameObject.SetActive (false);
-				primaryCollider.gameObject.SetActive (true);
+				platformCollider.gameObject.SetActive (false);
+				platformCollider.gameObject.SetActive (true);
 			}
 		}
 
@@ -281,8 +287,8 @@ namespace druggedcode.engine
 			if( bounce != mPhysicMaterial.bounciness )
 			{
 				mPhysicMaterial.bounciness = bounce;
-				primaryCollider.gameObject.SetActive (false);
-				primaryCollider.gameObject.SetActive (true);
+				platformCollider.gameObject.SetActive (false);
+				platformCollider.gameObject.SetActive (true);
 			}
 		}
         
@@ -351,7 +357,7 @@ namespace druggedcode.engine
 
 		public void UpdateColliderSize (float xScale, float yScale)
 		{
-			primaryCollider.transform.localScale = new Vector3(xScale,yScale,1f);
+			platformCollider.transform.localScale = new Vector3(xScale,yScale,1f);
 		}
 
 		public void ResetColliderSize()
@@ -389,7 +395,7 @@ namespace druggedcode.engine
 
 		public void IgnoreCollision( Collider2D col, bool ignore )
 		{
-			Physics2D.IgnoreCollision( primaryCollider, col, ignore );
+			Physics2D.IgnoreCollision( platformCollider, col, ignore );
 		}
 
 		#endregion

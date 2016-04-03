@@ -18,7 +18,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         public string SendMessageParam;
     }
 
-    public class ProCamera2DCinematics : BasePC2D
+    public class ProCamera2DCinematics : BasePC2D, IPositionOverrider, ISizeOverrider
     {
         public static string ExtensionName = "Cinematics";
 
@@ -26,9 +26,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         public Action<int> CinematicReachedTarget;
         public Action CinematicEnded;
 
-        bool _isActive;
+        bool _isPlaying;
 
-        public bool IsActive { get { return _isActive; } }
+        public bool IsPlaying { get { return _isPlaying; } }
 
         public List<CinematicTarget> CinematicTargets = new List<CinematicTarget>();
         public float EndDuration = 1f;
@@ -45,8 +45,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
         public Color LetterboxColor = Color.black;
 
-        ProCamera2DPositionAndSizeOverrider _overridePosition;
         float _initialCameraSize;
+
+        ProCamera2DNumericBoundaries _numericBoundaries;
 
         ProCamera2DLetterbox _letterbox;
 
@@ -56,24 +57,66 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
         bool _skipTarget;
 
+        Vector3 _newPos;
+        Vector3 _originalPos;
+
+        float _newSize;
+
         override protected void Awake()
         {
             base.Awake();
 
-            var positionAndSizeOverrider = ProCamera2D.gameObject.GetComponent<ProCamera2DPositionAndSizeOverrider>();
-            _overridePosition = positionAndSizeOverrider == null ? ProCamera2D.gameObject.AddComponent<ProCamera2DPositionAndSizeOverrider>() : positionAndSizeOverrider;
-            _overridePosition.hideFlags = HideFlags.HideInInspector;
-
             if (UseLetterbox)
                 SetupLetterbox();
 
-            _initialCameraSize = ProCamera2D.GameCameraSize;
+            _initialCameraSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
+
+            ProCamera2D.AddPositionOverrider(this);
+            ProCamera2D.AddSizeOverrider(this);
         }
+
+        #region IPositionOverrider implementation
+
+        public Vector3 OverridePosition(float deltaTime, Vector3 originalPosition)
+        {
+            if (!enabled)
+                return originalPosition;
+            
+            _originalPos = originalPosition;
+
+            if (_isPlaying)
+                return _newPos;
+            else
+                return originalPosition;
+        }
+
+        public int POOrder { get { return _poOrder; } set { _poOrder = value; } }
+        int _poOrder = 0;
+
+        #endregion
+
+        #region ISizeOverrider implementation
+
+        public float OverrideSize(float deltaTime, float originalSize)
+        {
+            if (!enabled)
+                return originalSize;
+            
+            if (_isPlaying)
+                return _newSize;
+            else
+                return originalSize;
+        }
+
+        public int SOOrder { get { return _soOrder; } set { _soOrder = value; } }
+        int _soOrder = 1000;
+
+        #endregion
 
         /// <summary>Play the cinematic.</summary>
         public void Play()
         {
-            if (_isActive)
+            if (_isPlaying)
                 return;
 
             if (CinematicTargets.Count == 0)
@@ -82,28 +125,13 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 return;
             }
 
-            if (_overridePosition == null)
-                Awake();
+            if (UseNumericBoundaries && _numericBoundaries == null)
+                _numericBoundaries = ProCamera2D.GetComponentInChildren<ProCamera2DNumericBoundaries>();
 
-            var numericBoundaries = ProCamera2D.gameObject.GetComponent<ProCamera2DNumericBoundaries>();
-            if (UseNumericBoundaries && numericBoundaries != null)
-            {
-                _overridePosition.UseNumericBoundaries = true;
-                _overridePosition.UseTopBoundary = numericBoundaries.UseTopBoundary;
-                _overridePosition.TopBoundary = numericBoundaries.TopBoundary;
-                _overridePosition.UseBottomBoundary = numericBoundaries.UseBottomBoundary;
-                _overridePosition.BottomBoundary = numericBoundaries.BottomBoundary;
-                _overridePosition.UseLeftBoundary = numericBoundaries.UseLeftBoundary;
-                _overridePosition.LeftBoundary = numericBoundaries.LeftBoundary;
-                _overridePosition.UseRightBoundary = numericBoundaries.UseRightBoundary;
-                _overridePosition.RightBoundary = numericBoundaries.RightBoundary;
-            }
-            else if (!UseNumericBoundaries && numericBoundaries != null)
-            {
-                _overridePosition.UseNumericBoundaries = false;
-            }
+            if (_numericBoundaries == null)
+                UseNumericBoundaries = false;
 
-            _isActive = true;
+            _isPlaying = true;
             if (_endCinematicRoutine != null)
             {
                 StopCoroutine(_endCinematicRoutine);
@@ -117,10 +145,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         /// <summary>Stop the cinematic.</summary>
         public void Stop()
         {
-            if (!_isActive)
+            if (!_isPlaying)
                 return;
 
-            _isActive = false;
             if (_startCinematicRoutine != null)
             {
                 StopCoroutine(_startCinematicRoutine);
@@ -140,7 +167,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         /// <summary>If the cinematic is stopped, it plays it. If it's playing, it stops it.</summary>
         public void Toggle()
         {
-            if (_isActive)
+            if (_isPlaying)
                 Stop();
             else
                 Play();
@@ -197,10 +224,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         {
             if (CinematicStarted != null)
                 CinematicStarted();
-
-            _overridePosition.OverridePosition = ProCamera2D.CameraPosition;
-            _overridePosition.OverrideSize = ProCamera2D.GameCameraSize;
-            _overridePosition.Enabled = true;
+            
+            _newPos = ProCamera2D.LocalPosition;
+            _newSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
 
             if (UseLetterbox)
             {
@@ -228,25 +254,26 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             if (cinematicTarget.TargetTransform == null)
                 yield break;
 
-            var initialPosH = Vector3H(ProCamera2D.CameraPosition);
-            var initialPosV = Vector3V(ProCamera2D.CameraPosition);
+            var initialPosH = Vector3H(ProCamera2D.LocalPosition);
+            var initialPosV = Vector3V(ProCamera2D.LocalPosition);
 
-            var currentCameraSize = ProCamera2D.GameCameraSize;
+            var currentCameraSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
 
             // Ease in
             var t = 0f;
             while (t <= 1.0f)
             {
                 t += ProCamera2D.DeltaTime / cinematicTarget.EaseInDuration;
-                
-                _overridePosition.Enabled = true;
 
-                _overridePosition.OverridePosition = VectorHVD(
-                    Utils.EaseFromTo(initialPosH, Vector3H(cinematicTarget.TargetTransform.position), t, cinematicTarget.EaseType), 
-                    Utils.EaseFromTo(initialPosV, Vector3V(cinematicTarget.TargetTransform.position), t, cinematicTarget.EaseType),
-                    Vector3D(ProCamera2D.CameraPosition));
+                var newPosH = Utils.EaseFromTo(initialPosH, Vector3H(cinematicTarget.TargetTransform.position), t, cinematicTarget.EaseType);
+                var newPosV = Utils.EaseFromTo(initialPosV, Vector3V(cinematicTarget.TargetTransform.position), t, cinematicTarget.EaseType);
 
-                _overridePosition.OverrideSize = Utils.EaseFromTo(currentCameraSize, _initialCameraSize / cinematicTarget.Zoom, t, cinematicTarget.EaseType);
+                if (UseNumericBoundaries)
+                    LimitToNumericBoundaries(ref newPosH, ref newPosV);
+
+                _newPos = VectorHVD(newPosH, newPosV, Vector3D(ProCamera2D.LocalPosition));
+
+                _newSize = Utils.EaseFromTo(currentCameraSize, _initialCameraSize / cinematicTarget.Zoom, t, cinematicTarget.EaseType);
 
                 if (_skipTarget)
                     yield break;
@@ -270,10 +297,13 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             {
                 t += ProCamera2D.DeltaTime;
 
-                _overridePosition.OverridePosition = VectorHVD(
-                    Vector3H(cinematicTarget.TargetTransform.position), 
-                    Vector3V(cinematicTarget.TargetTransform.position),
-                    Vector3D(ProCamera2D.CameraPosition));
+                var newPosH = Vector3H(cinematicTarget.TargetTransform.position);
+                var newPosV = Vector3V(cinematicTarget.TargetTransform.position);
+
+                if (UseNumericBoundaries)
+                    LimitToNumericBoundaries(ref newPosH, ref newPosV);
+
+                _newPos = VectorHVD(newPosH, newPosV, Vector3D(ProCamera2D.LocalPosition));
 
                 if (_skipTarget)
                     yield break;
@@ -286,11 +316,11 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         {
             if (_letterbox != null && LetterboxAmount > 0)
                 _letterbox.TweenTo(0f, LetterboxAnimDuration);
+            
+            var initialPosH = Vector3H(_newPos);
+            var initialPosV = Vector3V(_newPos);
 
-            var initialPosH = Vector3H(_overridePosition.OverridePosition);
-            var initialPosV = Vector3V(_overridePosition.OverridePosition);
-
-            var currentCameraSize = ProCamera2D.GameCameraSize;
+            var currentCameraSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
 
             // Ease out
             var t = 0f;
@@ -298,20 +328,23 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             {
                 t += ProCamera2D.DeltaTime / EndDuration;
 
-                _overridePosition.OverridePosition = VectorHVD(
-                    Utils.EaseFromTo(initialPosH, Vector3H(_overridePosition.OverridenPosition), t, EndEaseType), 
-                    Utils.EaseFromTo(initialPosV, Vector3V(_overridePosition.OverridenPosition), t, EndEaseType),
-                    Vector3D(ProCamera2D.CameraPosition));
+                var newPosH = Utils.EaseFromTo(initialPosH, Vector3H(_originalPos), t, EndEaseType);
+                var newPosV = Utils.EaseFromTo(initialPosV, Vector3V(_originalPos), t, EndEaseType);
 
-                _overridePosition.OverrideSize = Utils.EaseFromTo(currentCameraSize, _initialCameraSize, t, EndEaseType);
+                if (UseNumericBoundaries)
+                    LimitToNumericBoundaries(ref newPosH, ref newPosV);
+
+                _newPos = VectorHVD(newPosH, newPosV, Vector3D(ProCamera2D.LocalPosition));
+
+                _newSize = Utils.EaseFromTo(currentCameraSize, _initialCameraSize, t, EndEaseType);
 
                 yield return ProCamera2D.GetYield();
             }
 
-            _overridePosition.Enabled = false;
-
             if (CinematicEnded != null)
                 CinematicEnded();
+
+            _isPlaying = false;
         }
 
         void SetupLetterbox()
@@ -326,6 +359,19 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             }
 
             _letterbox = letterbox;
+        }
+
+        void LimitToNumericBoundaries(ref float horizontalPos, ref float verticalPos)
+        {
+            if (_numericBoundaries.UseLeftBoundary && horizontalPos - ProCamera2D.ScreenSizeInWorldCoordinates.x / 2 < _numericBoundaries.LeftBoundary)
+                horizontalPos = _numericBoundaries.LeftBoundary + ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
+            else if (_numericBoundaries.UseRightBoundary && horizontalPos + ProCamera2D.ScreenSizeInWorldCoordinates.x / 2 > _numericBoundaries.RightBoundary)
+                horizontalPos = _numericBoundaries.RightBoundary - ProCamera2D.ScreenSizeInWorldCoordinates.x / 2;
+
+            if (_numericBoundaries.UseBottomBoundary && verticalPos - ProCamera2D.ScreenSizeInWorldCoordinates.y / 2 < _numericBoundaries.BottomBoundary)
+                verticalPos = _numericBoundaries.BottomBoundary + ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
+            else if (_numericBoundaries.UseTopBoundary && verticalPos + ProCamera2D.ScreenSizeInWorldCoordinates.y / 2 > _numericBoundaries.TopBoundary)
+                verticalPos = _numericBoundaries.TopBoundary - ProCamera2D.ScreenSizeInWorldCoordinates.y / 2;
         }
 
         #if UNITY_EDITOR

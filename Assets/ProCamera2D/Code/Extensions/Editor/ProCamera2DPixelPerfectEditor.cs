@@ -98,9 +98,17 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             _tooltip = new GUIContent("Zoom", "The zoom level of the camera");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("Zoom"), _tooltip);
 
-            // Snap movemento to grid
-            _tooltip = new GUIContent("Snap Movement to Grid", "If checked, the camera and the sprites will snap to the grid. Might create some stuttering on your camera targets, especially if you're using a large grid and a follow smoothness greater than zero.");
+            // Snap movement to grid
+            EditorGUILayout.BeginHorizontal();
+            _tooltip = new GUIContent("Snap Movement to Grid", "If checked, the the sprites will snap to the grid. Might create some stuttering on your camera targets, especially if you're using a large grid and a follow smoothness greater than zero.");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("SnapMovementToGrid"), _tooltip);
+
+            if (proCamera2DPixelPerfect.SnapMovementToGrid)
+            {
+                _tooltip = new GUIContent("Snap Camera", "If checked, the camera will also snap to the grid. If you notice some stuttering in your game elements try to leave this on.");
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("SnapCameraToGrid"), _tooltip);
+            }
+            EditorGUILayout.EndHorizontal();
 
             // Draw grid
             EditorGUILayout.BeginHorizontal();

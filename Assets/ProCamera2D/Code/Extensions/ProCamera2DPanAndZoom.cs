@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DPanAndZoom : BasePC2D
+    public class ProCamera2DPanAndZoom : BasePC2D, ISizeDeltaChanger, IPreMover
     {
         public static string ExtensionName = "Pan And Zoom";
 
@@ -41,6 +41,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
         public bool UsePanByDrag = true;
 
+        [Range(0f, 1f)]
+        public float StopSpeedOnDragStart = .95f;
+
         public Rect DraggableAreaRect = new Rect(0f, 0f, 1f, 1f);
 
         public Vector2 DragPanSpeed = new Vector2(80f, 80f);
@@ -68,18 +71,21 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             UpdateCurrentFollowSmoothness();
 
             _panTarget = new GameObject("PC2DPanTarget").transform;
+
+            ProCamera2D.AddPreMover(this);
+            ProCamera2D.AddSizeDeltaChanger(this);
         }
 
         void Start()
         {
-            _initialCamSize = ProCamera2D.GameCameraSize;
+            _initialCamSize = ProCamera2D.ScreenSizeInWorldCoordinates.y * .5f;
         }
 
         protected override void OnEnable()
         {
             base.OnEnable();
 
-            CenterPanTargetOnCamera();
+            CenterPanTargetOnCamera(1f);
 
             ProCamera2D.Instance.AddCameraTarget(_panTarget);
         }
@@ -91,14 +97,34 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             ProCamera2D.RemoveCameraTarget(_panTarget);
         }
 
-        protected override void OnPreMoveUpdate(float deltaTime)
+        #region IPreMover implementation
+
+        public void PreMove(float deltaTime)
         {
-            if (AllowPan)
+            if (enabled && AllowPan)
                 Pan(deltaTime);
-            
-            if (AllowZoom)
-                Zoom(deltaTime);
         }
+
+        public int PrMOrder { get { return _prmOrder; } set { _prmOrder = value; } }
+
+        int _prmOrder = 0;
+
+        #endregion
+
+        #region ISizeDeltaChanger implementation
+
+        public float AdjustSize(float deltaTime, float originalDelta)
+        {
+            if (enabled && AllowZoom)
+                return Zoom(deltaTime) + originalDelta;
+
+            return originalDelta;
+        }
+
+        public int SDCOrder { get { return _sdcOrder; } set { _sdcOrder = value; } }
+        int _sdcOrder = 0;
+
+        #endregion
 
         void Pan(float deltaTime)
         {
@@ -108,6 +134,12 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             // Time since zoom
             if (Time.time - _touchZoomTime < .1f)
                 return;
+
+            // Reset camera inertia on pan start
+            if(Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began)
+            {
+                CenterPanTargetOnCamera(StopSpeedOnDragStart);
+            }
 
             // Touch delta
             var averageDelta = Vector2.zero;
@@ -127,14 +159,21 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
             var panSpeed = DragPanSpeed;
 
-            // Mouse delta
             #if UNITY_STANDALONE || UNITY_WEBGL || UNITY_WEBPLAYER || UNITY_EDITOR
+            // Reset camera inertia on pan start
+            if(UsePanByDrag && Input.GetMouseButtonDown(0))
+            {
+                CenterPanTargetOnCamera(StopSpeedOnDragStart);
+            }
+
+            // Mouse drag delta
             var normalizedMousePos = new Vector2(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height);
             if (UsePanByDrag && Input.GetMouseButton(0))
             {
                 if (InsideDraggableArea(normalizedMousePos))
                     _panDelta = _prevMousePosition - normalizedMousePos;
             }
+            // Move to edges delta
             else if (UsePanByMoveToEdges && !Input.GetMouseButton(0))
             {
                 var normalizedMousePosX = (-Screen.width * .5f + Input.mousePosition.x) / Screen.width;
@@ -152,7 +191,8 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
                 _panDelta = new Vector2(normalizedMousePosX, normalizedMousePosY);
 
-                panSpeed = EdgesPanSpeed;
+                if(_panDelta != Vector2.zero)
+                    panSpeed = EdgesPanSpeed;
             }
 
             _prevMousePosition = normalizedMousePos;
@@ -167,22 +207,22 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             }
 
             // Check if target is outside of bounds
-            if ((ProCamera2D.IsCameraPositionLeftBounded && Vector3H(_panTarget.position) < Vector3H(ProCamera2D.CameraPosition)) ||
-                (ProCamera2D.IsCameraPositionRightBounded && Vector3H(_panTarget.position) > Vector3H(ProCamera2D.CameraPosition)))
-                _panTarget.position = VectorHVD(Vector3H(ProCamera2D.CameraPosition), Vector3V(_panTarget.position), Vector3D(_panTarget.position));
+            if ((ProCamera2D.IsCameraPositionLeftBounded && Vector3H(_panTarget.position) < Vector3H(ProCamera2D.LocalPosition)) ||
+                (ProCamera2D.IsCameraPositionRightBounded && Vector3H(_panTarget.position) > Vector3H(ProCamera2D.LocalPosition)))
+                _panTarget.position = VectorHVD(Vector3H(ProCamera2D.LocalPosition), Vector3V(_panTarget.position), Vector3D(_panTarget.position));
 
-            if ((ProCamera2D.IsCameraPositionBottomBounded && Vector3V(_panTarget.position) < Vector3V(ProCamera2D.CameraPosition)) ||
-                (ProCamera2D.IsCameraPositionTopBounded && Vector3V(_panTarget.position) > Vector3V(ProCamera2D.CameraPosition)))
-                _panTarget.position = VectorHVD(Vector3H(_panTarget.position), Vector3V(ProCamera2D.CameraPosition), Vector3D(_panTarget.position));
+            if ((ProCamera2D.IsCameraPositionBottomBounded && Vector3V(_panTarget.position) < Vector3V(ProCamera2D.LocalPosition)) ||
+                (ProCamera2D.IsCameraPositionTopBounded && Vector3V(_panTarget.position) > Vector3V(ProCamera2D.LocalPosition)))
+                _panTarget.position = VectorHVD(Vector3H(_panTarget.position), Vector3V(ProCamera2D.LocalPosition), Vector3D(_panTarget.position));
         }
 
-        void Zoom(float deltaTime)
+        float Zoom(float deltaTime)
         {
             if (_panDelta != Vector2.zero)
             {
                 CancelZoom();
                 RestoreFollowSmoothness();
-                return;
+                return 0;
             }
 
             var zoomInput = 0f;
@@ -210,7 +250,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 if (!_zoomStarted)
                 {
                     _zoomStarted = true;
-                    _panTarget.position = ProCamera2D.CameraPosition;
+                    _panTarget.position = ProCamera2D.LocalPosition;
                     UpdateCurrentFollowSmoothness();
                     RemoveFollowSmoothness();
                 }
@@ -257,14 +297,14 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 
                 _zoomStarted = false;
                 _prevZoomAmount = 0;
-                return;
+                return 0;
             }
 
             // Smoothness to 0
             if (!_zoomStarted)
             {
                 _zoomStarted = true;
-                _panTarget.position = ProCamera2D.CameraPosition;
+                _panTarget.position = ProCamera2D.LocalPosition;
                 UpdateCurrentFollowSmoothness();
                 RemoveFollowSmoothness();
             }
@@ -289,7 +329,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             }
 
             // Zoom
-            ProCamera2D.Zoom(_zoomAmount);
+            return _zoomAmount;
         }
 
         /// <summary>
@@ -301,10 +341,10 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             _origFollowSmoothnessY = ProCamera2D.VerticalFollowSmoothness;
         }
 
-        void CenterPanTargetOnCamera()
+        void CenterPanTargetOnCamera(float interpolant)
         {
             if (_panTarget != null)
-                _panTarget.position = VectorHV(Vector3H(ProCamera2D.CameraPosition), Vector3V(ProCamera2D.CameraPosition));
+                _panTarget.position = Vector3.Lerp(_panTarget.position, VectorHV(Vector3H(ProCamera2D.LocalPosition), Vector3V(ProCamera2D.LocalPosition)), interpolant);
         }
 
         void CancelZoom()

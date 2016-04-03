@@ -241,9 +241,9 @@ namespace Com.LuisPedroFonseca.ProCamera2D
             EditorGUILayout.Space();
 
             GUI.enabled = Application.isPlaying && proCamera2DCinematics.CinematicTargets.Count > 0;
-            if (GUILayout.Button((proCamera2DCinematics.IsActive ? "Stop" : "Start") + " Cinematic"))
+            if (GUILayout.Button((proCamera2DCinematics.IsPlaying ? "Stop" : "Start") + " Cinematic"))
             {
-                if (proCamera2DCinematics.IsActive)
+                if (proCamera2DCinematics.IsPlaying)
                     proCamera2DCinematics.Stop();
                 else
                     proCamera2DCinematics.Play();

@@ -34,7 +34,7 @@ namespace Chronos
 			}
 		}
 
-		public NavMeshAgentTimeline(Timeline timeline) : base(timeline) { }
+		public NavMeshAgentTimeline(Timeline timeline, NavMeshAgent component) : base(timeline, component) { }
 
 		public override void Update()
 		{

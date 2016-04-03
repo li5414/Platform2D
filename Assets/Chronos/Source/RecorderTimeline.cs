@@ -13,7 +13,7 @@ namespace Chronos
 
 	public abstract class RecorderTimeline<TComponent, TSnapshot> : ComponentTimeline<TComponent>, IRecorder where TComponent : Component
 	{
-		public RecorderTimeline(Timeline timeline) : base(timeline)
+		public RecorderTimeline(Timeline timeline, TComponent component) : base(timeline, component)
 		{
 			snapshots = new List<TSnapshot>();
 			times = new List<float>();

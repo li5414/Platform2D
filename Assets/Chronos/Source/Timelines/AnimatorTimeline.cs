@@ -4,7 +4,7 @@ namespace Chronos
 {
 	public class AnimatorTimeline : ComponentTimeline<Animator>
 	{
-		public AnimatorTimeline(Timeline timeline) : base(timeline) { }
+		public AnimatorTimeline(Timeline timeline, Animator component) : base(timeline, component) { }
 
 		private float _speed;
 

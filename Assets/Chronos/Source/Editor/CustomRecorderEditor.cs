@@ -16,12 +16,16 @@ namespace Chronos
 
 		public override void OnInspectorGUI()
 		{
+			serializedObject.Update();
+			
 			EditorGUI.BeginDisabledGroup(Application.isPlaying);
 			{
 				ReorderableListGUI.Title("Variables");
 				ReorderableListGUI.ListField(variables, ReorderableListFlags.DisableDuplicateCommand);
 			}
 			EditorGUI.EndDisabledGroup();
+
+			serializedObject.ApplyModifiedProperties();
 		}
 	}
 }

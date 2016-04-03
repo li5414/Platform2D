@@ -10,7 +10,7 @@ namespace Com.LuisPedroFonseca.ProCamera2D
         VerticalAxis
     }
 
-    public class ProCamera2DRails : BasePC2D
+    public class ProCamera2DRails : BasePC2D, IPreMover
     {
         public static string ExtensionName = "Rails";
 
@@ -47,9 +47,27 @@ namespace Com.LuisPedroFonseca.ProCamera2D
 
             if (CameraTargets.Count == 0)
                 enabled = false;
+
+            ProCamera2D.Instance.AddPreMover(this);
+
+            Step();
         }
 
-        void Update()
+        #region IPreMover implementation
+
+        public void PreMove(float deltaTime)
+        {
+            if (enabled)
+                Step();
+        }
+
+        public int PrMOrder { get { return _prmOrder; } set { _prmOrder = value; } }
+
+        int _prmOrder = 1000;
+
+        #endregion
+
+        void Step()
         {
             var pos = Vector3.zero;
             for (int i = 0; i < CameraTargets.Count; i++)
@@ -59,13 +77,13 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                     case FollowMode.HorizontalAxis:
                         pos = VectorHVD(
                             Vector3H(CameraTargets[i].TargetPosition) * CameraTargets[i].TargetInfluenceH, 
-                            Vector3V(ProCamera2D.CameraPosition), 
+                            Vector3V(ProCamera2D.LocalPosition), 
                             0);
                         break;
 
                     case FollowMode.VerticalAxis:
                         pos = VectorHVD(
-                            Vector3H(ProCamera2D.CameraPosition), 
+                            Vector3H(ProCamera2D.LocalPosition), 
                             Vector3V(CameraTargets[i].TargetPosition) * CameraTargets[i].TargetInfluenceV, 
                             0);
                         break;

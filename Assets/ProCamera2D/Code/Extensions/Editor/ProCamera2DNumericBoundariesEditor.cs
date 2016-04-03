@@ -112,30 +112,32 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 EditorGUILayout.Space();
             }
 
-
-            _tooltip = new GUIContent("Use Elastic Boundaries", "If enabled, the camera will not stop instantly at the boundaries, but instead, it will ease from the current value to the defined boundaries.");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("UseElasticBoundaries"), _tooltip);
-
-            if (proCamera2DNumericBoundaries.UseElasticBoundaries)
+            if (proCamera2DNumericBoundaries.UseNumericBoundaries)
             {
-                EditorGUI.indentLevel = 1;
+                _tooltip = new GUIContent("Use Elastic Boundaries", "If enabled, the camera will not stop instantly at the boundaries, but instead, it will ease from the current value to the defined boundaries.");
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("UseElasticBoundaries"), _tooltip);
 
-                _tooltip = new GUIContent("Horizontal Elasticity Duration", "How long it should take the camera to reach boundaries");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("HorizontalElasticityDuration"), _tooltip);
+                if (proCamera2DNumericBoundaries.UseElasticBoundaries)
+                {
+                    EditorGUI.indentLevel = 1;
 
-                _tooltip = new GUIContent("Horizontal Elasticity Size", "How far can the camera go beyond the boundaries");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("HorizontalElasticitySize"), _tooltip);
+                    _tooltip = new GUIContent("Horizontal Elasticity Duration", "How long it should take the camera to reach boundaries");
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("HorizontalElasticityDuration"), _tooltip);
 
-                _tooltip = new GUIContent("Vertical Elasticity Duration", "How long it should take the camera to reach boundaries");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("VerticalElasticityDuration"), _tooltip);
+                    _tooltip = new GUIContent("Horizontal Elasticity Size", "How far can the camera go beyond the boundaries");
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("HorizontalElasticitySize"), _tooltip);
 
-                _tooltip = new GUIContent("Vertical Elasticity Size", "How far can the camera go beyond the boundaries");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("VerticalElasticitySize"), _tooltip);
+                    _tooltip = new GUIContent("Vertical Elasticity Duration", "How long it should take the camera to reach boundaries");
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("VerticalElasticityDuration"), _tooltip);
 
-                _tooltip = new GUIContent("Elasticity Ease Type", "");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("ElasticityEaseType"), _tooltip);
+                    _tooltip = new GUIContent("Vertical Elasticity Size", "How far can the camera go beyond the boundaries");
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("VerticalElasticitySize"), _tooltip);
 
-                EditorGUI.indentLevel = 0;
+                    _tooltip = new GUIContent("Elasticity Ease Type", "");
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("ElasticityEaseType"), _tooltip);
+
+                    EditorGUI.indentLevel = 0;
+                }
             }
 
             serializedObject.ApplyModifiedProperties();

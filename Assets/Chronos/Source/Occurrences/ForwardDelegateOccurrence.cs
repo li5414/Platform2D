@@ -2,16 +2,11 @@ using UnityEngine;
 
 namespace Chronos
 {
-	/// <summary>
-	/// An occurrence action that is only executed when time goes forward. Does not return any transferable state object that could be used to revert its effect.
-	/// </summary>
-	public delegate void ForwardOnlyAction();
-
-	internal sealed class ForwardDelegateOccurrence : Occurrence
+	internal sealed class ForwardActionOccurence : Occurrence
 	{
-		private ForwardOnlyAction forward { get; set; }
+		private ForwardAction forward { get; set; }
 
-		public ForwardDelegateOccurrence(ForwardOnlyAction forward)
+		public ForwardActionOccurence(ForwardAction forward)
 		{
 			this.forward = forward;
 		}

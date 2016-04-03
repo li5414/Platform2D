@@ -2,23 +2,27 @@
 
 namespace Com.LuisPedroFonseca.ProCamera2D
 {
-    public class ProCamera2DCameraWindow : BasePC2D
+    public class ProCamera2DCameraWindow : BasePC2D, IPositionDeltaChanger
     {
         public static string ExtensionName = "Camera Window";
 
         public Rect CameraWindowRect = new Rect(0f, 0f, .3f, .3f);
         Rect _cameraWindowRectInWorldCoords;
-        
-        override protected void OnPostMoveUpdate(float deltaTime)
+
+        protected override void Awake()
         {
-            CalculateOffset();
+            base.Awake();
+
+            ProCamera2D.AddPositionDeltaChanger(this);
         }
 
-        void CalculateOffset()
-        {
-            // Remove the delta movement
-            _transform.Translate(-ProCamera2D.DeltaMovement, Space.World);
+        #region IPositionDeltaChanger implementation
 
+        public Vector3 AdjustDelta(float deltaTime, Vector3 originalDelta)
+        {
+            if (!enabled)
+                return originalDelta;
+            
             // Calculate the window rect
             _cameraWindowRectInWorldCoords = GetRectAroundTransf(CameraWindowRect, ProCamera2D.ScreenSizeInWorldCoordinates, _transform);
 
@@ -44,9 +48,13 @@ namespace Com.LuisPedroFonseca.ProCamera2D
                 verticalDeltaMovement = ProCamera2D.CameraTargetPositionSmoothed.y - (Vector3V(_transform.localPosition) - _cameraWindowRectInWorldCoords.height / 2 + CameraWindowRect.y);
             }
 
-            var deltaMovement = VectorHV(horizontalDeltaMovement, verticalDeltaMovement);
-            _transform.Translate(deltaMovement, Space.World);
+            return VectorHV(horizontalDeltaMovement, verticalDeltaMovement);
         }
+
+        public int PDCOrder { get { return _pdcOrder; } set { _pdcOrder = value; } }
+        int _pdcOrder = 0;
+
+        #endregion
 
         Rect GetRectAroundTransf(Rect rectNormalized, Vector2 rectSize, Transform transf)
         {

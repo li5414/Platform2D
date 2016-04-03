@@ -14,14 +14,14 @@ namespace druggedcode.engine
         public bool GoesRightInitially = true;
 
 
-        private DEControllerOld _controller;
+		private DEController _controller;
         private Vector2 _direction;
         private Vector2 _startPosition;
         private Vector2 _initialDirection;
 
         void Awake()
         {
-            _controller = GetComponent<DEControllerOld>();
+			_controller = GetComponent<DEController>();
             _startPosition = transform.position;
             _direction = GoesRightInitially ? Vector2.right : -Vector2.right;
             _initialDirection = _direction;
@@ -34,11 +34,11 @@ namespace druggedcode.engine
             _controller.vx = _direction.x * Speed;
 
             // 무엇인가에 충돌한다면 방향을 전환.
-			if ( _controller.state.IsCollidingLeft || _controller.state.IsCollidingRight )
-            {
-                _direction = -_direction;
-                transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
-            }
+//			if ( _controller.state.IsCollidingLeft || _controller.state.IsCollidingRight )
+//            {
+//                _direction = -_direction;
+//                transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
+//            }
         }
 
         public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint )
