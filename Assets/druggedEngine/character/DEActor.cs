@@ -287,7 +287,7 @@ namespace druggedcode.engine
             }
         }
 
-        protected void currentAnimationTimeScale(float timeScale)
+        public void currentAnimationTimeScale(float timeScale)
         {
             GetCurrent(0).TimeScale = timeScale;
         }
@@ -717,7 +717,7 @@ namespace druggedcode.engine
 		void EquipWeapon(Weapon weapon)
 		{
 			if (mCurrentWeapon == weapon) return;
-			if (mCurrentWeapon != null ) mCurrentWeapon.Reset();
+			if (mCurrentWeapon != null ) mCurrentWeapon.UnEquip();
 			mCurrentWeapon = weapon;
 			mCurrentWeapon.Equip();
 		}
@@ -729,53 +729,27 @@ namespace druggedcode.engine
 			if( mCanAttack == false ) return;
 			if( mCurrentWeapon == null ) return;
 			if( mCurrentWeapon.IsReady() == false ) return;
-			if( mCurrentWeapon.Attack())
+
+			SetState(CharacterState.ATTACK);
+
+			if (Controller.State.IsGrounded)
 			{
-				SetState(CharacterState.ATTACK);
-				SetRestrict( false, false, false,true,false,false );
+				mCurrentWeapon.AttackGround();
+//				AddTransition(TransitionAttack_Idle);
+//				AddTransition(TransitionGround_Fall);
+			}
+			else
+			{
+				mCurrentWeapon.AttackAir();
 			}
 
+			SetRestrict( false, false, false,true,false,false );
 
-            if (mWaitNextAttack)
-            {
-                NextAttack();
-                return;
-            }
-
-            if (Controller.state.IsGrounded)
-            {
-                GroundAttack();
-            }
-            else
-            {
-                AirAttack();
-            }
-
-            
-        }
-
-        virtual protected void GroundAttack()
-        {
-            /*
-            mAttackIndex = 0;
-            Stop();
-
-            if (verticalAxis > 0.1f && string.IsNullOrEmpty(attackUpAnim) == false)
-            {
-                PlayAnimation(attackUpAnim);
-            }
-            else if (verticalAxis < -0.1f && string.IsNullOrEmpty(attackDownAnim) == false)
-            {
-                PlayAnimation(attackDownAnim);
-            }
-            else if (string.IsNullOrEmpty(attackGroundAnim) == false)
-            {
-                PlayAnimation(attackGroundAnim);
-            }
-
-            AddTransition(TransitionAttack_Idle);
-            AddTransition(TransitionGround_Fall);
-            */
+//            if (mWaitNextAttack)
+//            {
+//                NextAttack();
+//                return;
+//            }
         }
 
         protected void NextAttack()
@@ -843,6 +817,7 @@ namespace druggedcode.engine
 //			if (Time.time < mWaitNextAttackEndTime) return false;
 //			StopWaitNextAttack ();
 //			return true;
+			return false;
 		}
         #endregion
 

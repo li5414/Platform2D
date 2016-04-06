@@ -13,15 +13,20 @@ namespace druggedcode.engine
         [Header("Anim")]
         [SpineAnimation(startsWith: "Setup")]
         public string setupAnim;
-        [SpineAnimation(startsWith: "Idle")]
+        [SpineAnimation(startsWith: "Attack")]
         public string idleAnim;
         
         [SpineAnimation(startsWith: "Attack")]
-        public string attackAnim;
+        public string attackGroundAnim;
+
+		[SpineAnimation(startsWith: "Attack")]
+		public string attackAirAnim;
 
 		public LayerMask CollisionMask;
 		public int weaponDamage = 1;
-        public float nextFireTime = 0;
+        //public float nextFireTime = 0;
+
+		public float waitAttackDuration;
 
 		#endregion
 
@@ -30,6 +35,9 @@ namespace druggedcode.engine
 		protected SkeletonAnimation mSkeletonAnimation;
 		protected Skeleton mSkeleton;
 		protected SkeletonData mData;
+
+		protected bool mWaitNextAttack;
+		protected float mWaitNextAttackEndTime;
 
 		/// <summary>
 		/// Init from DECharacter's Start
@@ -53,7 +61,6 @@ namespace druggedcode.engine
 			{
 				case DEActor.ANIM_EVENT_WAITATTACK:
 					WaitNextAttack ( e.Int, e.Float, e.String );
-					//OnAnimWaitAttack(e.Int, e.Float, e.String);
 					break;
 
 				case DEActor.ANIM_EVENT_FIRE:
@@ -75,54 +82,62 @@ namespace druggedcode.engine
 			//			}
 		}
 
-		void WaitNextAttack()
+		virtual protected void WaitNextAttack( int i, float f, string s)
 		{
+			mWaitNextAttack = true;
+			mWaitNextAttackEndTime = Time.time + waitAttackDuration;
+
+			mOwner.currentAnimationTimeScale( 0f );
 			/*
             mCanAttack = true;
             mWaitNextAttack = true;
-            mWaitNextAttackEndTime = Time.time + waitAttackDuration;
             currentAnimationTimeScale(0f);
             */
 		}
 
-		virtual public void Reset()
+		virtual public void UnEquip()
 		{
 
 		}
 
+		virtual public void Equip()
+        {
+			if(mSetupAnim != null ) mSetupAnim.Apply( mSkeleton, 0, 1, false, null );
 
+//			mOwner.PlayAnimation( idleAnim, true, 1);
+        }
 
 		virtual public bool IsReady()
 		{
 			return false;
 		}
 
-		/// <summary>
-		/// Setup at player Equiq
-		/// </summary>
-		virtual public void Equip()
+		virtual public void AttackGround()
         {
-			if(mSetupAnim != null ) mSetupAnim.Apply( mSkeleton, 0, 1, false, null );
-
-			mOwner.PlayAnimation( idleAnim, true, 1);
-        }
-
-
-
-		virtual public bool Attack()
-        {
-			if( IsReady() == false ) return false;
-
-
 			Debug.LogWarning("Not implemented!");
-			return true;
         }
+
+		virtual public void AttackAir()
+		{
+			Debug.LogWarning("Not implemented!");
+		}
         
-        //발사 반동
-        public virtual Vector2 GetRecoil()
+        //공격 반동
+        virtual public Vector2 GetRecoil()
         {
             return Vector2.zero;
         }
     }
+
+	[System.Serializable]
+	public class AttakData
+	{
+		public string name;
+		public float damageRatio = 1f;
+		public Vector2 force;
+
+		public GameObject hitPrefab;
+		public Vector2 hitPrefabDirection;
+	}
 }
 

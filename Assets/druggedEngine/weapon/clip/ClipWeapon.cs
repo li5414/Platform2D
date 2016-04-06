@@ -4,7 +4,7 @@ using Spine;
 
 namespace druggedcode.engine
 {
-	public class ClipWeapon : Weapon
+	public class ClipWeapon : MonoBehaviour
 	{
 		[SpineAnimation(startsWith: "Aim")]
 		public string aimAnim;
@@ -27,15 +27,15 @@ namespace druggedcode.engine
 		public Spine.Animation AimAnim;
 		public Spine.Animation ReloadAnim;
 
-		override public void Init( DEActor owner, Skeleton skeleton )
-		{
-			base.Init( owner, skeleton );
-			AimAnim = mData.FindAnimation(aimAnim);
-			ReloadAnim = mData.FindAnimation(reloadAnim);
-		}
+//		override public void Init( DEActor owner, SkeletonAnimation sAnimation )
+//		{
+//			base.Init( owner, sAnimation );
+//			AimAnim = mData.FindAnimation(aimAnim);
+//			ReloadAnim = mData.FindAnimation(reloadAnim);
+//		}
 
-		override public void Attack()
-		{
+//		override public void Attack()
+//		{
 			/*
 			//조준하고,
 			if (mCurrentWeapon.reloadLock == false &&
@@ -77,20 +77,20 @@ namespace druggedcode.engine
 				}
 			}
 			*/
-		}
+//		}
 
-		bool Reload()
-		{
-			if (ammo == 0)
-				return false;
-
-			int refill = clipSize;
-			if (refill > ammo)
-				refill = clipSize - ammo;
-			ammo -= refill;
-			clip = refill;
-
-			return true;
-		}
+//		bool Reload()
+//		{
+//			if (ammo == 0)
+//				return false;
+//
+//			int refill = clipSize;
+//			if (refill > ammo)
+//				refill = clipSize - ammo;
+//			ammo -= refill;
+//			clip = refill;
+//
+//			return true;
+//		}
 	}
 }
