@@ -152,7 +152,7 @@ namespace druggedcode.engine
             PlayAnimation(wallSlideAnim);
             AnimFilp = true;
             Controller.LockVY(wallSlideSpeed);
-            BodyPosition(new Vector2(mFacing == Facing.LEFT ? -0.15f : 0.15f, 0f));
+            //BodyPosition(new Vector2(mFacing == Facing.LEFT ? -0.15f : 0.15f, 0f));
             Stop();
             ResetJump();
 

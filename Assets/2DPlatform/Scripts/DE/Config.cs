@@ -58,12 +58,6 @@ public enum SmoothType
     Lerp
 }
 
-public enum Facing
-{
-    RIGHT,
-    LEFT
-}
-
 public enum AnimationType
 {
     SPINE,

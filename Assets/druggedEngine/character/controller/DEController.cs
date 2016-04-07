@@ -6,6 +6,7 @@ namespace druggedcode.engine
 {
 	public class DEController : MonoBehaviour
 	{
+		const float CAST_FRONT_LENGTH = 0.1f;
 		const float CAST_GROUND_LENGTH = 0.1f;
 		const float CAST_GROUND_START_Y_OFFSET = 0.05f;
 		//CAST_GROUND_LENGTH - CAST_GROUND_START_Y_OFFSET 가 실제 position 에서 아래로 쏜 길이가 된다.
@@ -36,6 +37,7 @@ namespace druggedcode.engine
 		#region getter setter
 		public NewControllerState State { get; private set; }
 		public Vector2 Axis {get;set;}
+
 		public int Facing{get;set;}
 		public float Friction{ get{ return mPhysicMaterial.friction; }}
 		#endregion
@@ -50,8 +52,8 @@ namespace druggedcode.engine
 		Vector3 mCastOriginCenter;
 		Vector3 mCastOriginBack;
 		Vector3 mCastOriginForward;
-		Vector3 wallCastOrigin;
-		float wallCastDistance;
+		Vector3 mCastOriginFront;
+		float mWallCastDistance;
 
 		bool doPassthrough;
 		Platform passThroughPlatform;
@@ -119,8 +121,8 @@ namespace druggedcode.engine
 			mCastOriginForward.x = max.x;
 			mCastOriginForward.y = min.y + CAST_GROUND_START_Y_OFFSET;
 
-			wallCastOrigin = center;
-			wallCastDistance = b.extents.x + CAST_GROUND_START_Y_OFFSET;
+			mCastOriginFront = center;
+			mWallCastDistance = b.extents.x + CAST_FRONT_LENGTH;
 		}
 
 		#endregion
@@ -215,9 +217,7 @@ namespace druggedcode.engine
 			float currentX = velocity.x;
 			if( State.IsGrounded )
 			{
-				if(State.PlatformVelocity.x != 0 )print("t: " +TargetVX );
 				TargetVX += State.PlatformVelocity.x;
-				if(State.PlatformVelocity.x != 0 )print("\tafter t: " +TargetVX );
 				if( absAxisX > 0.1f )
 				{
 					currentX = Mathf.MoveTowards( currentX, TargetVX, Time.deltaTime * accelOnGround);
@@ -243,8 +243,6 @@ namespace druggedcode.engine
 				}
 
 			}
-
-			if(State.PlatformVelocity.x != 0 ) print("current :" + currentX + ", now :" + velocity.x );
 
 			velocity.x = currentX;
 		}
@@ -320,6 +318,7 @@ namespace druggedcode.engine
 		{
 			State.SaveLastStateAndReset ();
 
+			CastRayFront();
 			CastRaysBelow ();
 
 			//밀수 있는 것들은 민다.
@@ -327,6 +326,25 @@ namespace druggedcode.engine
 			if( State.JustGotGrounded )
 			{
 				if( OnJustGotGrounded != null ) OnJustGotGrounded();
+			}
+		}
+
+		void CastRayFront()
+		{
+			Vector2 origin = mTr.TransformPoint( mCastOriginFront );
+			float currentVX = mRb.velocity.x;
+			float distance = mWallCastDistance;
+			if( currentVX != 0 ) distance += Mathf.Abs( currentVX ) * Time.deltaTime;
+
+			RaycastHit2D hit = Physics2D.Raycast( origin, new Vector2( Facing,0), distance, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND );
+
+			if( hit && hit.collider.isTrigger == false )
+			{
+				State.FrontGameObject = hit.collider.gameObject;
+			}
+			else
+			{
+				State.FrontGameObject = null;
 			}
 		}
 
@@ -373,7 +391,6 @@ namespace druggedcode.engine
 			}
 		}
 
-
 		public void PassOneway()
 		{
 			if( State.IsOnOneway == false ) return;
@@ -417,10 +434,8 @@ namespace druggedcode.engine
 		Rigidbody2D OnTopOfCharacter ()
 		{
 			Rigidbody2D character = GetRelevantCharacterCast (mCastOriginCenter, 0.15f);
-			if (character == null)
-				character = GetRelevantCharacterCast (mCastOriginBack, 0.15f);
-			if (character == null)
-				character = GetRelevantCharacterCast (mCastOriginForward, 0.15f);
+			if (character == null) character = GetRelevantCharacterCast (mCastOriginBack, 0.15f);
+			if (character == null) character = GetRelevantCharacterCast (mCastOriginForward, 0.15f);
 
 			return character;
 		}
@@ -452,37 +467,6 @@ namespace druggedcode.engine
 			return null;
 		}
 
-		//check to see if pressing against a wall
-		public bool PressingAgainstWall {
-			get {
-				float x = mRb.velocity.x;
-				bool usingVelocity = true;
-				if (Mathf.Abs (x) < 0.1f)
-				{
-					x = Axis.x;
-					if (Mathf.Abs (x) == 0f)
-					{
-						return false;
-					} else
-					{
-						usingVelocity = false;
-					}
-				}
-
-				Vector2 origin = mTr.TransformPoint (wallCastOrigin);
-				Vector2 direction = new Vector2 (x, 0).normalized;
-				float distance = wallCastDistance + (usingVelocity ? x * Time.deltaTime : 0);
-				RaycastHit2D hit = Physics2D.Raycast( origin, direction, distance, currentMask);
-				if (hit.collider != null && !hit.collider.isTrigger)
-				{
-					if (hit.collider.GetComponent<Platform> ().oneway)
-						return false;
-
-					return true;
-				}
-				return false;
-			}
-		}
 		#endregion
 
 		#if UNITY_EDITOR
@@ -490,8 +474,9 @@ namespace druggedcode.engine
 		{
 			if (Application.isPlaying == false) return;
 
+			//DRAW GROUND
 			if (State.IsGrounded) Gizmos.color = Color.green;
-			else Gizmos.color = Color.grey;
+			else Gizmos.color = Color.magenta;
 
 			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginCenter), 0.05f);
 			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginBack), 0.05f);
@@ -500,6 +485,18 @@ namespace druggedcode.engine
 			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginCenter), mTr.TransformPoint (mCastOriginCenter + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
 			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginBack), mTr.TransformPoint (mCastOriginBack + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
 			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginForward), mTr.TransformPoint (mCastOriginForward + new Vector3 (0, -CAST_GROUND_LENGTH, 0)));
+
+			//DRAW FRONT
+			if (State.IsCollidingFront ) Gizmos.color = Color.green;
+			else Gizmos.color = Color.magenta;
+
+			Gizmos.DrawWireSphere (mTr.TransformPoint (mCastOriginFront), 0.05f);
+
+			float currentVX = mRb.velocity.x;
+			float distance = mWallCastDistance;
+			if( currentVX != 0 ) distance += Mathf.Abs( currentVX ) * Time.deltaTime;
+
+			Gizmos.DrawLine (mTr.TransformPoint (mCastOriginFront), mTr.TransformPoint (mCastOriginFront + new Vector3 ( Facing * distance, 0, 0)));
 		}
 		#endif
 	}
@@ -508,6 +505,7 @@ namespace druggedcode.engine
 	public class NewControllerState
 	{
 		GameObject mStandingOn;
+		GameObject mFrontObject;
 
 		public float SlopeAngle { get; set; }
 
@@ -518,6 +516,7 @@ namespace druggedcode.engine
 		public bool WasColldingAdoveLastFrame { get; private set; }
 
 		public bool IsCollidingAbove { get; set; }
+		public bool IsCollidingFront { get; private set; }
 
 		public bool IsGrounded{ get; private set; }
 
@@ -529,6 +528,25 @@ namespace druggedcode.engine
 			get {
 				if (IsGrounded == false || StandingPlatform == null ) return false;
 				return StandingPlatform.oneway;
+			}
+		}
+
+
+		public GameObject FrontGameObject
+		{
+			get{ return mFrontObject; }
+			set
+			{
+				mFrontObject = value;
+
+				if( mFrontObject == null )
+				{
+					IsCollidingFront = false;
+				}
+				else
+				{
+					IsCollidingFront = true;
+				}
 			}
 		}
 

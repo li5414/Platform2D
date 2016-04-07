@@ -24,11 +24,13 @@ namespace druggedcode.engine
 			if (Application.isPlaying && mController.gameObject.activeInHierarchy )
 			{
 				EditorGUILayout.LabelField ("Grounded", mState.IsGrounded + "( slope: " + mState.SlopeAngle + " )");
+				EditorGUILayout.LabelField("Facing",mController.Facing == 1 ? "RIGHT" : "LEFT");
 				EditorGUILayout.LabelField ("targetVX", mController.TargetVX.ToString());
 				EditorGUILayout.Vector2Field ("velocity", mController.Velocity);
 				EditorGUILayout.Vector2Field ("PlatformVelocity", mState.PlatformVelocity);
 				EditorGUILayout.LabelField ("Friction", mController.Friction.ToString());
 				EditorGUILayout.ObjectField ("StandingPlatform", mState.StandingGameObject, typeof(GameObject), true);
+				EditorGUILayout.ObjectField("FrontGameObject", mState.FrontGameObject,typeof(GameObject),true);
 
 				EditorGUILayout.Space ();
 				DrawDefaultInspector ();

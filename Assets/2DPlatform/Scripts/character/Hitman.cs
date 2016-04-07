@@ -164,14 +164,14 @@ namespace druggedcode.engine
 		{
 			SetState(CharacterState.WALLSLIDE);
 
-			SetRestrict( false,false,true,false,false,false );
+			SetRestrict(false,false,true,false,false,false );
 
 			PlayAnimation(wallSlideAnim);
 			Controller.Stop();
 			ResetJump();
 
 			Controller.LockVY(wallSlideSpeed);
-			//AnimFilp = true;
+			AnimFlip( true );
 			//BodyPosition(new Vector2(mFacing == Facing.LEFT ? -0.15f : 0.15f, 0f));
 
 			AddTransition(TransitionAir_Idle);
@@ -180,9 +180,22 @@ namespace druggedcode.engine
 			mStateExit += delegate
 			{
 				Controller.UnLockVY();
-				//AnimFilp = false;
+				AnimFlip( false );
 				//BodyPosition(Vector2.zero);
 			};
+
+			/*
+			state = ActionState.WALLSLIDE;
+			jumpCount = 0;
+			wallSlideWatchdog = wallSlideWatchdogDuration;
+			wallSlideStartTime = Time.time;
+			upAttackUsed = false;
+			if (Mathf.Abs(rb.velocity.x) > 0.1) {
+				wallSlideFlip = rb.velocity.x > 0;
+			} else {
+				wallSlideFlip = x > 0;
+			}
+			*/
 		}
 		#endregion
 
@@ -192,6 +205,8 @@ namespace druggedcode.engine
 			base.Jump();
 			if (State == CharacterState.WALLSLIDE)
 			{
+				//벽을 밀지 않으면 반대로 뛴다.
+				//벽을 밀고 있으면 조금밀고 올라간다 (오리 참고 )
 				//					Controller.vx = mFacing == Facing.LEFT ? 4 : -4;
 				//					Controller.LockMove (0.5f);
 				SpawnAtFoot(jumpEffectPrefab, Quaternion.Euler(0, 0, mFacing * 90), new Vector3(mFacing * 1f, 1f, 1f));
@@ -287,6 +302,23 @@ namespace druggedcode.engine
 
         }
         
+		public bool IsPressAgainstWall
+		{
+			get
+			{
+				GameObject front = Controller.State.FrontGameObject;
+				if( front == null ) return false;
+
+				Wall wall = front.GetComponent<Wall>();
+				if( wall == null ) return false;
+
+				if( wall.slideWay == WallSlideWay.NOTHING ) return false;
+				else if(( wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == 1 && axis.x > 0.5f ) return true;
+				else if(( wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == -1 && axis.x < -0.5f ) return true;
+				else return false;
+			}
+		}
+
         #region Transition
 		protected bool TransitionLadder_Idle()
 		{

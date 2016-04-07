@@ -179,7 +179,7 @@ namespace druggedcode.engine
 
 		//캐릭터의 중력을 활성화 하거나 비활성화 할때 이전 중력값을 기억하기 위한 용도
 		protected float _originalGravity;
-		protected Facing mFacing;
+		//protected Facing mFacing;
 
 		protected SkeletonAnimation mSkeletonAnimation;
 		protected SkeletonGhost mGhost;
@@ -332,7 +332,7 @@ namespace druggedcode.engine
 
 		virtual protected void OnAnimVX (int i, float f, string s)
 		{
-			Controller.AddForceX (mFacing == Facing.RIGHT ? f : -f);
+			//Controller.AddForceX (mFacing == Facing.RIGHT ? f : -f);
 		}
 
 		virtual protected void OnAnimVY (int i, float f, string s)
@@ -598,7 +598,7 @@ namespace druggedcode.engine
 			PlayAnimation (dashAnim);
 			GravityActive (false);
 			Stop ();
-			Controller.vx = mFacing == Facing.RIGHT ? dashSpeed : -dashSpeed;
+			//Controller.vx = mFacing == Facing.RIGHT ? dashSpeed : -dashSpeed;
 
 			AddTransition (TransitionDash_Idle);
 
@@ -624,7 +624,7 @@ namespace druggedcode.engine
 			PlayAnimation (escapeAnim);
 			Controller.UpdateColliderSize (1f, 0.5f);
 			Stop ();
-			Controller.vx = mFacing == Facing.RIGHT ? RunSpeed : -RunSpeed;
+			//Controller.vx = mFacing == Facing.RIGHT ? RunSpeed : -RunSpeed;
 
 			AddTransition (TransitionGround_Fall);
 			AddTransition (TransitionEscape_Idle);
@@ -661,7 +661,7 @@ namespace druggedcode.engine
 
 				if (State == CharacterState.WALLSLIDE)
 				{
-					Controller.vx = mFacing == Facing.LEFT ? 4 : -4;
+//					Controller.vx = mFacing == Facing.LEFT ? 4 : -4;
 					Controller.LockMove (0.5f);
 					wallJump = true;
 				}
@@ -687,14 +687,14 @@ namespace druggedcode.engine
 			mJumpStartTime = Time.time;
 			JumpCount++;
 
-			if (wallJump)
-			{
-				SpawnAtFoot (effect, Quaternion.Euler (0, 0, mFacing == Facing.RIGHT ? 90 : -90), new Vector3 (mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
-			}
-			else
-			{
-				FXManager.Instance.SpawnFX (effect, mTr.position, new Vector3 (mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
-			}
+//			if (wallJump)
+//			{
+//				SpawnAtFoot (effect, Quaternion.Euler (0, 0, mFacing == Facing.RIGHT ? 90 : -90), new Vector3 (mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
+//			}
+//			else
+//			{
+//				FXManager.Instance.SpawnFX (effect, mTr.position, new Vector3 (mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
+//			}
 
 			AddTransition (TransitionJump_Fall);
 
@@ -756,8 +756,8 @@ namespace druggedcode.engine
 
 		protected void PlatformEffectSpawn ()
 		{
-			Platform platform = Controller.state.StandingPlatform;
-			if (platform != null) platform.ShowEffect (mTr.position, new Vector3 (mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
+			//Platform platform = Controller.state.StandingPlatform;
+			//if (platform != null) platform.ShowEffect (mTr.position, new Vector3 (mFacing == Facing.RIGHT ? 1f : -1f, 1f, 1f));
 		}
 
 		protected void SpawnAtFoot (GameObject prefab, Quaternion rotation, Vector3 scale)
@@ -822,7 +822,7 @@ namespace druggedcode.engine
 		public void Spawn (Vector3 pos)
 		{
 			mTr.position = pos;
-			SetFacing (Facing.RIGHT);
+			//SetFacing (Facing.RIGHT);
 
 			Controller.enabled = true;
 			Controller.CollisionsOn ();
@@ -853,14 +853,14 @@ namespace druggedcode.engine
 
 		protected void Move ()
 		{
-			if (mFacing == Facing.LEFT && horizontalAxis > 0.1f)
-			{
-				SetFacing (Facing.RIGHT);
-			}
-			else if (mFacing == Facing.RIGHT && horizontalAxis < -0.1f)
-			{
-				SetFacing (Facing.LEFT);
-			}
+//			if (mFacing == Facing.LEFT && horizontalAxis > 0.1f)
+//			{
+//				SetFacing (Facing.RIGHT);
+//			}
+//			else if (mFacing == Facing.RIGHT && horizontalAxis < -0.1f)
+//			{
+//				SetFacing (Facing.LEFT);
+//			}
 
 			float targetVX = horizontalAxis * CurrentSpeed;
 			if (targetVX != 0f && smoothMovement)
@@ -1156,21 +1156,21 @@ namespace druggedcode.engine
 			graphic.transform.localPosition = translate;
 		}
 
-		void SetFacing (Facing facing)
-		{
-			mFacing = facing;
-
-			switch (mFacing)
-			{
-				case Facing.RIGHT:
-					graphic.localRotation = Quaternion.Euler( 0f,0f,0f );
-					break;
-
-				case Facing.LEFT:
-					graphic.localRotation = Quaternion.Euler( 0f,180f,0f );
-					break;
-			}
-		}
+//		void SetFacing (Facing facing)
+//		{
+//			mFacing = facing;
+//
+//			switch (mFacing)
+//			{
+//				case Facing.RIGHT:
+//					graphic.localRotation = Quaternion.Euler( 0f,0f,0f );
+//					break;
+//
+//				case Facing.LEFT:
+//					graphic.localRotation = Quaternion.Euler( 0f,180f,0f );
+//					break;
+//			}
+//		}
 
 		protected bool AnimFilp {
 			set {
@@ -1246,14 +1246,14 @@ namespace druggedcode.engine
 		//추후 wall 이 아니라 특정 오브젝트를 밀고 있는지를 알 수 있는 메소드로 변경하자
 		public bool IsPressAgainstWall {
 			get {
-				if (Controller.state.CollidingSide == null) return false;
-
-				Wall wall = Controller.state.CollidingSide.GetComponent<Wall> ();
-
-				if (wall == null) return false;
-				else if (wall.slideWay == WallSlideWay.NOTHING) return false;
-				else if ((wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH) && mFacing == Facing.RIGHT && horizontalAxis > 0f) return true;
-				else if ((wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH) && mFacing == Facing.LEFT && horizontalAxis < 0f) return true;
+//				if (Controller.state.CollidingSide == null) return false;
+//
+//				Wall wall = Controller.state.CollidingSide.GetComponent<Wall> ();
+//
+//				if (wall == null) return false;
+//				else if (wall.slideWay == WallSlideWay.NOTHING) return false;
+//				else if ((wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH) && mFacing == Facing.RIGHT && horizontalAxis > 0f) return true;
+//				else if ((wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH) && mFacing == Facing.LEFT && horizontalAxis < 0f) return true;
 				return false;
 			}
 		}
