@@ -17,6 +17,7 @@ namespace druggedcode.engine
         [SpineAnimation]
         public string wallSlideAnim;
         public float wallSlideSpeed = -1f;
+		public float wallJumpSpeed = 4f;
         
 		[Header ("Ladder")]
 		[SpineAnimation]
@@ -172,7 +173,6 @@ namespace druggedcode.engine
 
 			Controller.LockVY(wallSlideSpeed);
 			AnimFlip( true );
-			//BodyPosition(new Vector2(mFacing == Facing.LEFT ? -0.15f : 0.15f, 0f));
 
 			AddTransition(TransitionAir_Idle);
 			AddTransition(TransitionWallSlide_Fall);
@@ -181,21 +181,7 @@ namespace druggedcode.engine
 			{
 				Controller.UnLockVY();
 				AnimFlip( false );
-				//BodyPosition(Vector2.zero);
 			};
-
-			/*
-			state = ActionState.WALLSLIDE;
-			jumpCount = 0;
-			wallSlideWatchdog = wallSlideWatchdogDuration;
-			wallSlideStartTime = Time.time;
-			upAttackUsed = false;
-			if (Mathf.Abs(rb.velocity.x) > 0.1) {
-				wallSlideFlip = rb.velocity.x > 0;
-			} else {
-				wallSlideFlip = x > 0;
-			}
-			*/
 		}
 		#endregion
 
@@ -209,6 +195,7 @@ namespace druggedcode.engine
 				//벽을 밀고 있으면 조금밀고 올라간다 (오리 참고 )
 				//					Controller.vx = mFacing == Facing.LEFT ? 4 : -4;
 				//					Controller.LockMove (0.5f);
+				Controller.vx = 0f;
 				SpawnAtFoot(jumpEffectPrefab, Quaternion.Euler(0, 0, mFacing * 90), new Vector3(mFacing * 1f, 1f, 1f));
 			}
 			else if (Controller.State.IsGrounded)
@@ -324,7 +311,6 @@ namespace druggedcode.engine
 		{
 			if (Controller.State.IsGrounded || CurrentLadder == null)
 			{
-				print("tpye1 " + Controller.State.IsGrounded + ", " + CurrentLadder );
 				Idle();
 				return true;
 			}
@@ -350,9 +336,14 @@ namespace druggedcode.engine
 
         bool TransitionWallSlide_Fall()
         {
-            if (IsPressAgainstWall) return false;
-            Fall();
-            return true;
+			if( IsPressAgainstWall == false &&
+				(axis.y < -0.5f || ( mFacing == 1 && axis.x < -0.5f ) || ( mFacing == -1 && axis.x > 0.5f )))
+			{
+				Fall();
+				return true;
+			}
+
+			return false;
         }
         
         bool Transition_Climb()
