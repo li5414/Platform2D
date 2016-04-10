@@ -33,8 +33,8 @@ namespace druggedcode.engine
 			var axisX = ((Input.GetKey (leftKey) ? -1 : 0) + (Input.GetKey (rightKey) ? 1 : 0));
 			var axisY = ((Input.GetKey (downKey) ? -1 : 0) + (Input.GetKey (upKey) ? 1 : 0));
 
-			mPlayer.axis = new Vector2(axisX,axisY);
-			mPlayer.isRun = Input.GetKey (runKey);
+			mPlayer.Axis = new Vector2(axisX,axisY);
+			mPlayer.IsRun = Input.GetKey (runKey);
 			mPlayer.isJumpPressed = Input.GetKey( jumpKey );
 
 			if( mPlayer.currentManualLinker != null && axisY > 0.5f )

@@ -84,13 +84,12 @@ namespace druggedcode.engine
 		//----------------------------------------------------------------------------------------------------------
 		// input
 		//----------------------------------------------------------------------------------------------------------
-		public Vector2 axis { get; set; }
-
-		public Vector2 lastAxis { get; set; }
-
-		public bool isRun { get; set; }
+		public Vector2 Axis { get; set; }
+		public Vector2 LastAxis { get; set; }
+		public bool IsRun { get; set; }
 
 		//GET,SET
+		public CharacterState LastState {get;protected set;}
 		public CharacterState State { get; protected set; }
 
 		public DEController Controller { get; private set; }
@@ -111,7 +110,7 @@ namespace druggedcode.engine
 
 		protected Transform mTr;
 		protected int mFacing = 1;
-		protected bool mIsFlip;
+		protected bool mAnimFlip;
 
 		//state
 		protected List<StateTransition> mStateTransitions;
@@ -329,7 +328,7 @@ namespace druggedcode.engine
 			if (mCanFacing)	UpdateFacing ();
 			if (mCanMove) Move ();
 
-			lastAxis = axis;
+			LastAxis = Axis;
 		}
 
 		void FixedUpdate ()
@@ -474,8 +473,8 @@ namespace druggedcode.engine
 
 		protected void UpdateFacing ()
 		{
-			if (mFacing == 1 && axis.x < -0.1f)	SetFacing (-1);
-			else if (mFacing == -1 && axis.x > 0.1f) SetFacing (1);
+			if (mFacing == 1 && Axis.x < -0.1f)	SetFacing (-1);
+			else if (mFacing == -1 && Axis.x > 0.1f) SetFacing (1);
 		}
 
 		protected void SetFacing (int facing)
@@ -487,7 +486,6 @@ namespace druggedcode.engine
 			else mSkeletonAnimation.Skeleton.FlipX = !mAnimFlip;
 		}
 
-		protected bool mAnimFlip;
 		public void AnimFlip( bool isFlip )
 		{
 			mAnimFlip = isFlip;
@@ -496,8 +494,8 @@ namespace druggedcode.engine
 
 		protected void Move ()
 		{
-			float speed = CurrentSpeed * axis.x;
-			Controller.Axis = axis;
+			float speed = CurrentSpeed * Axis.x;
+			Controller.Axis = Axis;
 			Controller.TargetVX = speed;
 		}
 
@@ -505,9 +503,9 @@ namespace druggedcode.engine
 
 		#region STATE CONTROLL
 
-		protected void SetState (CharacterState next)
+		protected void SetState (CharacterState next, bool ignoreSameState = true )
 		{
-			if (State == next)
+			if ( ignoreSameState && State == next)
 			{
 				//Debug.Log("---------same state!!!!! " + state + " > " + next);
 				return;
@@ -516,13 +514,12 @@ namespace druggedcode.engine
 			//Debug.Log (State + " > " + next);
 
 			mStateExit ();
-			mStateExit = delegate {
-			};
-			mStateLoop = delegate {
-			};
+			mStateExit = delegate {};
+			mStateLoop = delegate {};
 
 			mStateTransitions.Clear ();
 
+			LastState = State;
 			State = next;
 		}
 
@@ -615,7 +612,7 @@ namespace druggedcode.engine
 		virtual protected void Fall (bool useJumpCount = true)
 		{
 			SetState (CharacterState.FALL);
-			CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
+			CurrentSpeed = IsRun ? RunSpeed : WalkSpeed;
 			SetRestrict (true, true, true, true, true, false);
 
 			if (useJumpCount)
@@ -700,7 +697,7 @@ namespace druggedcode.engine
 			PlatformEffectSpawn ();
 
 			PlayAnimation (jumpAnim);
-			CurrentSpeed = isRun ? RunSpeed : WalkSpeed;
+			CurrentSpeed = IsRun ? RunSpeed : WalkSpeed;
 
 			Controller.Jump ();
 			mJumpStartTime = Time.time;
@@ -876,10 +873,10 @@ namespace druggedcode.engine
 
 		protected bool TransitionIdle_Move ()
 		{
-			if (axis.x == 0f)
+			if (Axis.x == 0f)
 				return false;
 
-			if (isRun)
+			if (IsRun)
 				Run ();
 			else
 				Walk ();
@@ -888,13 +885,13 @@ namespace druggedcode.engine
 
 		protected bool TransitionWalk_IdleOrRun ()
 		{
-			if (axis.x == 0f)
+			if (Axis.x == 0f)
 			{
 				Idle ();
 				return true;
 			}
 
-			if (isRun)
+			if (IsRun)
 			{
 				Run ();
 				return true;
@@ -905,7 +902,7 @@ namespace druggedcode.engine
 
 		protected bool TransitionRun_IdleOrWalk ()
 		{
-			if (axis.x == 0f || isRun == false)
+			if (Axis.x == 0f || IsRun == false)
 			{
 				Idle ();
 				return true;

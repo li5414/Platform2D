@@ -89,7 +89,7 @@ namespace druggedcode.engine
             CurrentSpeed = crouchSpeed;
             Controller.UpdateColliderSize(1f, 0.65f);
 
-			if( -0.1f < axis.x && axis.x < 0.1f )
+			if( -0.1f < Axis.x && Axis.x < 0.1f )
 			{
 				Controller.SetFriction(idleFriction);
 				currentAnimationTimeScale(0f);
@@ -104,9 +104,9 @@ namespace druggedcode.engine
 
 			mStateLoop += delegate
 			{
-				if( lastAxis.x == axis.x ) return;
+				if( LastAxis.x == Axis.x ) return;
 
-				if ( -0.1f < axis.x && axis.x < 0.1f )
+				if ( -0.1f < Axis.x && Axis.x < 0.1f )
 				{
 					Controller.SetFriction(idleFriction);
 					currentAnimationTimeScale(0f);
@@ -146,10 +146,10 @@ namespace druggedcode.engine
 
 			mStateLoop += delegate
 			{
-				if (axis.y == 0f) currentAnimationTimeScale(0f);
+				if (Axis.y == 0f) currentAnimationTimeScale(0f);
 				else currentAnimationTimeScale(1f);
 
-				Controller.vy = axis.y * ladderClimbSpeed;
+				Controller.vy = Axis.y * ladderClimbSpeed;
 			};
 
 			mStateExit += delegate
@@ -171,6 +171,11 @@ namespace druggedcode.engine
 			Controller.Stop();
 			ResetJump();
 
+			//벽에 착 달라붙게 하자
+			float colliderHalfX = Controller.platformCollider.bounds.extents.x;
+			float tx = Controller.State.FrontHit.point.x + -mFacing * ( colliderHalfX +0.02f );
+			Controller.SetPosX( tx );
+
 			Controller.LockVY(wallSlideSpeed);
 			AnimFlip( true );
 
@@ -189,13 +194,19 @@ namespace druggedcode.engine
 		override protected void Jump()
         {
 			base.Jump();
-			if (State == CharacterState.WALLSLIDE)
+			if (LastState == CharacterState.WALLSLIDE)
 			{
-				//벽을 밀지 않으면 반대로 뛴다.
-				//벽을 밀고 있으면 조금밀고 올라간다 (오리 참고 )
-				//					Controller.vx = mFacing == Facing.LEFT ? 4 : -4;
-				//					Controller.LockMove (0.5f);
-				Controller.vx = 0f;
+				if( IsPressAgainstWall )
+				{
+					Controller.vx = wallJumpSpeed * 0.3f * -mFacing;
+				}
+				else
+				{
+					Controller.vx = wallJumpSpeed * -mFacing;
+				}
+
+				SetFacing( -mFacing );
+
 				SpawnAtFoot(jumpEffectPrefab, Quaternion.Euler(0, 0, mFacing * 90), new Vector3(mFacing * 1f, 1f, 1f));
 			}
 			else if (Controller.State.IsGrounded)
@@ -270,42 +281,6 @@ namespace druggedcode.engine
 		}
 		#endregion
 
-        protected virtual IEnumerator Dive()
-        {
-            yield break;
-            //			// Shake parameters : intensity, duration (in seconds) and decay
-            //			Vector3 ShakeParameters = new Vector3(1.5f,0.5f,1f);
-            //			BehaviorState.Diving=true;
-            //			// while the player is not grounded, we force it to go down fast
-            //			while (!_controller.State.IsGrounded)
-            //			{
-            //				_controller.SetVerticalForce(-Mathf.Abs(_controller.Parameters.Gravity)*2);
-            //				yield return 0; //go to next frame
-            //			}
-            //
-            //			// once the player is grounded, we shake the camera, and restore the diving state to false
-            //			_sceneCamera.Shake(ShakeParameters);		
-            //			BehaviorState.Diving=false;
-
-        }
-        
-		public bool IsPressAgainstWall
-		{
-			get
-			{
-				GameObject front = Controller.State.FrontGameObject;
-				if( front == null ) return false;
-
-				Wall wall = front.GetComponent<Wall>();
-				if( wall == null ) return false;
-
-				if( wall.slideWay == WallSlideWay.NOTHING ) return false;
-				else if(( wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == 1 && axis.x > 0.5f ) return true;
-				else if(( wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == -1 && axis.x < -0.5f ) return true;
-				else return false;
-			}
-		}
-
         #region Transition
 		protected bool TransitionLadder_Idle()
 		{
@@ -330,6 +305,8 @@ namespace druggedcode.engine
             if (jumpElapsedTime < 0.3f) return false;
             else if (IsPressAgainstWall == false) return false;
 
+			//TODO 충돌각도 고려할 것
+
             WallSlide();
             return true;
         }
@@ -337,7 +314,7 @@ namespace druggedcode.engine
         bool TransitionWallSlide_Fall()
         {
 			if( IsPressAgainstWall == false &&
-				(axis.y < -0.5f || ( mFacing == 1 && axis.x < -0.5f ) || ( mFacing == -1 && axis.x > 0.5f )))
+				(Axis.y < -0.5f || ( mFacing == 1 && Axis.x < -0.5f ) || ( mFacing == -1 && Axis.x > 0.5f )))
 			{
 				Fall();
 				return true;
@@ -350,7 +327,7 @@ namespace druggedcode.engine
         {
             if (CurrentLadder == null) return false;
 
-			if (axis.y > 0.1f && CurrentLadder.PlatformY > mTr.position.y)
+			if (Axis.y > 0.1f && CurrentLadder.PlatformY > mTr.position.y)
             {
                 //사다리를 등반하며 점프하자마자 다시 붙는현상을 피하기위해 약간의 버퍼타임을 둔다. 
                 if (Controller.State.IsGrounded == false && jumpElapsedTime < 0.2f) return false;
@@ -358,7 +335,7 @@ namespace druggedcode.engine
                 LadderClimb();
                 return true;
             }
-			else if (axis.y < -0.1f && CurrentLadder.PlatformY <= mTr.position.y)
+			else if (Axis.y < -0.1f && CurrentLadder.PlatformY <= mTr.position.y)
             {
                 mTr.position = new Vector2(CurrentLadder.transform.position.x, CurrentLadder.PlatformY - 0.1f);
                 LadderClimb();
@@ -370,7 +347,7 @@ namespace druggedcode.engine
         
         bool TransitionCrouch_Idle()
         {
-			if (axis.y >= -0.1f && Controller.IsCollidingHead == false)
+			if (Axis.y >= -0.1f && Controller.IsCollidingHead == false)
             {
                 Idle();
                 return true;
@@ -380,7 +357,7 @@ namespace druggedcode.engine
         
         bool TransitionGround_Crouch()
         {
-			if (axis.y < -0.1f)
+			if (Axis.y < -0.1f)
             {
                 Crouch();
                 return true;
@@ -410,6 +387,47 @@ namespace druggedcode.engine
 
         #endregion
         
+		#region GET SET
+		public bool IsPressAgainstWall
+		{
+			get
+			{
+				GameObject front = Controller.State.FrontGameObject;
+				if( front == null ) return false;
+
+				Wall wall = front.GetComponent<Wall>();
+				if( wall == null ) return false;
+
+				if( wall.slideWay == WallSlideWay.NOTHING ) return false;
+				else if(( wall.slideWay == WallSlideWay.LEFT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == 1 && Axis.x > 0.5f ) return true;
+				else if(( wall.slideWay == WallSlideWay.RIGHT || wall.slideWay == WallSlideWay.BOTH ) && mFacing == -1 && Axis.x < -0.5f ) return true;
+				else return false;
+			}
+		}
+		#endregion
+
+		#region DIVE
+		protected virtual IEnumerator Dive()
+		{
+			yield break;
+			//			// Shake parameters : intensity, duration (in seconds) and decay
+			//			Vector3 ShakeParameters = new Vector3(1.5f,0.5f,1f);
+			//			BehaviorState.Diving=true;
+			//			// while the player is not grounded, we force it to go down fast
+			//			while (!_controller.State.IsGrounded)
+			//			{
+			//				_controller.SetVerticalForce(-Mathf.Abs(_controller.Parameters.Gravity)*2);
+			//				yield return 0; //go to next frame
+			//			}
+			//
+			//			// once the player is grounded, we shake the camera, and restore the diving state to false
+			//			_sceneCamera.Shake(ShakeParameters);		
+			//			BehaviorState.Diving=false;
+
+		}
+		#endregion
+
+		#region DOWN ATTACK
         //입력하지 않고 계산으로 알수있지 않을까
         public float downAttackFrameSkip;
         protected void StateLoopLogic()
@@ -474,6 +492,7 @@ namespace druggedcode.engine
                     break;
             }
         }
+		#endregion
     }
 }
 

@@ -267,6 +267,21 @@ namespace druggedcode.engine
 
 			velocity.y = currentY;
 		}
+
+		public void SetPos( float x, float y )
+		{
+			mTr.position = new Vector3( x, y, mTr.position.z );
+		}
+
+		public void SetPosX( float x )
+		{
+			SetPos(x, mTr.position.y );
+		}
+
+		public void SetPosY( float y )
+		{
+			SetPos( mTr.position.x, y );
+		}
 		#endregion
 
 		#region Physics
@@ -341,6 +356,7 @@ namespace druggedcode.engine
 			if( hit && hit.collider.isTrigger == false )
 			{
 				State.FrontGameObject = hit.collider.gameObject;
+				State.FrontHit = hit;
 			}
 			else
 			{
@@ -531,7 +547,7 @@ namespace druggedcode.engine
 			}
 		}
 
-
+		public RaycastHit2D FrontHit{ get;set;}
 		public GameObject FrontGameObject
 		{
 			get{ return mFrontObject; }
