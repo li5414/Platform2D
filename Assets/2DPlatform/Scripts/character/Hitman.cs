@@ -246,8 +246,11 @@ namespace druggedcode.engine
 
 			AddTransition (TransitionDash_Idle);
 
+			GhostMode( true );
+
 			mStateExit += delegate
 			{
+				GhostMode( false );
 				Controller.GravityActive (true);
 				Controller.Stop();
 			};

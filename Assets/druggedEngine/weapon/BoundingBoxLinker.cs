@@ -15,9 +15,9 @@ namespace druggedcode.engine
 			mFollower = GetComponent<BoundingBoxFollower>();
 		}
 
-		void OnTriggerEnter2D( Collider2D collider )
+		void OnTriggerEnter2D( Collider2D coll )
 		{
-			meleeWeapon.BoundingTrigger( mFollower, collider );
+			meleeWeapon.BoundingTrigger( mFollower, coll );
 		}
 	}
 }

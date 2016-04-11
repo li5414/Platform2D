@@ -7,34 +7,23 @@ namespace druggedcode.engine
 {
 	public class MeleeWeapon : Weapon
 	{
-		[Header("Melee")]
-
-		public List<AttakData> hitDataList;
-
-		Dictionary<string, AttakData> mHitDataDic;
-
-		override public void Init( DEActor owner, SkeletonAnimation sAnimation )
+		override public void AttackGround ()
 		{
-			base.Init( owner, sAnimation );
-
-			mHitDataDic = new Dictionary<string, AttakData>();
-
-			foreach( AttakData data in hitDataList )
+			if (mWaitNextAttack)
 			{
-				mHitDataDic.Add( data.name, data );
+				NextAttack();
 			}
+			else
+			{
+				mOwner.Controller.Stop ();
+				mOwner.PlayAnimation (attackGroundAnim);
+			}
+
+			mIsReady = false;
 		}
 
-		override public bool IsReady()
+		override public void AttackAir ()
 		{
-			return true;
-		}
-
-		override public void AttackGround()
-		{
-			mOwner.Controller.Stop();
-			mOwner.PlayAnimation( attackGroundAnim );
-
 			/*
             mAttackIndex = 0;
             Stop();
@@ -52,55 +41,50 @@ namespace druggedcode.engine
                 PlayAnimation(attackGroundAnim);
             }
             */
-
 		}
 
-		override public void AttackAir()
+		public void BoundingTrigger (BoundingBoxFollower follower, Collider2D other)
 		{
-		}
-
-		public void BoundingTrigger( BoundingBoxFollower follower, Collider2D other )
-		{
-			if( LayerUtil.Contains( CollisionMask, other.gameObject.layer ) == false )
+			if (LayerUtil.Contains (mTargetLayer, other.gameObject.layer) == false)
 			{
 				return;
 			}
 
 			string attackName = follower.CurrentAttachmentName;
 
-			AttakData data = mHitDataDic[ attackName ];
-			if( data == null ) return;
+			AttakData data = mHitDataDic [attackName];
+			if (data == null) return;
 
-			print("Hit:" + follower.name + ", tg: " + other.name );
+			print ("Hit:" + attackName + ", tg: " + other.name);
 
-			PolygonCollider2D me =  follower.CurrentCollider;
+			PolygonCollider2D me = follower.CurrentCollider;
 			int xDir = other.transform.position.x < mOwner.transform.position.x ? -1 : 1;
 
-			SendHit( data, other, xDir );
-			ShowImpact( data, me, xDir );
+			SendHit (data, other, xDir);
+			ShowImpact (data, me, xDir);
 		}
 
-		void SendHit( AttakData data, Collider2D collider, int xDir )
+		void SendHit (AttakData data, Collider2D collider, int xDir)
 		{
-			IDamageable damageable = collider.GetComponent<IDamageable>();
+			IDamageable damageable = collider.GetComponent<IDamageable> ();
 
 			if (damageable == null) return;
 
 			float damage = weaponDamage * data.damageRatio;
-			Vector2 force = new Vector2( xDir * data.force.x, data.force.y );
-			HitData hitData = new HitData( damage, force  );
+			Vector2 force = new Vector2 (xDir * data.force.x, data.force.y);
+			HitData hitData = new HitData (damage, force);
 
-			damageable.Hit( hitData );
+			damageable.Hit (hitData);
 		}
 
-		void ShowImpact( AttakData data, PolygonCollider2D current, int xDir )
+		void ShowImpact (AttakData data, PolygonCollider2D current, int xDir)
 		{
-			if( data.hitPrefab == null ) return;
+			if (data.hitPrefab == null) return;
 
 			Vector3 hitPos = current.bounds.center + Vector3.zero;
-			Vector2 hitDirection = new Vector2( xDir * data.hitPrefabDirection.x, data.hitPrefabDirection.y );
-			Quaternion hitRotation = Quaternion.FromToRotation( Vector2.right, hitDirection);
-			FXManager.Instance.SpawnFX( data.hitPrefab, hitPos, hitRotation );
+			Vector2 hitDirection = new Vector2 (xDir * data.hitPrefabDirection.x, data.hitPrefabDirection.y);
+			Quaternion hitRotation = Quaternion.FromToRotation (Vector2.right, hitDirection);
+			FXManager.Instance.SpawnFX (data.hitPrefab, hitPos, hitRotation);
 		}
 	}
 }

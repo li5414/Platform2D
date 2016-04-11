@@ -212,11 +212,6 @@ namespace druggedcode.engine
 
 		virtual protected void HandleComplete (Spine.AnimationState animState, int trackIndex, int loopCount)
 		{
-			var entry = animState.GetCurrent (trackIndex);
-			if (entry.Animation.Name.IndexOf ("Attack") == 0)
-			{
-				Idle ();
-			}
 		}
 
 		virtual protected void HandleEvent (Spine.AnimationState animState, int trackIndex, Spine.Event e)
@@ -228,7 +223,7 @@ namespace druggedcode.engine
 					break;
 
 				case ANIM_EVENT_VY:
-					OnAnimVY (e.Int, e.Float, e.String);
+					//OnAnimVY (e.Int, e.Float, e.String);
 					break;
 
 				case ANIM_EVENT_GHOSTING:
@@ -756,11 +751,14 @@ namespace druggedcode.engine
 
 		void EquipWeapon (Weapon weapon)
 		{
-			if (mCurrentWeapon == weapon)
-				return;
-			if (mCurrentWeapon != null)
-				mCurrentWeapon.UnEquip ();
+			if (mCurrentWeapon == weapon) return;
+			if (mCurrentWeapon != null) mCurrentWeapon.UnEquip ();
+
 			mCurrentWeapon = weapon;
+			mCurrentWeapon.OnAttackEnd += delegate {
+				Idle();
+			};
+
 			mCurrentWeapon.Equip ();
 		}
 
@@ -770,53 +768,22 @@ namespace druggedcode.engine
 
 		virtual public void DoAttack ()
 		{
-			if (mCanAttack == false)
-				return;
-			if (mCurrentWeapon == null)
-				return;
-			if (mCurrentWeapon.IsReady () == false)
-				return;
+			if (mCanAttack == false) return;
+			if (mCurrentWeapon == null) return;
+			if (mCurrentWeapon.IsReady () == false)	return;
 
-			return;
 			SetState (CharacterState.ATTACK);
 
 			if (Controller.State.IsGrounded)
 			{
-				mCurrentWeapon.AttackGround ();
-//				AddTransition(TransitionAttack_Idle);
-//				AddTransition(TransitionGround_Fall);
+				mCurrentWeapon.AttackGround();
+				AddTransition(TransitionGround_Fall);
 			} else
 			{
 				mCurrentWeapon.AttackAir ();
 			}
 
 			SetRestrict (false, false, false, true, false, false);
-
-//            if (mWaitNextAttack)
-//            {
-//                NextAttack();
-//                return;
-//            }
-		}
-
-		protected void NextAttack ()
-		{
-			/*
-            mWaitNextAttack = false;
-            mAttackIndex++;
-
-            if (mAttackIndex == 3)
-            {
-                RemoveTransition(TransitionGround_Fall);
-            }
-
-            switch (bodyType)
-            {
-                case AnimationType.SPINE:
-                    GetCurrent(0).TimeScale = 1;
-                    break;
-            }
-            */
 		}
 
 		void WaitNextAttack ()
@@ -826,14 +793,6 @@ namespace druggedcode.engine
             mWaitNextAttack = true;
             mWaitNextAttackEndTime = Time.time + waitAttackDuration;
             currentAnimationTimeScale(0f);
-            */
-		}
-
-		void StopWaitNextAttack ()
-		{
-			/*
-            mWaitNextAttack = false;
-            Idle();
             */
 		}
 
