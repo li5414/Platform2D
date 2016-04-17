@@ -3,10 +3,12 @@ using System.Collections;
 
 namespace druggedcode.engine
 {
+	public delegate void BoundingBoxDelegate( BoundingBoxFollower follower, Collider2D coll );
+
 	[RequireComponent(typeof(BoundingBoxFollower))]
-	public class BoundingBoxLinker : MonoBehaviour
+	public class BoundingBoxObserver : MonoBehaviour
 	{
-		public MeleeWeapon meleeWeapon;
+		public event BoundingBoxDelegate OnTrigger;
 
 		BoundingBoxFollower mFollower;
 
@@ -17,7 +19,7 @@ namespace druggedcode.engine
 
 		void OnTriggerEnter2D( Collider2D coll )
 		{
-			meleeWeapon.BoundingTrigger( mFollower, coll );
+			if( OnTrigger != null ) OnTrigger( mFollower, coll );
 		}
 	}
 }

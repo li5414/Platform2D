@@ -41,7 +41,8 @@ public class ALocation : MonoBehaviour
 		DEPlayer[] actors = GameObject.FindObjectsOfType<DEPlayer>();
 		foreach( DEPlayer ac in actors )
 		{
-			if( ac.dts == null ) Destroy( ac.gameObject );
+			Destroy( ac.gameObject );
+//			if( ac.dts == null ) Destroy( ac.gameObject );
 		}
     }
 

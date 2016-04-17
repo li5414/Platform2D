@@ -22,7 +22,6 @@ namespace druggedcode.engine
 				EditorGUILayout.Vector2Field( "Axis", mCharacter.Axis );
 				EditorGUILayout.LabelField( "CurrentSpeed", mCharacter.CurrentSpeed.ToString());
 				EditorGUILayout.LabelField("hp",mCharacter.Health.ToString());
-
 				EditorGUILayout.Space ();
 				DrawDefaultInspector();
 			}

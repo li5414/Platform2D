@@ -57,6 +57,7 @@ public struct MetaData
 	public string date;
 }
 
+[System.Serializable]
 public class DTS
 {
 	public string id;
@@ -64,6 +65,7 @@ public class DTS
 	public string assetName;
 }
 
+[System.Serializable]
 public class DTSCharacter: DTS
 {
     public int hp;
@@ -72,6 +74,11 @@ public class DTSCharacter: DTS
     public int def;
     public int luck;
     public List<string> skills;
+
+	public override string ToString()
+	{
+		return string.Format("[DTSCharacter] id:{0}, name:{1}, assetName:{2}",id,name,assetName );
+	}
 }
 
 public class DTSLocation: DTS

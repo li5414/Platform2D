@@ -96,7 +96,7 @@ namespace druggedcode.engine
 
 		virtual protected void Start ()
 		{
-			currentMask = DruggedEngine.MASK_ALL_GROUND;
+			currentMask = DruggedEngine.MASK_MIXED_ALLGROUND;
 		}
 
 		void CalculateRayBounds (Collider2D coll)
@@ -351,7 +351,7 @@ namespace druggedcode.engine
 			float distance = mWallCastDistance;
 			if( currentVX != 0 ) distance += Mathf.Abs( currentVX ) * Time.deltaTime;
 
-			RaycastHit2D hit = Physics2D.Raycast( origin, new Vector2( Facing,0), distance, DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND );
+			RaycastHit2D hit = Physics2D.Raycast( origin, new Vector2( Facing,0), distance, DruggedEngine.MASK_MIXED_EXCEPT_ONEWAY_GROUND );
 
 			if( hit && hit.collider.isTrigger == false )
 			{
@@ -416,13 +416,13 @@ namespace druggedcode.engine
 
 		public void ExceptOneway( Platform oneway )
 		{
-			currentMask = DruggedEngine.MASK_EXCEPT_ONEWAY_GROUND;
+			currentMask = DruggedEngine.MASK_MIXED_EXCEPT_ONEWAY_GROUND;
 			IgnoreCollision( oneway.platformCollider, true );
 		}
 
 		public void IncludeOneway( Platform oneway )
 		{
-			currentMask = DruggedEngine.MASK_ALL_GROUND;
+			currentMask = DruggedEngine.MASK_MIXED_ALLGROUND;
 			IgnoreCollision( oneway.platformCollider, false );
 		}
 

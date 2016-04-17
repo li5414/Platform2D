@@ -7,7 +7,17 @@ namespace druggedcode.engine
 {
 	public class MeleeWeapon : Weapon
 	{
-		override public void AttackGround ()
+		BoundingBoxObserver mBoxObserver;
+
+		override public void Init( DEActor owner, SkeletonAnimation sAnimation )
+		{
+			base.Init( owner, sAnimation );
+
+			mBoxObserver = mOwner.GetComponentInChildren<BoundingBoxObserver>();
+			mBoxObserver.OnTrigger += BoundingTrigger;
+		}
+
+		override protected void AttackGround ()
 		{
 			if (mWaitNextAttack)
 			{
@@ -22,7 +32,7 @@ namespace druggedcode.engine
 			mIsReady = false;
 		}
 
-		override public void AttackAir ()
+		override protected void AttackAir ()
 		{
 			/*
             mAttackIndex = 0;
@@ -43,28 +53,29 @@ namespace druggedcode.engine
             */
 		}
 
-		public void BoundingTrigger (BoundingBoxFollower follower, Collider2D other)
+		void BoundingTrigger (BoundingBoxFollower follower, Collider2D coll)
 		{
-			if (LayerUtil.Contains (mTargetLayer, other.gameObject.layer) == false)
+			if (LayerUtil.Contains (mTargetLayer, coll.gameObject.layer) == false)
 			{
 				return;
 			}
 
 			string attackName = follower.CurrentAttachmentName;
 
-			AttakData data = mHitDataDic [attackName];
+			AttackData data = mHitDataDic [attackName];
 			if (data == null) return;
 
-			print ("Hit:" + attackName + ", tg: " + other.name);
+			print ("Hit:" + attackName + ", tg: " + coll.name);
 
 			PolygonCollider2D me = follower.CurrentCollider;
-			int xDir = other.transform.position.x < mOwner.transform.position.x ? -1 : 1;
+			int xDir = coll.transform.position.x < mOwner.transform.position.x ? -1 : 1;
 
-			SendHit (data, other, xDir);
+			SendHit (data, coll, xDir);
 			ShowImpact (data, me, xDir);
 		}
 
-		void SendHit (AttakData data, Collider2D collider, int xDir)
+
+		void SendHit (AttackData data, Collider2D collider, int xDir)
 		{
 			IDamageable damageable = collider.GetComponent<IDamageable> ();
 
@@ -77,7 +88,7 @@ namespace druggedcode.engine
 			damageable.Hit (hitData);
 		}
 
-		void ShowImpact (AttakData data, PolygonCollider2D current, int xDir)
+		void ShowImpact (AttackData data, PolygonCollider2D current, int xDir)
 		{
 			if (data.hitPrefab == null) return;
 

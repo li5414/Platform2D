@@ -33,7 +33,7 @@ namespace druggedcode.engine
 
 		void Start ()
 		{
-			LayerUtil.ChangeLayer (gameObject, DruggedEngine.MASK_TRIGGER_AT_PLAYER);
+			LayerUtil.ChangeLayer (gameObject, DruggedEngine.MASK_PLAYER_TRIGGER);
 		}
 
 		public void Move()

@@ -100,7 +100,8 @@ namespace druggedcode.engine
 
 		public int JumpCount { get; set; }
 
-		public DTSCharacter dts { get; set; }
+//		public DTSCharacter dts { get; set; }
+		public DTSCharacter dts;
 
 		public Ladder CurrentLadder { get; set; }
 
@@ -132,6 +133,10 @@ namespace druggedcode.engine
 
 		//anim
 		protected SkeletonAnimation mSkeletonAnimation;
+		protected Spine.AnimationState mAnimationState;
+		protected Spine.AnimationStateData mAnimationStateData;
+		protected Spine.SkeletonData mSkeletonData;
+
 		protected SkeletonGhost mGhost;
 		protected SkeletonRagdoll2D mRagdoll;
 
@@ -157,18 +162,20 @@ namespace druggedcode.engine
 			Health = new HealthState (100);
 
 			mStateTransitions = new List<StateTransition> ();
-			mStateLoop = delegate {
-			};
-			mStateExit = delegate {
-			};
+			mStateLoop = delegate {};
+			mStateExit = delegate {};
 		}
 
 		virtual protected void Start ()
 		{
-			mSkeletonAnimation.state.Event += HandleEvent;
-			mSkeletonAnimation.state.Complete += HandleComplete;
+			mAnimationState = mSkeletonAnimation.state;
+			mAnimationState.Event += HandleEvent;
+			mAnimationState.Complete += HandleComplete;
 
-			Weapon[] weaponArr = GetComponents<Weapon> ();
+			mAnimationStateData = mAnimationState.Data;
+			mSkeletonData = mAnimationStateData.SkeletonData;
+
+			Weapon[] weaponArr = GetComponentsInChildren<Weapon> ();
 			mWeaponList = new List<Weapon> (weaponArr);
 			foreach (Weapon w in mWeaponList)
 			{
@@ -178,6 +185,7 @@ namespace druggedcode.engine
 			if (mWeaponList.Count > 0)
 				EquipWeapon (mWeaponList [0]);
 
+			print("dts: " + dts.ToString());
 			Idle ();
 		}
 
@@ -223,7 +231,7 @@ namespace druggedcode.engine
 					break;
 
 				case ANIM_EVENT_VY:
-					//OnAnimVY (e.Int, e.Float, e.String);
+					OnAnimVY (e.Int, e.Float, e.String);
 					break;
 
 				case ANIM_EVENT_GHOSTING:
@@ -261,8 +269,7 @@ namespace druggedcode.engine
 
 		virtual protected void OnAnimStep (int i, float f, string s)
 		{
-			if (Controller.State.IsGrounded)
-				PlatformSoundPlay ();
+			if (Controller.State.IsGrounded) PlatformSoundPlay ();
 		}
 
 		virtual protected void OnAnimSound (int i, float f, string s)
@@ -275,27 +282,36 @@ namespace druggedcode.engine
 			//print("Effect : " + s);
 		}
 
-		public void PlayAnimation (string animName, bool loop = true, int trackIndex = 0)
+		public bool PlayAnimation (string animName, bool loop = true, int trackIndex = 0)
 		{
-			if (string.IsNullOrEmpty (animName))
-				return;
+			if (string.IsNullOrEmpty (animName)) return false;
 
-			mSkeletonAnimation.state.SetAnimation (trackIndex, animName, loop);
+			Spine.Animation animation =  mSkeletonData.FindAnimation(animName);
+
+			if( animation == null ) return false;
+
+			mAnimationState.SetAnimation( trackIndex, animation, loop );
+
+			return true;
 		}
 
-		protected void PlayAnimation (Spine.Animation animation, bool loop = true, int trackIndex = 0)
+		public bool PlayAnimation(Spine.Animation animation, bool loop = true, int trackIndex = 0)
 		{
-			mSkeletonAnimation.state.SetAnimation (trackIndex, animation, loop);
+			if( animation == null ) return false;
+
+			mAnimationState.SetAnimation( trackIndex, animation, loop );
+
+			return true;
 		}
 
 		protected bool HasAnim (string animName)
 		{
-			return mSkeletonAnimation.state.Data.SkeletonData.FindAnimation (animName) == null ? false : true;
+			return mSkeletonData.FindAnimation(animName) == null ? false:true;
 		}
 
 		protected TrackEntry GetCurrent (int trackIndex = 0)
 		{
-			return mSkeletonAnimation.state.GetCurrent (trackIndex);
+			return mAnimationState.GetCurrent (trackIndex);
 		}
 
 		protected float currentAnimationDuration {
@@ -448,7 +464,7 @@ namespace druggedcode.engine
 			Vector3 rbPosition = mRagdoll.RootRigidbody.position;
 
 			Vector3 skeletonPoint = estimatedPos;
-			RaycastHit2D hit = Physics2D.Raycast ((Vector2)rbPosition, (Vector2)(estimatedPos - rbPosition), Vector3.Distance (estimatedPos, rbPosition), DruggedEngine.MASK_ALL_GROUND);
+			RaycastHit2D hit = Physics2D.Raycast ((Vector2)rbPosition, (Vector2)(estimatedPos - rbPosition), Vector3.Distance (estimatedPos, rbPosition), DruggedEngine.MASK_MIXED_ALLGROUND);
 			if (hit.collider != null)
 				skeletonPoint = hit.point;
 
@@ -770,30 +786,14 @@ namespace druggedcode.engine
 		{
 			if (mCanAttack == false) return;
 			if (mCurrentWeapon == null) return;
-			if (mCurrentWeapon.IsReady () == false)	return;
+			if (mCurrentWeapon.IsReady == false ) return;
+
+			print("dts: " + dts );
+			mCurrentWeapon.Attack();
 
 			SetState (CharacterState.ATTACK);
-
-			if (Controller.State.IsGrounded)
-			{
-				mCurrentWeapon.AttackGround();
-				AddTransition(TransitionGround_Fall);
-			} else
-			{
-				mCurrentWeapon.AttackAir ();
-			}
-
+			AddTransition(TransitionGround_Fall);
 			SetRestrict (false, false, false, true, false, false);
-		}
-
-		void WaitNextAttack ()
-		{
-			/*
-            mCanAttack = true;
-            mWaitNextAttack = true;
-            mWaitNextAttackEndTime = Time.time + waitAttackDuration;
-            currentAnimationTimeScale(0f);
-            */
 		}
 
 		virtual protected void AirAttack ()
@@ -816,16 +816,6 @@ namespace druggedcode.engine
             }
             */
 		}
-
-		protected bool TransitionAttack_Idle ()
-		{
-//			if (mWaitNextAttack == false) return false;
-//			if (Time.time < mWaitNextAttackEndTime) return false;
-//			StopWaitNextAttack ();
-//			return true;
-			return false;
-		}
-
 		#endregion
 
 		#region STATE TRANSITION

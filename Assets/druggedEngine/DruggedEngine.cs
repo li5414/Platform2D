@@ -16,13 +16,16 @@ public class DruggedEngine : MonoBehaviour
 
 	public static LayerMask MASK_PLAYER;
 	public static LayerMask MASK_ENEMY;
-	public static LayerMask MASK_TRIGGER_AT_PLAYER;
-    public static LayerMask MASK_LADDER;
+	public static LayerMask MASK_PLAYER_TRIGGER;
 	public static LayerMask MASK_ENVIRONMENT;
 	public static LayerMask MASK_PLATFORM;
 	public static LayerMask MASK_ONEWAY;
-	public static LayerMask MASK_ALL_GROUND;
-	public static LayerMask MASK_EXCEPT_ONEWAY_GROUND;
+	public static LayerMask MASK_RAGDOLL;
+	public static LayerMask MASK_LADDER;
+	public static LayerMask MASK_DAMAGER;
+
+	public static LayerMask MASK_MIXED_ALLGROUND;
+	public static LayerMask MASK_MIXED_EXCEPT_ONEWAY_GROUND;
 
 	public static int LAYER_ONEWAY;
 
@@ -35,7 +38,7 @@ public class DruggedEngine : MonoBehaviour
 
 	public LayerMask player;
 	public LayerMask enemy;
-	public LayerMask triggerAtPlayer;
+	public LayerMask playerTrigger;
 	public LayerMask environment;
 	public LayerMask platform;
 	public LayerMask oneway;
@@ -49,15 +52,16 @@ public class DruggedEngine : MonoBehaviour
 
 		MASK_PLAYER = player;
 		MASK_ENEMY = enemy;
-		MASK_TRIGGER_AT_PLAYER = triggerAtPlayer;
-        MASK_LADDER = ladder;
-
+		MASK_PLAYER_TRIGGER = playerTrigger;
 		MASK_ENVIRONMENT = environment;
 		MASK_PLATFORM = platform;
 		MASK_ONEWAY = oneway;
+		MASK_RAGDOLL = ragdoll;
+        MASK_LADDER = ladder;
+		MASK_DAMAGER = damager;
         
-		MASK_ALL_GROUND = MASK_ENVIRONMENT + MASK_PLATFORM + MASK_ONEWAY;
-		MASK_EXCEPT_ONEWAY_GROUND = MASK_ENVIRONMENT + MASK_PLATFORM;
+		MASK_MIXED_ALLGROUND = MASK_ENVIRONMENT + MASK_PLATFORM + MASK_ONEWAY;
+		MASK_MIXED_EXCEPT_ONEWAY_GROUND = MASK_ENVIRONMENT + MASK_PLATFORM;
 
 		LAYER_ONEWAY = LayerUtil.GetLayerIdFromLayerMask( MASK_ONEWAY );
 	}
