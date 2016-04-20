@@ -334,7 +334,7 @@ namespace druggedcode.engine
 			State.SaveLastStateAndReset ();
 
 			CastRayFront();
-			CastRaysBelow ();
+			CastRaysBelow();
 
 			//밀수 있는 것들은 민다.
 
@@ -584,10 +584,13 @@ namespace druggedcode.engine
 				{
 					IsGrounded = true;
 
-					if (WasColldingBelowLastFrame == false) JustGotGrounded = true;
+					StandingPlatform = mStandingOn.GetComponent<Platform>();
 
-					StandingPlatform = mStandingOn.GetComponent<Platform> ();
-
+					if (WasColldingBelowLastFrame == false)
+					{
+						JustGotGrounded = true;
+						//StandingPlatform.StepOn( this );
+					}
 				}
 			}
 		}

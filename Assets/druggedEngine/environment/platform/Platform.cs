@@ -27,6 +27,11 @@ namespace druggedcode.engine
 		protected Collider2D mCollider;
 		protected Collider2D mOnewayTriggerCollider;
 
+		public void StepOn()
+		{
+
+		}
+
         virtual protected void Awake()
         {
 			mPathFollow = GetComponent<PathFollow>();

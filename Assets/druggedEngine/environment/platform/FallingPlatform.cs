@@ -9,7 +9,6 @@ namespace druggedcode.engine
     /// IPlayerRespawnListener 구현 하여 스폰 시 다시 정상위치로 되돌리는 기능 추가 고려
     /// 현재 밟은 시간이 누적되지만 시간이 되기 전에 다시 점프하면 리셋되는 기능 고려
     /// </summary>
-    [RequireComponent(typeof(Animator))]
     public class FallingPlatform : Platform, IPlayerRespawnListener
     {
         /// 바닥이 추락할 때 까지 남은 시간.
@@ -17,15 +16,15 @@ namespace druggedcode.engine
         public float FallSpeed = 3f;
 
         bool _characterOn;
-        Animator _animator;
+        Animator mAnimator;
         Vector2 _newPosition;
-        float _remainTime;
+		float mRemainTime;
 
         override protected void Awake()
         {
             base.Awake();
-            _animator = GetComponent<Animator>();
-            _remainTime = TimeBeforeFall;
+			mAnimator = GetComponent<Animator>();
+            mRemainTime = TimeBeforeFall;
         }
 
         override protected void Start()
@@ -37,10 +36,10 @@ namespace druggedcode.engine
         {
             if (_characterOn)
             {
-                _remainTime -= Time.deltaTime;
+                mRemainTime -= Time.deltaTime;
             }
 
-            if (_remainTime < 0)
+            if (mRemainTime < 0)
             {
 				//mCollider.enabled = false;
                 _characterOn = false;
@@ -58,7 +57,7 @@ namespace druggedcode.engine
 
         private void UpdateAnimator()
         {
-            EngineUtils.UpdateAnimatorBool(_animator, "shake", _characterOn);
+            EngineUtils.UpdateAnimatorBool(mAnimator, "shake", _characterOn);
         }
 
         public void onPlayerRespawnInThisCheckpoint(CheckPoint checkpoint )
@@ -85,7 +84,7 @@ namespace druggedcode.engine
                 return;
 
             _characterOn = false;
-            _remainTime = TimeBeforeFall;
+            mRemainTime = TimeBeforeFall;
             UpdateAnimator();
         }
     }
