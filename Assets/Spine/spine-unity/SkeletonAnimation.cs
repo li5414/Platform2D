@@ -30,102 +30,165 @@
  *****************************************************************************/
 
 using System;
-using System.IO;
-using System.Collections.Generic;
 using UnityEngine;
-using Spine;
 
-[ExecuteInEditMode]
-[AddComponentMenu("Spine/SkeletonAnimation")]
-public class SkeletonAnimation : SkeletonRenderer, ISkeletonAnimation {
-	public float timeScale = 1;
-	public bool loop;
-	public Spine.AnimationState state;
-
+namespace Spine.Unity {
 	
+	[ExecuteInEditMode]
+	[AddComponentMenu("Spine/SkeletonAnimation")]
+	[HelpURL("http://esotericsoftware.com/spine-unity-documentation#Controlling-Animation")]
+	public class SkeletonAnimation : SkeletonRenderer, ISkeletonAnimation {
 
-	public event UpdateBonesDelegate UpdateLocal {
-		add { _UpdateLocal += value; }
-		remove { _UpdateLocal -= value; }
-	}
+		/// <summary>
+		/// This is the Spine.AnimationState object of this SkeletonAnimation. You can control animations through it. 
+		/// Note that this object, like .skeleton, is not guaranteed to exist in Awake. Do all accesses and caching to it in Start</summary>
+		public Spine.AnimationState state;
 
-	public event UpdateBonesDelegate UpdateWorld {
-		add { _UpdateWorld += value; }
-		remove { _UpdateWorld -= value; }
-	}
-
-	public event UpdateBonesDelegate UpdateComplete {
-		add { _UpdateComplete += value; }
-		remove { _UpdateComplete -= value; }
-	}
-
-	protected event UpdateBonesDelegate _UpdateLocal;
-	protected event UpdateBonesDelegate _UpdateWorld;
-	protected event UpdateBonesDelegate _UpdateComplete;
-
-	public Skeleton Skeleton {
-		get {
-			return this.skeleton;
+		public event UpdateBonesDelegate UpdateLocal {
+			add { _UpdateLocal += value; }
+			remove { _UpdateLocal -= value; }
 		}
-	}
 
-	[SerializeField]
-	private String
-		_animationName;
-
-	public String AnimationName {
-		get {
-			TrackEntry entry = state.GetCurrent(0);
-			return entry == null ? null : entry.Animation.Name;
+		public event UpdateBonesDelegate UpdateWorld {
+			add { _UpdateWorld += value; }
+			remove { _UpdateWorld -= value; }
 		}
-		set {
-			if (_animationName == value)
+
+		public event UpdateBonesDelegate UpdateComplete {
+			add { _UpdateComplete += value; }
+			remove { _UpdateComplete -= value; }
+		}
+
+		protected event UpdateBonesDelegate _UpdateLocal;
+		protected event UpdateBonesDelegate _UpdateWorld;
+		protected event UpdateBonesDelegate _UpdateComplete;
+
+		/// <summary>Gets the skeleton.</summary>
+		public Skeleton Skeleton {
+			get {
+				this.Initialize(false);
+				return this.skeleton;
+			}
+		}
+
+		[SerializeField]
+		[SpineAnimation]
+		private String _animationName;
+
+		public String AnimationName {
+			get {
+				if (!valid) {
+					Debug.LogWarning("You tried access AnimationName but the SkeletonAnimation was not valid. Try checking your Skeleton Data for errors.");
+					return null;
+				}
+
+				TrackEntry entry = state.GetCurrent(0);
+				return entry == null ? null : entry.Animation.Name;
+			}
+			set {
+				if (_animationName == value)
+					return;
+				_animationName = value;
+
+				if (!valid) {
+					Debug.LogWarning("You tried to change AnimationName but the SkeletonAnimation was not valid. Try checking your Skeleton Data for errors.");
+					return;
+				}
+
+				if (value == null || value.Length == 0)
+					state.ClearTrack(0);
+				else
+					state.SetAnimation(0, value, loop);
+			}
+		}
+
+		/// <summary>Whether or not an animation should loop. This only applies to the initial animation specified in the inspector, or any subsequent Animations played through .AnimationName. Animations set through state.SetAnimation are unaffected.</summary>
+		#if UNITY_5
+		[Tooltip("Whether or not an animation should loop. This only applies to the initial animation specified in the inspector, or any subsequent Animations played through .AnimationName. Animations set through state.SetAnimation are unaffected.")]
+		#endif
+		public bool loop;
+
+		/// <summary>
+		/// The rate at which animations progress over time. 1 means 100%. 0.5 means 50%.</summary>
+		/// <remarks>AnimationState and TrackEntry also have their own timeScale. These are combined multiplicatively.</remarks>
+		#if UNITY_5
+		[Tooltip("The rate at which animations progress over time. 1 means 100%. 0.5 means 50%.")]
+		#endif
+		public float timeScale = 1;
+
+		#region Runtime Instantiation
+		/// <summary>Adds and prepares a SkeletonAnimation component to a GameObject at runtime.</summary>
+		/// <returns>The newly instantiated SkeletonAnimation</returns>
+		public static SkeletonAnimation AddToGameObject (GameObject gameObject, SkeletonDataAsset skeletonDataAsset) {
+			return SkeletonRenderer.AddSpineComponent<SkeletonAnimation>(gameObject, skeletonDataAsset);
+		}
+
+		/// <summary>Instantiates a new UnityEngine.GameObject and adds a prepared SkeletonAnimation component to it.</summary>
+		/// <returns>The newly instantiated SkeletonAnimation component.</returns>
+		public static SkeletonAnimation NewSkeletonAnimationGameObject (SkeletonDataAsset skeletonDataAsset) {
+			return SkeletonRenderer.NewSpineGameObject<SkeletonAnimation>(skeletonDataAsset);
+		}
+		#endregion
+
+		public override void Initialize (bool overwrite) {
+			if (valid && !overwrite)
 				return;
-			_animationName = value;
-			if (value == null || value.Length == 0)
-				state.ClearTrack(0);
-			else
-				state.SetAnimation(0, value, loop);
-		}
-	}
 
-	public override void Reset () {
-		base.Reset();
-		if (!valid)
-			return;
+			base.Initialize(overwrite);
 
-		state = new Spine.AnimationState(skeletonDataAsset.GetAnimationStateData());
-		if (_animationName != null && _animationName.Length > 0) {
+			if (!valid)
+				return;
+
+			state = new Spine.AnimationState(skeletonDataAsset.GetAnimationStateData());
+
+			#if UNITY_EDITOR
+			if (!string.IsNullOrEmpty(_animationName)) {
+				if (Application.isPlaying) {
+					state.SetAnimation(0, _animationName, loop);
+				} else {
+					// Assume SkeletonAnimation is valid for skeletonData and skeleton. Checked above.
+					var animationObject = skeletonDataAsset.GetSkeletonData(false).FindAnimation(_animationName);
+					if (animationObject != null)
+						animationObject.Apply(skeleton, 0f, 0f, false, null);
+				}
+				Update(0);
+			}
+			#else
+			if (!string.IsNullOrEmpty(_animationName)) {
 			state.SetAnimation(0, _animationName, loop);
 			Update(0);
+			}
+			#endif
 		}
-	}
 
-	public virtual void Update () {
-		Update(Time.deltaTime);
-	}
+		public virtual void Update () {
+			Update(Time.deltaTime);
+		}
 
-	public virtual void Update (float deltaTime) {
-		if (!valid)
-			return;
+		public virtual void Update (float deltaTime) {
+			if (!valid)
+				return;
 
-		deltaTime *= timeScale;
-		skeleton.Update(deltaTime);
-		state.Update(deltaTime);
-		state.Apply(skeleton);
+			deltaTime *= timeScale;
+			skeleton.Update(deltaTime);
+			state.Update(deltaTime);
+			state.Apply(skeleton);
 
-		if (_UpdateLocal != null) 
-			_UpdateLocal(this);
+			if (_UpdateLocal != null)
+				_UpdateLocal(this);
 
-		skeleton.UpdateWorldTransform();
-
-		if (_UpdateWorld != null) { 
-			_UpdateWorld(this);
 			skeleton.UpdateWorldTransform();
+
+			if (_UpdateWorld != null) {
+				_UpdateWorld(this);
+				skeleton.UpdateWorldTransform();
+			}
+
+			if (_UpdateComplete != null) {
+				_UpdateComplete(this);
+			}
 		}
 
-		if (_UpdateComplete != null) { 
-			_UpdateComplete(this);
-		}
 	}
+
 }

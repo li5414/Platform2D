@@ -3,6 +3,7 @@ using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
 using Spine;
+using Spine.Unity;
 
 namespace druggedcode.engine
 {

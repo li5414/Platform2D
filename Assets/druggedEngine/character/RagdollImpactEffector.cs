@@ -1,7 +1,8 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using druggedcode;
+using Spine.Unity;
+
 namespace druggedcode.engine
 {
     public class RagdollImpactEffector : MonoBehaviour
